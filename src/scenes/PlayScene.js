@@ -6,6 +6,7 @@ import { Ground } from '../entities/Ground.js';
 import { Parallax } from '../entities/Parallax.js';
 import { Dog } from '../entities/Dog.js';
 import { Pigeon } from '../entities/Pigeon.js';
+import { Crow } from '../entities/Crow.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 
@@ -30,6 +31,7 @@ export class PlayScene extends Phaser.Scene {
     this.elapsed = 0;
     this.nextSpawnAt = 0;
     this.nextPigeonAt = Infinity;
+    this.nextCrowAt = Infinity;
     this.scrollSpeed = WORLD.baseScrollSpeed;
     this.health = HEALTH.start;
     this.avoidedCount = 0;
@@ -62,13 +64,13 @@ export class PlayScene extends Phaser.Scene {
       this
     );
 
-    this.pigeonGroup = this.physics.add.group();
+    this.birdGroup = this.physics.add.group();
     this.physics.add.overlap(
       this.player.sprite,
-      this.pigeonGroup,
-      (_playerSprite, pigeonSprite) => {
-        const pigeon = pigeonSprite.getData('entity');
-        if (pigeon) pigeon.onCollide(this.player);
+      this.birdGroup,
+      (_playerSprite, birdSprite) => {
+        const bird = birdSprite.getData('entity');
+        if (bird) bird.onCollide(this.player);
       },
       null,
       this
@@ -137,9 +139,9 @@ export class PlayScene extends Phaser.Scene {
     this.overlayPanel.fillRoundedRect(panelX + 18, panelY + 13, 344, 3, 2);
 
     this.overlayTitle = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 34, 'RUN THE CITY', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 34, 'STREETWISE: NICOLE & STELLA', {
         fontFamily: 'sans-serif',
-        fontSize: '22px',
+        fontSize: '19px',
         fontStyle: 'bold',
         resolution: RENDER_SCALE,
         color: '#f2c14e',
@@ -187,6 +189,7 @@ export class PlayScene extends Phaser.Scene {
   startRun() {
     this.state = 'running';
     this.nextPigeonAt = this.time.now + Phaser.Math.Between(7000, 12000);
+    this.nextCrowAt = this.time.now + Phaser.Math.Between(5000, 9000);
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
@@ -291,8 +294,15 @@ export class PlayScene extends Phaser.Scene {
   spawnPigeon() {
     const pigeon = new Pigeon(this, this.scrollSpeed);
     pigeon.sprite.setData('entity', pigeon);
-    this.pigeonGroup.add(pigeon.sprite);
+    this.birdGroup.add(pigeon.sprite);
     this.entities.push(pigeon);
+  }
+
+  spawnCrow() {
+    const crow = new Crow(this, this.scrollSpeed);
+    crow.sprite.setData('entity', crow);
+    this.birdGroup.add(crow.sprite);
+    this.entities.push(crow);
   }
 
   collectPigeon(x, y) {
@@ -410,6 +420,10 @@ export class PlayScene extends Phaser.Scene {
     if (time > this.nextPigeonAt) {
       this.spawnPigeon();
       this.nextPigeonAt = time + Phaser.Math.Between(11000, 19000);
+    }
+    if (time > this.nextCrowAt) {
+      this.spawnCrow();
+      this.nextCrowAt = time + Phaser.Math.Between(12000, 20000);
     }
   }
 }

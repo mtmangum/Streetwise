@@ -17,6 +17,10 @@ function daylightOnlyWeight(phase) {
   return phase < DUSK_START ? 1 : 0;
 }
 
+function halfDayWeight(phase) {
+  return dayWeight(phase) * 0.5;
+}
+
 function nightWeight(phase) {
   if (phase <= DUSK_START) return 0;
   return (phase - DUSK_START) / (1 - DUSK_START);
@@ -38,9 +42,10 @@ const TYPES = [
   { key: 'obstacle-child0', animation: 'obstacle-child-jumprope', aspect: 30 / 28, height: 42, groundOffset: 3, weight: daylightOnlyWeight },
   { key: 'obstacle-trashbin', aspect: 30 / 36, height: 54, weight: dayWeight },
   { key: 'obstacle-crate', aspect: 1, height: 50, weight: dayWeight },
-  { key: 'obstacle-hydrant0', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, groundOffset: 2, weight: dayWeight },
-  { key: 'obstacle-shoppingcart', aspect: 40 / 30, height: 45, weight: dayWeight },
-  { key: 'obstacle-hotdogcart', aspect: 44 / 56, height: 84, weight: dayWeight },
+  { key: 'obstacle-hydrant0', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
+  { key: 'obstacle-hydrant-long0', animation: 'obstacle-hydrant-long-spray', aspect: 90 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
+  { key: 'obstacle-shoppingcart0', animation: 'obstacle-shoppingcart-roll', aspect: 44 / 32, height: 48, speedFactor: 1.18, flipX: true, weight: dayWeight },
+  { key: 'obstacle-hotdogcart', aspect: 44 / 64, height: 96, weight: dayWeight },
   { key: 'obstacle-parkingmeter', aspect: 18 / 60, height: 75, weight: dayWeight },
   // Night: derelict city
   { key: 'obstacle-cat0', animation: 'obstacle-cat-hiss', aspect: 30 / 27, height: 44, groundOffset: 2, weight: nightWeight },
@@ -82,14 +87,16 @@ export class Obstacle extends Entity {
     const sprite = scene.physics.add.sprite(spawnX, GROUND_Y - height / 2 + groundOffset, type.key);
     super(scene, sprite);
 
+    this.speedFactor = type.speedFactor ?? 1;
     this.sprite.setDisplaySize(width, height);
+    if (type.flipX) this.sprite.setFlipX(true);
     if (type.animation) this.sprite.anims.play(type.animation);
     this.sprite.body.setAllowGravity(false);
-    this.sprite.setVelocityX(-speed);
+    this.sprite.setVelocityX(-speed * this.speedFactor);
   }
 
   setSpeed(speed) {
-    this.sprite.setVelocityX(-speed);
+    this.sprite.setVelocityX(-speed * this.speedFactor);
   }
 
   onUpdate() {

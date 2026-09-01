@@ -52,7 +52,10 @@ export class BootScene extends Phaser.Scene {
     this.drawCrateObstacle('obstacle-crate');
     this.drawHydrantObstacle('obstacle-hydrant0', false);
     this.drawHydrantObstacle('obstacle-hydrant1', true);
-    this.drawShoppingCartObstacle('obstacle-shoppingcart');
+    this.drawHydrantObstacle('obstacle-hydrant-long0', false, true);
+    this.drawHydrantObstacle('obstacle-hydrant-long1', true, true);
+    this.drawShoppingCartObstacle('obstacle-shoppingcart0', false);
+    this.drawShoppingCartObstacle('obstacle-shoppingcart1', true);
     this.drawHotDogCartObstacle('obstacle-hotdogcart');
     this.drawParkingMeterObstacle('obstacle-parkingmeter');
     this.drawCatObstacle('obstacle-cat0', false);
@@ -74,6 +77,9 @@ export class BootScene extends Phaser.Scene {
     this.drawPigeonFrame('pigeon-fly0', 0);
     this.drawPigeonFrame('pigeon-fly1', 1);
     this.drawPigeonFrame('pigeon-fly2', 2);
+    this.drawCrowFrame('crow-fly0', 0);
+    this.drawCrowFrame('crow-fly1', 1);
+    this.drawCrowFrame('crow-fly2', 2);
   }
 
   // Obstacles use a 2x logical-pixel grid, matching the denser character
@@ -313,49 +319,66 @@ export class BootScene extends Phaser.Scene {
     ]);
   }
 
-  drawHydrantObstacle(key, flip) {
+  drawHydrantObstacle(key, flip, extended = false) {
     const O=0x51251f,D=0xa63b2c,M=0xd95237,L=0xf27a54,STEEL=0xb8c2c7,W=0xc9edf2,HI=0xf2ffff;
-    const spray=flip
-      ? [[17,13,6,3,HI],[21,11,6,4,W],[25,9,6,4,HI],[29,10,5,4,W],
-         [32,12,5,5,HI],[35,15,3,6,W],[36,21,2,3,HI],[32,19,2,2,W],[29,23,2,2,HI]]
-      : [[17,14,6,3,W],[21,12,6,4,HI],[25,10,6,4,W],[29,10,5,4,HI],
-         [32,12,5,5,W],[35,16,3,6,HI],[36,22,2,3,W],[33,20,2,2,HI],[30,24,2,2,W]];
-    this.drawObstacleTexture(key,38,28,[...spray,
+    const shortSpray=flip
+      ? [[17,13,6,3,HI],[21,11,6,4,W],[25,9,6,4,HI],[29,10,5,4,W],[32,12,5,5,HI],[35,15,3,6,W],[36,21,2,3,HI]]
+      : [[17,14,6,3,W],[21,12,6,4,HI],[25,10,6,4,W],[29,10,5,4,HI],[32,12,5,5,W],[35,16,3,6,HI],[36,22,2,3,W]];
+    const longSpray=flip
+      ? [[17,13,8,3,HI],[23,10,10,4,W],[31,7,11,4,HI],[40,5,12,4,W],[50,5,12,4,HI],
+         [60,7,10,4,W],[68,9,9,5,HI],[75,12,8,5,W],[81,15,7,6,HI],[86,20,4,6,W],
+         [77,19,3,2,W],[69,22,3,2,HI],[84,25,3,2,HI]]
+      : [[17,14,8,3,W],[23,11,10,4,HI],[31,8,11,4,W],[40,6,12,4,HI],[50,5,12,4,W],
+         [60,6,10,4,HI],[68,8,9,5,W],[75,11,8,5,HI],[81,15,7,6,W],[86,21,4,6,HI],
+         [78,20,3,2,HI],[70,23,3,2,W],[83,25,3,2,W]];
+    const spray=extended?longSpray:shortSpray;
+    this.drawObstacleTexture(key,extended?90:38,28,[...spray,
       [7,5,10,3,O],[9,3,6,3,O],[10,3,4,2,STEEL],[5,7,14,3,O],[6,7,12,2,L],
       [7,9,10,15,O],[8,9,8,14,M],[9,10,2,12,L],[5,12,4,7,O],[3,13,4,5,O],[4,14,3,3,M],
       [16,11,4,8,O],[17,12,2,6,STEEL],[6,19,12,5,O],[7,19,10,3,D],[3,23,19,4,O],[5,23,15,2,L]
     ]);
   }
 
-  drawShoppingCartObstacle(key) {
-    const O=0x24262b,D=0x555b62,M=0x899198,L=0xc2c8ca,R=0xb84b3e,B=0x385b83,T=0x8b643d;
-    this.drawObstacleTexture(key,40,30,[
-      [3,3,7,2,O],[2,2,4,2,L],[8,4,3,18,O],[10,6,27,3,O],[11,7,24,2,L],
-      [10,9,26,13,O],[12,10,22,10,D],[12,11,22,2,M],[13,14,20,2,M],[14,18,18,2,M],
-      [13,10,7,7,B],[21,12,7,8,T],[28,10,5,6,R],[16,9,4,3,L],[25,9,3,4,0xd0b56d],
-      [10,21,25,3,O],[12,21,21,1,L],[12,23,3,4,O],[31,23,3,4,O],
-      [11,26,6,4,O],[12,27,4,2,M],[29,26,6,4,O],[30,27,4,2,M]
+  drawShoppingCartObstacle(key, roll) {
+    const O=0x22252a,D=0x50575d,M=0x818a8f,L=0xc2c8ca,R=0xa84b42,B=0x435d78,T=0x786044,Y=0xb99a4d;
+    const wheels=roll
+      ? [[9,26,7,6,O],[11,28,3,2,L],[31,26,7,6,O],[33,28,3,2,L]]
+      : [[9,26,7,6,O],[11,27,3,4,M],[31,26,7,6,O],[33,27,3,4,M]];
+    this.drawObstacleTexture(key,44,32,[
+      // Tall rear handle and colored plastic grip.
+      [2,2,10,3,O],[2,1,8,2,R],[10,3,3,20,O],[11,4,2,18,L],
+      // Deep sloped wire basket—the front wall angles inward at the base.
+      [11,6,30,3,O],[12,7,28,2,L],[12,9,28,13,O],[14,10,25,11,D],
+      [14,10,2,11,M],[20,10,2,11,M],[26,10,2,11,M],[32,10,2,11,M],[38,10,2,9,M],
+      [13,12,27,2,M],[14,16,25,2,M],[15,20,23,2,M],
+      // Fold-down child seat and an uneven load of bags and boxes.
+      [13,9,9,8,O],[14,10,7,6,B],[16,11,3,3,L],
+      [23,11,7,8,T],[30,13,7,7,R],[25,10,4,4,Y],[34,11,4,4,0x657553],
+      // Under-basket chassis, lower rack, and caster forks.
+      [10,21,29,3,O],[12,21,25,1,L],[13,24,23,2,O],[15,24,19,1,M],
+      [11,23,3,5,O],[34,23,3,5,O],
+      ...wheels
     ]);
   }
 
   drawHotDogCartObstacle(key) {
     const O=0x202126,D=0x8e2f28,R=0xd34a3c,Y=0xe2b942,L=0xf1e3c8,STEEL=0xa9b2b4,GLASS=0x86a9b2,NAVY=0x27375c;
-    this.drawObstacleTexture(key,44,56,[
+    this.drawObstacleTexture(key,44,64,[
       // Broad alternating-panel umbrella with a scalloped valance.
       [18,1,8,1,O],[11,2,22,2,O],[6,4,32,2,O],[3,6,38,4,O],[1,9,42,3,O],
       [18,2,8,2,R],[12,3,8,3,NAVY],[24,3,8,3,NAVY],[7,5,10,4,R],[17,4,10,6,R],[27,5,10,4,R],
       [3,7,7,3,NAVY],[10,8,7,2,NAVY],[27,8,7,2,NAVY],[34,7,7,3,NAVY],
       [2,10,7,2,NAVY],[10,10,7,2,R],[18,10,8,2,R],[27,10,7,2,R],[35,10,7,2,NAVY],
       // Center pole visibly connects canopy to cart.
-      [21,11,3,24,O],[22,11,1,24,STEEL],
+      [21,11,3,32,O],[22,11,1,32,STEEL],
       // Stainless serving canopy and ingredient display.
-      [8,23,28,2,O],[5,25,34,3,O],[7,25,30,2,R],[4,28,36,3,O],[5,28,34,2,Y],
-      [7,31,30,10,O],[8,31,28,9,GLASS],[9,32,26,2,0xcce0df],[10,35,8,4,L],[20,34,7,5,R],[29,33,5,6,Y],
+      [8,31,28,2,O],[5,33,34,3,O],[7,33,30,2,R],[4,36,36,3,O],[5,36,34,2,Y],
+      [7,39,30,10,O],[8,39,28,9,GLASS],[9,40,26,2,0xcce0df],[10,43,8,4,L],[20,42,7,5,R],[29,41,5,6,Y],
       // Cart cabinet, service panel and counter lip.
-      [5,40,34,10,O],[6,41,32,8,R],[7,42,30,3,Y],[9,46,12,3,L],[25,46,9,3,D],
-      [3,49,38,3,O],[5,49,34,1,STEEL],[8,51,4,3,O],[33,51,4,3,O],
+      [5,48,34,10,O],[6,49,32,8,R],[7,50,30,3,Y],[9,54,12,3,L],[25,54,9,3,D],
+      [3,57,38,3,O],[5,57,34,1,STEEL],[8,59,4,3,O],[33,59,4,3,O],
       // Two large street-cart wheels.
-      [6,52,8,4,O],[8,53,4,2,STEEL],[31,52,8,4,O],[33,53,4,2,STEEL]
+      [6,60,8,4,O],[8,61,4,2,STEEL],[31,60,8,4,O],[33,61,4,2,STEEL]
     ]);
   }
 
@@ -426,6 +449,21 @@ export class BootScene extends Phaser.Scene {
       [1,7,4,2,O],[0,8,4,1,0xd2a34b],[5,6,1,1,EYE],
       [17,7,6,3,O],[18,7,5,2,D],[20,6,4,2,O],
       [9,11,2,3,O],[10,11,1,2,0xb06d55],[14,11,2,3,O],[15,11,1,2,0xb06d55]
+    ]);
+  }
+
+  drawCrowFrame(key, wingPose) {
+    const O=0x090b10,D=0x181c25,M=0x303743,L=0x596270,EYE=0xe64c45;
+    const wings = wingPose === 0
+      ? [[8,0,5,8,O],[9,1,4,6,L],[12,4,7,5,O],[13,5,5,3,M]]
+      : wingPose === 1
+        ? [[8,6,11,6,O],[9,7,9,3,L],[13,10,8,3,O],[14,10,6,2,M]]
+        : [[9,4,9,6,O],[10,5,7,3,L],[13,8,6,5,O],[14,9,4,3,M]];
+    this.drawObstacleTexture(key,25,14,[
+      ...wings,
+      [6,6,13,6,O],[7,6,11,5,D],[8,7,7,2,M],[2,5,6,6,O],[3,6,5,4,D],
+      [0,7,4,2,O],[0,8,3,1,L],[4,6,1,1,EYE],
+      [18,7,7,3,O],[19,7,5,2,D],[21,6,4,2,O]
     ]);
   }
 
@@ -927,6 +965,18 @@ export class BootScene extends Phaser.Scene {
       repeat: -1
     });
     this.anims.create({
+      key: 'obstacle-hydrant-long-spray',
+      frames: [{ key: 'obstacle-hydrant-long0' }, { key: 'obstacle-hydrant-long1' }],
+      frameRate: 8,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-shoppingcart-roll',
+      frames: [{ key: 'obstacle-shoppingcart0' }, { key: 'obstacle-shoppingcart1' }],
+      frameRate: 6,
+      repeat: -1
+    });
+    this.anims.create({
       key: 'obstacle-rat-tail',
       frames: [{ key: 'obstacle-garbagebags0' }, { key: 'obstacle-garbagebags1' }],
       frameRate: 5,
@@ -957,6 +1007,17 @@ export class BootScene extends Phaser.Scene {
         { key: 'pigeon-fly1' }
       ],
       frameRate: 9,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'crow-fly',
+      frames: [
+        { key: 'crow-fly0' },
+        { key: 'crow-fly1' },
+        { key: 'crow-fly2' },
+        { key: 'crow-fly1' }
+      ],
+      frameRate: 11,
       repeat: -1
     });
 

@@ -1,4 +1,4 @@
-# Scroller
+# Streetwise: Nicole & Stella
 
 A 16-bit-style side-scroller game built with [Phaser 4](https://phaser.io/) and [Vite](https://vitejs.dev/).
 
