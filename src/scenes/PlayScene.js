@@ -1,8 +1,12 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, WORLD } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, WORLD, HEALTH } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
+import { Parallax } from '../entities/Parallax.js';
+import { healthBarColor } from '../gfx/healthColor.js';
+
+const HEALTH_BAR = { x: 16, y: 14, width: 200, height: 16, padding: 2 };
 
 export class PlayScene extends Phaser.Scene {
   constructor() {
@@ -14,7 +18,10 @@ export class PlayScene extends Phaser.Scene {
     this.elapsed = 0;
     this.nextSpawnAt = 0;
     this.scrollSpeed = WORLD.baseScrollSpeed;
+    this.health = HEALTH.start;
+    this.avoidedCount = 0;
 
+    this.parallax = new Parallax(this);
     this.ground = new Ground(this);
     this.player = new Player(this);
     this.physics.add.collider(this.player.sprite, this.ground.body);
@@ -32,13 +39,24 @@ export class PlayScene extends Phaser.Scene {
       this
     );
 
-    this.scoreText = this.add
-      .text(16, 12, 'Score: 0', {
-        fontFamily: 'sans-serif',
-        fontSize: '20px',
-        color: '#f0f0f0'
-      })
+    // Health bar replaces a numeric score: it grows and shifts toward green
+    // as obstacles are dodged, shrinks back toward red on every hit.
+    this.healthBarBg = this.add
+      .rectangle(HEALTH_BAR.x, HEALTH_BAR.y, HEALTH_BAR.width, HEALTH_BAR.height, 0x14161c)
+      .setOrigin(0, 0)
+      .setStrokeStyle(2, 0x000000, 0.5)
       .setDepth(20);
+    this.healthBarFill = this.add
+      .rectangle(
+        HEALTH_BAR.x + HEALTH_BAR.padding,
+        HEALTH_BAR.y + HEALTH_BAR.padding,
+        0,
+        HEALTH_BAR.height - HEALTH_BAR.padding * 2,
+        healthBarColor(HEALTH.start / HEALTH.max)
+      )
+      .setOrigin(0, 0)
+      .setDepth(21);
+    this.updateHealthBar();
 
     this.overlayText = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Press Space or tap to start', {
@@ -76,12 +94,39 @@ export class PlayScene extends Phaser.Scene {
     if (obstacle) obstacle.onCollide(this.player);
   }
 
+  updateHealthBar() {
+    const fraction = Phaser.Math.Clamp(this.health / HEALTH.max, 0, 1);
+    this.healthBarFill.width = (HEALTH_BAR.width - HEALTH_BAR.padding * 2) * fraction;
+    this.healthBarFill.fillColor = healthBarColor(fraction);
+  }
+
+  // Called by Obstacle when it scrolls safely past the player.
+  onObstacleAvoided() {
+    if (this.state !== 'running') return;
+    this.avoidedCount += 1;
+    this.health = Phaser.Math.Clamp(this.health + HEALTH.gainPerAvoid, 0, HEALTH.max);
+    this.updateHealthBar();
+  }
+
+  // Called by Player.onCollide when an obstacle hits it.
+  takeDamage() {
+    if (this.state !== 'running') return;
+    this.health = Phaser.Math.Clamp(this.health - HEALTH.lossPerHit, 0, HEALTH.max);
+    this.updateHealthBar();
+
+    if (this.health <= 0) {
+      this.player.fallDown();
+      this.gameOver();
+    } else {
+      this.player.stumble();
+    }
+  }
+
   gameOver() {
     if (this.state !== 'running') return;
     this.state = 'gameover';
     this.physics.pause();
-    const score = Math.floor(this.elapsed * 10);
-    this.overlayText.setText(`Game over — score ${score}\nSpace / tap to try again`);
+    this.overlayText.setText(`Game over — dodged ${this.avoidedCount}\nSpace / tap to try again`);
     this.overlayText.setVisible(true);
   }
 
@@ -105,6 +150,8 @@ export class PlayScene extends Phaser.Scene {
     );
 
     this.ground.scroll(this.scrollSpeed, delta);
+    this.parallax.scroll(this.scrollSpeed, delta);
+    this.player.update(time, delta);
 
     // Same call, different behavior per entity type — no type-checking here.
     for (const entity of this.entities) {
@@ -118,7 +165,5 @@ export class PlayScene extends Phaser.Scene {
       const gap = Phaser.Math.Between(900, 1500) - ramp * 300;
       this.nextSpawnAt = time + gap;
     }
-
-    this.scoreText.setText(`Score: ${Math.floor(this.elapsed * 10)}`);
   }
 }

@@ -4,7 +4,7 @@ A simple side-scroller game built with [Phaser 3](https://phaser.io/) and [Vite]
 
 ## Stack
 
-- **Phaser 3** — 2D game framework (sprites, animation, arcade physics, scenes)
+- **Phaser 4** — 2D game framework (sprites, animation, arcade physics, scenes)
 - **Vite** — dev server and build tool
 
 ## Getting started
@@ -25,20 +25,36 @@ Open the local URL Vite prints (usually `http://localhost:5173`).
 ```
 index.html          Mounts the game, no game logic
 src/
-  config.js           Tunable constants (sizes, gravity, scroll speed)
+  config.js           Tunable constants (sizes, gravity, scroll speed,
+                       colors, parallax layout, health tuning)
   main.js              Phaser boot and game config
+  gfx/
+    playerFrames.js      Procedural pixel-art part/pose data for the player
+    healthColor.js        Red -> orange -> yellow -> green health bar ramp
   scenes/
-    BootScene.js         Loads/generates assets, hands off to Play
-    PlayScene.js          Game loop: scrolling ground, obstacle spawning,
-                           scoring, collisions, game over/restart
+    BootScene.js         Generates all textures + player animations, hands off to Play
+    PlayScene.js          Game loop: scrolling ground/scenery, obstacle
+                           spawning, health bar, collisions, game over/restart
   entities/
-    Player.js              Player sprite wrapper (physics body, jump)
+    Player.js              Player sprite wrapper (physics body, jump,
+                            animation, stumble/fall/get-up)
+    Parallax.js             Sun/hills/clouds scenery layer
 ```
 
 ## Current state
 
-Player, obstacles, and ground are placeholder solid-color textures
-generated at runtime in `BootScene.js`. No real art yet.
+The player is a procedurally-drawn, animated chibi pixel-art sprite — big
+head, brown bob haircut, pink dress — with idle/walk/jump poses plus a
+stumble/fall/get-up sequence played on hit (see `src/gfx/playerFrames.js`
+and `Player.js`). Obstacles come in three types (spike/crate/barrel) and
+the sky has a parallax scenery layer (sun, two hill bands, drifting
+clouds — `src/entities/Parallax.js`); the ground itself is still a plain
+scrolling tile.
+
+There's no numeric score. A health bar (top-left) grows and shifts red ->
+orange -> yellow -> green as obstacles are dodged, and shrinks back toward
+red on every hit; an empty bar ends the run. See "Health bar, not score" in
+`HANDOFF.md` for the mechanics.
 
 ## Architecture
 
@@ -58,9 +74,10 @@ Game objects follow the four pillars of OOP:
 ```
 src/entities/
   Entity.js     Abstract base class
-  Player.js     extends Entity — jump, collide -> game over
-  Obstacle.js   extends Entity — scroll, self-destroy off screen
-  Ground.js     scrolling background/floor (not a collidable Entity)
+  Player.js     extends Entity — jump, animate, stumble/fall/get up on hit
+  Obstacle.js   extends Entity — scroll, avoid/hit, self-destroy off screen
+  Ground.js     scrolling floor tile (not a collidable-lifecycle Entity)
+  Parallax.js   sun/hills/clouds scenery (not a collidable-lifecycle Entity)
 ```
 
 ## Deployment
@@ -76,7 +93,9 @@ If you rename the repo, update `base` in `vite.config.js` to match.
 
 ## Roadmap
 
-- [ ] Animated player sprite (idle / run / jump)
-- [ ] Parallax background layers
+- [x] Animated player sprite (idle / walk / jump / stumble)
+- [x] Parallax background layers
+- [x] Obstacle variety
+- [x] Health bar (replaces numeric score)
 - [ ] Sound effects
-- [ ] Local high-score storage
+- [ ] Local high-score storage (e.g. best dodge streak)
