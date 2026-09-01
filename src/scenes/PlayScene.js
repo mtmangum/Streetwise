@@ -10,6 +10,7 @@ import { Crow } from '../entities/Crow.js';
 import { Seagull } from '../entities/Seagull.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
+import { ChiptuneAudio } from '../audio/ChiptuneAudio.js';
 
 // `width` is the 0..max track; `overchargeWidth` is extra track for the
 // max..overchargeMax stretch, rendered as a distinct sparking color rather
@@ -42,6 +43,7 @@ export class PlayScene extends Phaser.Scene {
     this.avoidedCount = 0;
     this.overchargeActive = false;
     this.dayPhase = 0;
+    this.audio = new ChiptuneAudio(this);
 
     this.parallax = new Parallax(this);
     this.ground = new Ground(this);
@@ -161,7 +163,7 @@ export class PlayScene extends Phaser.Scene {
       .setDepth(20);
 
     this.overlayText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 23, 'SPACE / TAP  —  JUMP\nDOUBLE-PRESS  —  POWER JUMP\nPOWER-HIT PIGEONS  —  FULL LIFE', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 23, 'SPACE / TAP  —  JUMP\nDOUBLE-PRESS  —  SUPER JUMP\nPIGEONS BOOST LIFE · RARE SEAGULLS FILL IT', {
         fontFamily: 'sans-serif',
         fontSize: '15px',
         fontStyle: 'bold',
@@ -174,6 +176,34 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(20);
+
+    const hintBack = this.add
+      .rectangle(0, 0, 330, 58, 0x111722, 0.92)
+      .setStrokeStyle(2, 0xf2c14e, 0.95);
+    const hintTitle = this.add
+      .text(0, -12, 'NICOLE!  JUMP OR SUPER JUMP', {
+        fontFamily: 'sans-serif',
+        fontSize: '14px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#f2c14e',
+        stroke: '#090b10',
+        strokeThickness: 3
+      })
+      .setOrigin(0.5);
+    const hintControls = this.add
+      .text(0, 13, 'SPACE / TAP  ·  DOUBLE-PRESS', {
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#eef3f6'
+      })
+      .setOrigin(0.5);
+    this.openingHint = this.add
+      .container(GAME_WIDTH / 2, 62, [hintBack, hintTitle, hintControls])
+      .setDepth(25)
+      .setVisible(false);
 
     this.pauseShade = this.add
       .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x05070c, 0.55)
@@ -240,6 +270,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.state === 'gameover') return this.restart();
     if (this.state === 'paused') return;
     if (this.player.jump()) {
+      this.audio.jump();
       // The obstacle she just cleared reaches the dog's (screen-fixed)
       // position trailDistance/scrollSpeed later - that travel time is the
       // real delay, not a flat number, or the echo desyncs from the
@@ -247,7 +278,7 @@ export class PlayScene extends Phaser.Scene {
       this.scheduleDogJump();
       return;
     }
-    this.player.powerJump();
+    if (this.player.powerJump()) this.audio.superJump();
   }
 
   scheduleDogJump() {
@@ -256,7 +287,10 @@ export class PlayScene extends Phaser.Scene {
   }
 
   onBufferedPlayerJump() {
-    if (this.state === 'running') this.scheduleDogJump();
+    if (this.state === 'running') {
+      this.audio.jump();
+      this.scheduleDogJump();
+    }
   }
 
   togglePause() {
@@ -289,6 +323,7 @@ export class PlayScene extends Phaser.Scene {
 
   startRun() {
     this.state = 'running';
+    this.audio.start();
     const easyStartMs = SPAWN_RHYTHM.easyStartSeconds * 1000;
     this.nextPigeonAt = this.time.now + easyStartMs + Phaser.Math.Between(3000, 7000);
     this.nextCrowAt = this.time.now + easyStartMs + Phaser.Math.Between(2000, 6000);
@@ -296,6 +331,24 @@ export class PlayScene extends Phaser.Scene {
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
+    this.openingHint.setVisible(true).setAlpha(1).setScale(0.92);
+    this.tweens.add({
+      targets: this.openingHint,
+      scale: 1,
+      duration: 220,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: this.openingHint,
+          y: 52,
+          alpha: 0,
+          delay: 3000,
+          duration: 650,
+          ease: 'Quad.easeIn',
+          onComplete: () => this.openingHint.setVisible(false)
+        });
+      }
+    });
   }
 
   restart() {
@@ -392,11 +445,48 @@ export class PlayScene extends Phaser.Scene {
   }
 
   // Called by Obstacle when it scrolls safely past the player.
-  onObstacleAvoided() {
+  onObstacleAvoided(x, y) {
     if (this.state !== 'running') return;
     this.avoidedCount += 1;
     this.health = Phaser.Math.Clamp(this.health + HEALTH.gainPerAvoid, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
+    this.showHealthReward(x, y, HEALTH.gainPerAvoid);
+    this.audio.health();
+  }
+
+  showHealthReward(x, y, amount) {
+    const token = this.add.container(x, y - 10).setDepth(18);
+    const glow = this.add.circle(0, 0, 10, 0x58f28b, 0.25);
+    const core = this.add.circle(0, 0, 7, 0x173d27, 0.95)
+      .setStrokeStyle(1, 0xaef2c1, 1);
+    const plusH = this.add.rectangle(0, 0, 9, 3, 0xaef2c1);
+    const plusV = this.add.rectangle(0, 0, 3, 9, 0xaef2c1);
+    const label = this.add.text(14, 0, `+${amount}`, {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      fontStyle: 'bold',
+      resolution: RENDER_SCALE,
+      color: '#b8ffbf',
+      stroke: '#10251a',
+      strokeThickness: 3
+    }).setOrigin(0, 0.5);
+    token.add([glow, core, plusH, plusV, label]);
+
+    this.tweens.add({
+      targets: glow,
+      scale: { from: 0.7, to: 1.45 },
+      alpha: { from: 0.65, to: 0 },
+      duration: 520,
+      ease: 'Quad.easeOut'
+    });
+    this.tweens.add({
+      targets: token,
+      y: y - 42,
+      alpha: 0,
+      duration: 850,
+      ease: 'Quad.easeOut',
+      onComplete: () => token.destroy()
+    });
   }
 
   // Called by Player.onCollide when an obstacle hits it.
@@ -406,6 +496,7 @@ export class PlayScene extends Phaser.Scene {
     this.damageInvulnerableUntil = this.time.now + HEALTH.invulnerabilityMs;
     this.health = Phaser.Math.Clamp(this.health - damage, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
+    this.audio.hit();
 
     if (this.health <= 0) {
       this.player.fallDown();
@@ -427,6 +518,8 @@ export class PlayScene extends Phaser.Scene {
   gameOver() {
     if (this.state !== 'running') return;
     this.state = 'gameover';
+    this.audio.stop();
+    this.audio.gameOver();
     this.physics.pause();
     this.dog.rest();
     this.overlayTitle.setText('RUN OVER');
@@ -515,6 +608,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.state !== 'running') return;
     this.health = Phaser.Math.Clamp(this.health + HEALTH.pigeonBoost, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
+    this.audio.pigeon();
     this.burstBirdReward(x, y, 'LIFE BOOST!', '#f2e88f');
   }
 
@@ -522,6 +616,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.state !== 'running') return;
     this.health = HEALTH.overchargeMax;
     this.updateHealthBar();
+    this.audio.fullLife();
     this.rainHealthSparks();
     this.burstBirdReward(x, y, 'FULL LIFE!', '#b8ffbf');
   }

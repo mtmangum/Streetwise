@@ -132,7 +132,10 @@ export class Obstacle extends Entity {
       this.sprite.body.setVelocity(0, 0);
       this.sprite.body.enable = false;
       this.sprite.setFlipX(true).setDepth(8);
-      this.scene.onObstacleAvoided();
+      this.scene.onObstacleAvoided(
+        this.sprite.x,
+        this.sprite.y - this.sprite.displayHeight / 2
+      );
     }
 
     if (this.chasing) {
@@ -152,9 +155,20 @@ export class Obstacle extends Entity {
       return;
     }
 
+    if (
+      !this.rewarded &&
+      this.sprite.x + this.sprite.displayWidth / 2 < PLAYER.startX
+    ) {
+      // Reward as soon as the obstacle is visibly cleared so the health
+      // token can rise from it while it is still on screen.
+      this.rewarded = true;
+      this.scene.onObstacleAvoided(
+        this.sprite.x,
+        this.sprite.y - this.sprite.displayHeight / 2
+      );
+    }
+
     if (this.sprite.x < -60) {
-      // Made it past the player without a hit — reward for the dodge.
-      if (!this.rewarded) this.scene.onObstacleAvoided();
       this.destroy();
     }
   }
