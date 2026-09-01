@@ -19,6 +19,8 @@ Open the local URL Vite prints (usually `http://localhost:5173`).
 ## Controls
 
 - **Space / click / tap** — jump, or start/restart the game
+- **Double-press** — turn a rising jump into a super jump
+- **P / Escape / Pause button** — pause or resume
 
 ## Project structure
 
@@ -28,6 +30,8 @@ src/
   config.js           Tunable constants (sizes, gravity, scroll speed,
                        colors, parallax layout, health tuning)
   main.js              Phaser boot and game config
+  audio/
+    ChiptuneAudio.js      Generated 8-bit soundtrack and sound effects
   gfx/
     playerFrames.js      Procedural pixel-art part/pose data for the player
     dogFrames.js           Procedural pixel-art part/pose data for the dog
@@ -40,7 +44,11 @@ src/
   entities/
     Player.js              Player sprite wrapper (physics body, jump,
                             animation, stumble/fall/get-up)
-    Dog.js                  Companion greyhound - cosmetic, no physics/collision
+    Dog.js                  Companion greyhound with a delayed forward jump arc
+    Obstacle.js             Weighted day/night hazards and collision behavior
+    Pigeon.js               Super-jump health-boost target
+    Seagull.js              Rare full-life target
+    Crow.js                 Hostile aerial hazard
     Parallax.js             Sky, sun/moon, brownstones, clouds scenery layer
 ```
 
@@ -57,22 +65,32 @@ how long the same obstacle takes to travel from her position to the dog's
 at the current scroll speed (not a flat delay - see "The dog's jump delay
 is computed" in `HANDOFF.md`).
 
-Each run plays out one full day -> night arc over 90 seconds: sunny
-morning -> afternoon -> dusk -> derelict night, driving the sky color, a
-row of brownstones on the horizon (cornice/stoop/windows by day, dark with
-lit windows by night), and the obstacle roster. Obstacles are a hard split
-by time of day — day: mailbox, traffic cone, sitting child, trash bin,
-crate; night: angry cat, burning trash bin, a low prone silhouette,
-boombox — full day roster until dusk, full night roster by the time it's
-fully dark (`Obstacle.js`). The ground itself is still a plain scrolling
-tile, tinted to match.
+Each run plays out one full day -> night arc over 90 seconds, driving the
+sky, sun/moon, pavement, scenery, and obstacle roster. Layered brownstones
+include varied facades, fire escapes, roof tanks, parked cars, and walking
+pedestrians. Day hazards include hydrants with arcing water, shopping
+carts, food carts, parking meters, crates, cones, mailboxes, trash bins,
+and boomboxes. Night adds burning barrels, steam stacks, garbage bags with
+a rat, cats, cops, streetwalkers, and sleeping street figures. Spawn
+phrasing mixes clusters with deliberate quiet beats and never repeats the
+same obstacle family twice in a row.
 
-There's no numeric score. A health bar (top-left) starts full and grows
-past 100% into a sparking "overcharge" zone as obstacles are dodged
-(shifting red -> orange -> yellow -> green along the way, then a fixed
-neon green once overcharged), and shrinks back toward red on every hit —
-which also makes the player stumble and recover (~0.9s). An empty bar ends
-the run. See "Health bar, not score" in `HANDOFF.md` for the mechanics.
+The first 20 seconds form an easier onboarding stretch with widely spaced,
+stationary obstacles and no birds. Difficulty then ramps through tighter
+spacing, moving carts, faster scrolling, aerial hazards, and day/night
+roster changes. Cops chase briefly after Nicole clears them.
+
+There's no numeric score. Life force slowly drains during play, rises by
+eight points when an obstacle is cleared, and can extend past 100% into a
+textured, sparking overcharge zone. A floating `+8` token makes each reward
+visible. Super-jumping into a pigeon grants a 35-point boost; the much
+rarer seagull fills the complete bar. Black birds cause an aerial tumble
+and heavy damage. An empty bar ends the run.
+
+Music and effects are synthesized in real time by Web Audio: a looping
+square-wave chiptune accompanies distinct jump, super-jump, reward, bird,
+damage, and game-over sounds. Audio begins with the first gameplay input
+to comply with browser autoplay rules.
 
 ## Architecture
 
@@ -94,6 +112,9 @@ src/entities/
   Entity.js     Abstract base class
   Player.js     extends Entity — jump, animate, stumble/fall/get up on hit
   Obstacle.js   extends Entity — scroll, avoid/hit, self-destroy off screen
+  Pigeon.js     extends Entity — super-jump health boost
+  Seagull.js    extends Entity — rare full-life reward
+  Crow.js       extends Entity — damaging aerial hazard
   Ground.js     scrolling floor tile (not a collidable-lifecycle Entity)
   Parallax.js   sky/sun/moon/brownstones/clouds (not a collidable-lifecycle Entity)
   Dog.js        companion greyhound (not an Entity - cosmetic, no physics/collision)
@@ -118,6 +139,8 @@ If you rename the repo, update `base` in `vite.config.js` to match.
 - [x] Health bar with overcharge (replaces numeric score)
 - [x] Day -> night run arc with matching scenery
 - [x] Companion greyhound
-- [ ] Foreground street-level parallax (fire hydrants, trees, etc.)
-- [ ] Sound effects
+- [x] Foreground street activity and parked-car parallax
+- [x] 8-bit soundtrack and sound effects
+- [x] Power jump with aerial rewards and hazards
+- [x] Pause/resume controls
 - [ ] Local high-score storage (e.g. best dodge streak)

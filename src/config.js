@@ -30,6 +30,8 @@ export const DOG = {
   // the dog too early at low speed and too late at high speed.
   jumpReactionMs: 50,
   jumpDurationMs: 540,
+  jumpForwardDistance: 62,
+  landingRecoveryMs: 420,
   // Tall obstacles reach ~65px; the player's real jump apex (from
   // PLAYER.gravity/jumpVelocity) is ~112px. This needs real clearance
   // margin, not just a stylized hop - it was 46 and visibly clipped tall
