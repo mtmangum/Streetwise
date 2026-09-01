@@ -48,7 +48,8 @@ export class BootScene extends Phaser.Scene {
     this.drawConeObstacle('obstacle-cone');
     this.drawChildObstacle('obstacle-child0', false);
     this.drawChildObstacle('obstacle-child1', true);
-    this.drawTrashBinObstacle('obstacle-trashbin');
+    this.drawTrashBinObstacle('obstacle-trashbin0', false);
+    this.drawTrashBinObstacle('obstacle-trashbin1', true);
     this.drawCrateObstacle('obstacle-crate');
     this.drawHydrantObstacle('obstacle-hydrant0', false);
     this.drawHydrantObstacle('obstacle-hydrant1', true);
@@ -159,11 +160,16 @@ export class BootScene extends Phaser.Scene {
 
   // Ordinary (unlit) trash bin - the daytime counterpart to
   // obstacle-trashfire, same rounded-can shape in a cleaner color.
-  drawTrashBinObstacle(key) {
+  drawTrashBinObstacle(key, flip) {
     // Municipal sidewalk basket: wide rolled rim, circular deposit opening,
     // black inner liner and repeating powder-coated steel slats.
     const O=0x101216,DEEP=0x06070a,D=0x22252a,M=0x3c4045,L=0x656a70,HI=0xa4a9ae,EDGE=0xd0d3d5;
+    const FLY=0x111014,WING=0xc2c0c5;
+    const flies=flip
+      ? [[1,2,2,1,FLY],[0,1,1,1,WING],[27,4,2,1,FLY],[29,3,1,1,WING],[2,10,2,1,FLY],[4,9,1,1,WING]]
+      : [[2,5,2,1,FLY],[1,4,1,1,WING],[27,1,2,1,FLY],[26,2,1,1,WING],[26,10,2,1,FLY],[28,11,1,1,WING]];
     this.drawObstacleTexture(key,30,36,[
+      ...flies,
       // Back half of the rolled elliptical rim and rear slats visible through it.
       [6,1,18,1,O],[3,2,24,1,O],[1,3,28,4,O],[3,2,24,1,HI],
       [3,3,24,2,L],[5,4,20,2,M],[6,5,3,5,D],[12,4,3,6,D],[18,4,3,6,D],[24,5,2,5,D],
@@ -913,6 +919,12 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({
       key: 'obstacle-child-jumprope',
       frames: [{ key: 'obstacle-child0' }, { key: 'obstacle-child1' }],
+      frameRate: 5,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-trashbin-flies',
+      frames: [{ key: 'obstacle-trashbin0' }, { key: 'obstacle-trashbin1' }],
       frameRate: 5,
       repeat: -1
     });

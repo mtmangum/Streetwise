@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { Entity } from './Entity.js';
-import { GAME_WIDTH, GROUND_Y } from '../config.js';
+import { GAME_WIDTH, GROUND_Y, PLAYER } from '../config.js';
 
 // Day and night rosters are mutually exclusive until dusk (matching the
 // "dusk" stop in dayNightPalette.js) - full weight on its own side of that
@@ -40,10 +40,10 @@ const TYPES = [
   { key: 'obstacle-mailbox', aspect: 22 / 34, height: 56, weight: dayWeight },
   { key: 'obstacle-cone', aspect: 18 / 30, height: 46, weight: dayWeight },
   { key: 'obstacle-child0', animation: 'obstacle-child-jumprope', aspect: 30 / 28, height: 42, groundOffset: 3, weight: daylightOnlyWeight },
-  { key: 'obstacle-trashbin', aspect: 30 / 36, height: 54, weight: dayWeight },
+  { key: 'obstacle-trashbin0', animation: 'obstacle-trashbin-flies', aspect: 30 / 36, height: 54, weight: dayWeight },
   { key: 'obstacle-crate', aspect: 1, height: 50, weight: dayWeight },
-  { key: 'obstacle-hydrant0', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
-  { key: 'obstacle-hydrant-long0', animation: 'obstacle-hydrant-long-spray', aspect: 90 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
+  { key: 'obstacle-hydrant0', family: 'hydrant', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
+  { key: 'obstacle-hydrant-long0', family: 'hydrant', animation: 'obstacle-hydrant-long-spray', aspect: 90 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
   { key: 'obstacle-shoppingcart0', animation: 'obstacle-shoppingcart-roll', aspect: 44 / 32, height: 48, speedFactor: 1.18, flipX: true, weight: dayWeight },
   { key: 'obstacle-hotdogcart', aspect: 44 / 64, height: 96, weight: dayWeight },
   { key: 'obstacle-parkingmeter', aspect: 18 / 60, height: 75, weight: dayWeight },
@@ -52,14 +52,21 @@ const TYPES = [
   { key: 'obstacle-trashfire0', animation: 'obstacle-fire-flicker', aspect: 28 / 36, height: 60, weight: nightWeight },
   { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-flies', aspect: 48 / 20, height: 28, weight: nightWeight },
   { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, weight: allDayWeight },
-  { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 62, weight: nightWeight },
+  { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 76, weight: nightWeight },
   { key: 'obstacle-garbagebags0', animation: 'obstacle-rat-tail', aspect: 38 / 22, height: 33, weight: nightWeight },
-  { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 24 / 38, height: 57, weight: nightWeight },
+  { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 24 / 38, height: 70, chasesAfterAvoid: true, weight: nightWeight },
   { key: 'obstacle-streetwalker0', animation: 'obstacle-streetwalker-idle', aspect: 24 / 38, height: 57, weight: nightWeight }
 ];
 
-function pickType(phase) {
-  const weighted = TYPES.map((t) => ({ ...t, w: t.weight(phase) }));
+function obstacleFamily(type) {
+  return type.family ?? type.key.replace(/\d+$/, '');
+}
+
+function pickType(phase, excludedFamily) {
+  const weighted = TYPES.map((t) => ({
+    ...t,
+    w: obstacleFamily(t) === excludedFamily ? 0 : t.weight(phase)
+  }));
   const total = weighted.reduce((sum, t) => sum + t.w, 0);
   let roll = Math.random() * total;
   for (const t of weighted) {
@@ -73,8 +80,8 @@ function pickType(phase) {
 // different behavior — that's the polymorphism payoff: PlayScene's update
 // loop treats every entity the same way and each one does its own thing.
 export class Obstacle extends Entity {
-  constructor(scene, speed, phase) {
-    const type = pickType(phase);
+  constructor(scene, speed, phase, excludedFamily = null) {
+    const type = pickType(phase, excludedFamily);
     const height = type.height;
     const width = Math.round(height * type.aspect);
     // Spawn far enough right that the widest obstacle is still fully
@@ -88,6 +95,12 @@ export class Obstacle extends Entity {
     super(scene, sprite);
 
     this.speedFactor = type.speedFactor ?? 1;
+    this.family = obstacleFamily(type);
+    this.currentSpeed = speed;
+    this.chasesAfterAvoid = type.chasesAfterAvoid ?? false;
+    this.chasing = false;
+    this.retiring = false;
+    this.rewarded = false;
     this.sprite.setDisplaySize(width, height);
     if (type.flipX) this.sprite.setFlipX(true);
     if (type.animation) this.sprite.anims.play(type.animation);
@@ -96,13 +109,49 @@ export class Obstacle extends Entity {
   }
 
   setSpeed(speed) {
+    this.currentSpeed = speed;
+    if (this.chasing || this.retiring) return;
     this.sprite.setVelocityX(-speed * this.speedFactor);
   }
 
-  onUpdate() {
+  onUpdate(time, delta) {
+    if (
+      this.chasesAfterAvoid &&
+      !this.chasing &&
+      !this.retiring &&
+      this.sprite.x + this.sprite.displayWidth / 2 < PLAYER.startX
+    ) {
+      // Reaching Nicole's far side without colliding means she successfully
+      // cleared him. Turn him around for a harmless, screen-fixed pursuit.
+      this.chasing = true;
+      this.rewarded = true;
+      this.chaseEndsAt = time + Phaser.Math.Between(3200, 4600);
+      this.sprite.body.setVelocity(0, 0);
+      this.sprite.body.enable = false;
+      this.sprite.setFlipX(true).setDepth(8);
+      this.scene.onObstacleAvoided();
+    }
+
+    if (this.chasing) {
+      const targetX = PLAYER.startX - 76 + Math.sin(time * 0.012) * 5;
+      this.sprite.x = Phaser.Math.Linear(this.sprite.x, targetX, 0.065);
+      if (time >= this.chaseEndsAt) {
+        this.chasing = false;
+        this.retiring = true;
+        this.sprite.setFlipX(false).setDepth(0);
+      }
+      return;
+    }
+
+    if (this.retiring) {
+      this.sprite.x -= this.currentSpeed * 1.15 * (delta / 1000);
+      if (this.sprite.x < -60) this.destroy();
+      return;
+    }
+
     if (this.sprite.x < -60) {
       // Made it past the player without a hit — reward for the dodge.
-      this.scene.onObstacleAvoided();
+      if (!this.rewarded) this.scene.onObstacleAvoided();
       this.destroy();
     }
   }

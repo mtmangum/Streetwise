@@ -28,7 +28,7 @@ export class Crow extends Entity {
 
   onCollide(player) {
     if (!this.alive) return;
-    player.onCollide(this);
+    player.onCrowCollide(this);
     this.destroy();
   }
 }

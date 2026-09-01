@@ -22,6 +22,8 @@ export class Player extends Entity {
     this.recovering = false;
     this.recoveryTimer = null;
     this.powerJumpUsed = false;
+    this.jumpBufferUntil = 0;
+    this.coyoteUntil = 0;
   }
 
   // A second hit can land mid-recovery (a different obstacle, while still
@@ -54,12 +56,23 @@ export class Player extends Entity {
   // recovering) - PlayScene uses that to decide whether to echo the jump
   // to the dog a beat later, rather than echoing every keypress.
   jump() {
-    if (this._isOnGround && !this.recovering) {
-      this.sprite.body.setVelocityY(PLAYER.jumpVelocity);
-      this.powerJumpUsed = false;
+    const now = this.scene.time.now;
+    if (!this.recovering && (this._isOnGround || now <= this.coyoteUntil)) {
+      this._startJump();
       return true;
     }
+    // A slightly early press near landing is remembered instead of lost.
+    // Rising presses remain reserved for the explicit power-jump input.
+    if (!this.recovering && this.sprite.body.velocity.y >= 0) {
+      this.jumpBufferUntil = now + PLAYER.jumpBufferMs;
+    }
     return false;
+  }
+
+  _startJump() {
+    this.jumpBufferUntil = 0;
+    this.sprite.body.setVelocityY(PLAYER.jumpVelocity);
+    this.powerJumpUsed = false;
   }
 
   // A second press during ascent converts the regular hop into one higher
@@ -78,6 +91,15 @@ export class Player extends Entity {
   // never spawned/despawned the way obstacles are).
   onUpdate() {
     if (this.recovering) return;
+    const now = this.scene.time.now;
+    if (this._isOnGround) {
+      this.coyoteUntil = now + PLAYER.coyoteTimeMs;
+      if (this.jumpBufferUntil >= now) {
+        this._startJump();
+        this.scene.onBufferedPlayerJump?.();
+        return;
+      }
+    }
     if (!this._isOnGround) {
       this.sprite.anims.stop();
       this.sprite.setTexture(this.sprite.body.velocity.y < 40 ? 'player-jumpRise' : 'player-jumpFall');
@@ -92,6 +114,7 @@ export class Player extends Entity {
   // sprite is never rotated like a rigid cardboard cutout.
   stumble() {
     this._cancelRecovery();
+    this.jumpBufferUntil = 0;
     this.recovering = true;
     this.sprite.anims.stop();
     this._nextRecoveryPose('player-stumble', RECOVERY_TIMING.recoil, () =>
@@ -107,10 +130,65 @@ export class Player extends Entity {
     );
   }
 
+  // Crow hit: pop Nicole off the pavement (or arrest a falling jump) and
+  // spin her through one complete airborne somersault before control returns.
+  airTumble() {
+    this._cancelRecovery();
+    this.recovering = true;
+    this.jumpBufferUntil = 0;
+    this.sprite.anims.stop();
+    this.sprite.setTexture('player-stumble');
+    this.sprite.body.setVelocityY(Math.min(this.sprite.body.velocity.y, -340));
+
+    const tumblePoses = [
+      'player-stumble',
+      'player-jumpRise',
+      'player-prone',
+      'player-jumpFall',
+      'player-stumble',
+      'player-jumpRise',
+      'player-prone',
+      'player-jumpFall'
+    ];
+    let poseIndex = 0;
+
+    // Compress and stretch twice during the rotations. This breaks the rigid
+    // cardboard-cutout look while leaving Nicole's physics arc untouched.
+    this.scene.tweens.add({
+      targets: this.sprite,
+      scaleX: 0.82,
+      scaleY: 1.12,
+      duration: 155,
+      yoyo: true,
+      repeat: 1,
+      ease: 'Sine.easeInOut'
+    });
+    this.scene.tweens.add({
+      targets: this.sprite,
+      // The crow arrives from Nicole's right, so the impact spins her
+      // backward through two quick counter-clockwise rotations.
+      angle: -720,
+      duration: 620,
+      ease: 'Cubic.easeOut',
+      onUpdate: (tween) => {
+        const nextPose = Math.min(tumblePoses.length - 1, Math.floor(tween.progress * tumblePoses.length));
+        if (nextPose !== poseIndex) {
+          poseIndex = nextPose;
+          this.sprite.setTexture(tumblePoses[poseIndex]);
+        }
+      },
+      onComplete: () => {
+        this.sprite.setAngle(0).setScale(1).setTexture('player-jumpFall');
+        this.recovering = false;
+      }
+    });
+  }
+
   // Fatal hit (health hit zero): fall and stay down. Recovering never
   // clears — PlayScene.restart() rebuilds the Player from scratch anyway.
   fallDown() {
     this._cancelRecovery();
+    this.jumpBufferUntil = 0;
     this.recovering = true;
     this.sprite.anims.stop();
     this._nextRecoveryPose('player-stumble', RECOVERY_TIMING.recoil, () =>
@@ -126,5 +204,9 @@ export class Player extends Entity {
   // it's shared run state, not something the player entity owns.
   onCollide() {
     this.scene.takeDamage();
+  }
+
+  onCrowCollide() {
+    this.scene.takeDamage('air');
   }
 }

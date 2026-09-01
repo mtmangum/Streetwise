@@ -10,6 +10,8 @@ export const PLAYER = {
   gravity: 1400,
   jumpVelocity: -560,
   powerJumpVelocity: -720,
+  jumpBufferMs: 120,
+  coyoteTimeMs: 80,
   runSpeed: 0 // player stays put on screen; world scrolls under it
 };
 
@@ -110,5 +112,6 @@ export const HEALTH = {
   overchargeMax: 160,
   start: 100,
   gainPerAvoid: 8,
-  lossPerHit: 30
+  lossPerHit: 30,
+  invulnerabilityMs: 900
 };

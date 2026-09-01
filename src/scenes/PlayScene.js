@@ -27,13 +27,15 @@ export class PlayScene extends Phaser.Scene {
     this.cameras.main.setZoom(RENDER_SCALE);
     this.cameras.main.centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
 
-    this.state = 'ready'; // ready | running | gameover
+    this.state = 'ready'; // ready | running | paused | gameover
     this.elapsed = 0;
     this.nextSpawnAt = 0;
     this.nextPigeonAt = Infinity;
     this.nextCrowAt = Infinity;
+    this.lastObstacleFamily = null;
     this.scrollSpeed = WORLD.baseScrollSpeed;
     this.health = HEALTH.start;
+    this.damageInvulnerableUntil = 0;
     this.avoidedCount = 0;
     this.overchargeActive = false;
     this.dayPhase = 0;
@@ -127,19 +129,19 @@ export class PlayScene extends Phaser.Scene {
     this.updateHealthBar();
 
     const panelX = GAME_WIDTH / 2 - 190;
-    const panelY = GAME_HEIGHT / 2 - 64;
+    const panelY = GAME_HEIGHT / 2 - 74;
     this.overlayPanel = this.add.graphics().setDepth(19);
     this.overlayPanel.fillStyle(0x05070c, 0.45);
-    this.overlayPanel.fillRoundedRect(panelX + 4, panelY + 5, 380, 128, 14);
+    this.overlayPanel.fillRoundedRect(panelX + 4, panelY + 5, 380, 148, 14);
     this.overlayPanel.fillStyle(0x121823, 0.94);
-    this.overlayPanel.fillRoundedRect(panelX, panelY, 380, 128, 14);
+    this.overlayPanel.fillRoundedRect(panelX, panelY, 380, 148, 14);
     this.overlayPanel.lineStyle(2, 0xe0752f, 0.9);
-    this.overlayPanel.strokeRoundedRect(panelX, panelY, 380, 128, 14);
+    this.overlayPanel.strokeRoundedRect(panelX, panelY, 380, 148, 14);
     this.overlayPanel.fillStyle(0xf2c14e, 1);
     this.overlayPanel.fillRoundedRect(panelX + 18, panelY + 13, 344, 3, 2);
 
     this.overlayTitle = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 34, 'STREETWISE: NICOLE & STELLA', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 43, 'STREETWISE: NICOLE & STELLA', {
         fontFamily: 'sans-serif',
         fontSize: '19px',
         fontStyle: 'bold',
@@ -153,37 +155,130 @@ export class PlayScene extends Phaser.Scene {
       .setDepth(20);
 
     this.overlayText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20, 'SPACE / TAP  —  JUMP\nDOUBLE-PRESS  —  POWER JUMP', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 23, 'SPACE / TAP  —  JUMP\nDOUBLE-PRESS  —  POWER JUMP\nPOWER-HIT PIGEONS  —  FULL LIFE', {
         fontFamily: 'sans-serif',
-        fontSize: '16px',
+        fontSize: '15px',
         fontStyle: 'bold',
         resolution: RENDER_SCALE,
         color: '#eef3f6',
         stroke: '#090b10',
         strokeThickness: 3,
-        lineSpacing: 7,
+        lineSpacing: 5,
         align: 'center'
       })
       .setOrigin(0.5)
       .setDepth(20);
 
+    this.pauseShade = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x05070c, 0.55)
+      .setDepth(27)
+      .setVisible(false);
+    this.pauseCard = this.add.graphics().setDepth(28).setVisible(false);
+    this.pauseCard.fillStyle(0x111722, 0.97);
+    this.pauseCard.fillRoundedRect(GAME_WIDTH / 2 - 135, GAME_HEIGHT / 2 - 48, 270, 96, 12);
+    this.pauseCard.lineStyle(2, 0xf2c14e, 0.95);
+    this.pauseCard.strokeRoundedRect(GAME_WIDTH / 2 - 135, GAME_HEIGHT / 2 - 48, 270, 96, 12);
+    this.pauseTitle = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 14, 'PAUSED', {
+        fontFamily: 'sans-serif',
+        fontSize: '24px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#f2c14e',
+        stroke: '#090b10',
+        strokeThickness: 4
+      })
+      .setOrigin(0.5)
+      .setDepth(29)
+      .setVisible(false);
+    this.pauseHint = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 22, 'PRESS P, ESC, OR RESUME', {
+        fontFamily: 'sans-serif',
+        fontSize: '13px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#eef3f6'
+      })
+      .setOrigin(0.5)
+      .setDepth(29)
+      .setVisible(false);
+
+    this.pauseButton = this.add
+      .rectangle(GAME_WIDTH - 62, 22, 104, 28, 0x141b27, 0.94)
+      .setStrokeStyle(2, 0xf2c14e, 0.9)
+      .setDepth(30)
+      .setInteractive({ useHandCursor: true });
+    this.pauseButtonText = this.add
+      .text(GAME_WIDTH - 62, 22, 'PAUSE', {
+        fontFamily: 'sans-serif',
+        fontSize: '12px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#f2c14e'
+      })
+      .setOrigin(0.5)
+      .setDepth(31);
+    this.pauseButton.on('pointerdown', (_pointer, _x, _y, event) => {
+      event?.stopPropagation();
+      this.togglePause();
+    });
+
     this.input.keyboard.on('keydown-SPACE', () => this.handleInput());
+    this.input.keyboard.on('keydown-P', () => this.togglePause());
+    this.input.keyboard.on('keydown-ESC', () => this.togglePause());
     this.input.on('pointerdown', () => this.handleInput());
   }
 
   handleInput() {
     if (this.state === 'ready') return this.startRun();
     if (this.state === 'gameover') return this.restart();
+    if (this.state === 'paused') return;
     if (this.player.jump()) {
       // The obstacle she just cleared reaches the dog's (screen-fixed)
       // position trailDistance/scrollSpeed later - that travel time is the
       // real delay, not a flat number, or the echo desyncs from the
       // obstacle at any scroll speed but the one it was tuned for.
-      const travelMs = (DOG.trailDistance / this.scrollSpeed) * 1000;
-      this.time.delayedCall(travelMs + DOG.jumpReactionMs, () => this.dog.jump());
+      this.scheduleDogJump();
       return;
     }
     this.player.powerJump();
+  }
+
+  scheduleDogJump() {
+    const travelMs = (DOG.trailDistance / this.scrollSpeed) * 1000;
+    this.time.delayedCall(travelMs + DOG.jumpReactionMs, () => this.dog.jump());
+  }
+
+  onBufferedPlayerJump() {
+    if (this.state === 'running') this.scheduleDogJump();
+  }
+
+  togglePause() {
+    if (this.state === 'running') {
+      this.state = 'paused';
+      this.physics.pause();
+      this.time.paused = true;
+      this.tweens.pauseAll();
+      this.anims.pauseAll();
+      this.pauseShade.setVisible(true);
+      this.pauseCard.setVisible(true);
+      this.pauseTitle.setVisible(true);
+      this.pauseHint.setVisible(true);
+      this.pauseButtonText.setText('RESUME');
+      return;
+    }
+    if (this.state === 'paused') {
+      this.state = 'running';
+      this.time.paused = false;
+      this.physics.resume();
+      this.tweens.resumeAll();
+      this.anims.resumeAll();
+      this.pauseShade.setVisible(false);
+      this.pauseCard.setVisible(false);
+      this.pauseTitle.setVisible(false);
+      this.pauseHint.setVisible(false);
+      this.pauseButtonText.setText('PAUSE');
+    }
   }
 
   startRun() {
@@ -259,8 +354,10 @@ export class PlayScene extends Phaser.Scene {
   }
 
   // Called by Player.onCollide when an obstacle hits it.
-  takeDamage() {
+  takeDamage(reaction = 'ground') {
     if (this.state !== 'running') return;
+    if (this.time.now < this.damageInvulnerableUntil) return;
+    this.damageInvulnerableUntil = this.time.now + HEALTH.invulnerabilityMs;
     this.health = Phaser.Math.Clamp(this.health - HEALTH.lossPerHit, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
 
@@ -268,7 +365,16 @@ export class PlayScene extends Phaser.Scene {
       this.player.fallDown();
       this.gameOver();
     } else {
-      this.player.stumble();
+      if (reaction === 'air') this.player.airTumble();
+      else this.player.stumble();
+      this.tweens.add({
+        targets: this.player.sprite,
+        alpha: { from: 0.35, to: 1 },
+        duration: 75,
+        yoyo: true,
+        repeat: 4,
+        onComplete: () => this.player.sprite.setAlpha(1)
+      });
     }
   }
 
@@ -285,7 +391,8 @@ export class PlayScene extends Phaser.Scene {
   }
 
   spawnObstacle() {
-    const obstacle = new Obstacle(this, this.scrollSpeed, this.dayPhase);
+    const obstacle = new Obstacle(this, this.scrollSpeed, this.dayPhase, this.lastObstacleFamily);
+    this.lastObstacleFamily = obstacle.family;
     obstacle.sprite.setData('entity', obstacle);
     this.obstacleGroup.add(obstacle.sprite);
     this.entities.push(obstacle);
@@ -303,6 +410,15 @@ export class PlayScene extends Phaser.Scene {
     crow.sprite.setData('entity', crow);
     this.birdGroup.add(crow.sprite);
     this.entities.push(crow);
+  }
+
+  canSpawnBird() {
+    if (this.birdGroup.countActive(true) > 0) return false;
+    // An obstacle already close to Nicole should resolve before a bird begins
+    // its dive/bonus line, avoiding contradictory overlapping inputs.
+    return !this.obstacleGroup.getChildren().some((sprite) =>
+      sprite.active && sprite.x > this.player.sprite.x - 70 && sprite.x < this.player.sprite.x + 330
+    );
   }
 
   collectPigeon(x, y) {
@@ -408,7 +524,7 @@ export class PlayScene extends Phaser.Scene {
     }
     this.entities = this.entities.filter((e) => e.alive);
 
-    if (time > this.nextSpawnAt) {
+    if (time > this.nextSpawnAt && this.birdGroup.countActive(true) === 0) {
       this.spawnObstacle();
       // Keep obstacles readable as individual challenges. The previous gap
       // compressed to 600ms at top speed, which could create near-impossible
@@ -417,11 +533,11 @@ export class PlayScene extends Phaser.Scene {
       this.nextSpawnAt = time + gap;
     }
 
-    if (time > this.nextPigeonAt) {
+    if (time > this.nextPigeonAt && this.canSpawnBird()) {
       this.spawnPigeon();
       this.nextPigeonAt = time + Phaser.Math.Between(11000, 19000);
     }
-    if (time > this.nextCrowAt) {
+    if (time > this.nextCrowAt && this.canSpawnBird()) {
       this.spawnCrow();
       this.nextCrowAt = time + Phaser.Math.Between(12000, 20000);
     }
