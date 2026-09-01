@@ -336,22 +336,44 @@ export class BootScene extends Phaser.Scene {
   }
 
   drawHotDogCartObstacle(key) {
-    const O=0x202126,D=0x8e2f28,R=0xd34a3c,Y=0xe2b942,L=0xf1e3c8,STEEL=0xa9b2b4,GLASS=0x86a9b2;
-    this.drawObstacleTexture(key,44,38,[
-      [8,1,28,2,O],[5,3,34,3,O],[7,3,30,2,R],[4,6,36,3,O],[5,6,34,2,Y],
-      [7,9,30,10,O],[8,9,28,9,GLASS],[9,10,26,2,0xcce0df],[10,13,8,4,L],[20,12,7,5,R],[29,11,5,6,Y],
-      [5,18,34,14,O],[6,19,32,12,R],[7,20,30,3,Y],[9,24,12,5,L],[25,24,9,3,D],
-      [3,31,38,3,O],[5,31,34,1,STEEL],[8,33,4,3,O],[33,33,4,3,O],
-      [6,34,8,4,O],[8,35,4,2,STEEL],[31,34,8,4,O],[33,35,4,2,STEEL]
+    const O=0x202126,D=0x8e2f28,R=0xd34a3c,Y=0xe2b942,L=0xf1e3c8,STEEL=0xa9b2b4,GLASS=0x86a9b2,NAVY=0x27375c;
+    this.drawObstacleTexture(key,44,50,[
+      // Broad alternating-panel umbrella with a scalloped valance.
+      [18,1,8,1,O],[11,2,22,2,O],[6,4,32,2,O],[3,6,38,4,O],[1,9,42,3,O],
+      [18,2,8,2,R],[12,3,8,3,NAVY],[24,3,8,3,NAVY],[7,5,10,4,R],[17,4,10,6,R],[27,5,10,4,R],
+      [3,7,7,3,NAVY],[10,8,7,2,NAVY],[27,8,7,2,NAVY],[34,7,7,3,NAVY],
+      [2,10,7,2,NAVY],[10,10,7,2,R],[18,10,8,2,R],[27,10,7,2,R],[35,10,7,2,NAVY],
+      // Center pole visibly connects canopy to cart.
+      [21,11,3,18,O],[22,11,1,18,STEEL],
+      // Stainless serving canopy and ingredient display.
+      [8,17,28,2,O],[5,19,34,3,O],[7,19,30,2,R],[4,22,36,3,O],[5,22,34,2,Y],
+      [7,25,30,10,O],[8,25,28,9,GLASS],[9,26,26,2,0xcce0df],[10,29,8,4,L],[20,28,7,5,R],[29,27,5,6,Y],
+      // Cart cabinet, service panel and counter lip.
+      [5,34,34,10,O],[6,35,32,8,R],[7,36,30,3,Y],[9,40,12,3,L],[25,40,9,3,D],
+      [3,43,38,3,O],[5,43,34,1,STEEL],[8,45,4,3,O],[33,45,4,3,O],
+      // Two large street-cart wheels.
+      [6,46,8,4,O],[8,47,4,2,STEEL],[31,46,8,4,O],[33,47,4,2,STEEL]
     ]);
   }
 
   drawParkingMeterObstacle(key) {
-    const O=0x1e2529,D=0x405058,M=0x6f8188,L=0xb5c1c3,GLASS=0x91b6bd,R=0xd6574b;
-    this.drawObstacleTexture(key,18,38,[
-      [4,1,10,2,O],[2,3,14,10,O],[3,3,12,9,M],[5,4,8,5,GLASS],[6,5,6,2,L],[7,8,4,2,D],
-      [4,11,10,3,O],[6,12,6,2,L],[8,13,2,18,O],[9,14,2,17,M],[7,30,4,4,O],
-      [5,33,8,3,O],[3,35,12,3,O],[5,35,8,1,L],[13,7,2,2,R]
+    const O=0x1b2023,DEEP=0x111517,D=0x3e494d,M=0x68767a,L=0xaab5b6,HI=0xd8dedc,GLASS=0x92afb0,BLUE=0x35577b,R=0xc85045,G=0x75a36a;
+    this.drawObstacleTexture(key,22,40,[
+      // Heavy stepped arch gives the meter its traditional rounded crown.
+      [7,1,8,1,O],[4,2,14,2,O],[2,4,18,4,O],[1,7,20,8,O],
+      [7,2,8,1,HI],[5,3,12,2,L],[3,5,16,3,M],[2,8,18,6,D],
+      // Glass timer window nested inside the dome.
+      [5,5,12,7,O],[6,5,10,6,GLASS],[7,6,8,2,HI],[8,8,6,2,D],
+      [10,6,1,4,M],[13,6,1,4,M],[7,10,8,1,O],
+      // Thick divider and blue coin/control face inspired by the reference.
+      [1,13,20,4,O],[2,13,18,2,L],[3,16,16,12,O],[4,16,14,11,BLUE],
+      [5,17,5,7,DEEP],[6,18,3,4,L],[7,19,1,3,O],[11,17,5,2,HI],
+      [12,20,4,2,R],[12,23,2,2,G],[15,23,2,2,HI],[5,25,12,2,D],
+      // Round lower mechanism housing, keyhole and cast-metal shoulders.
+      [3,27,16,8,O],[4,27,14,7,M],[5,28,12,5,D],[7,29,8,3,DEEP],
+      [9,29,4,4,O],[10,30,2,2,L],[5,33,12,2,L],
+      // Narrow post, collar, and weighted foot.
+      [8,34,6,5,O],[9,34,4,5,M],[7,38,8,2,O],[5,39,12,1,O],[8,38,6,1,HI]
     ]);
   }
 
@@ -414,15 +436,131 @@ export class BootScene extends Phaser.Scene {
   }
 
   generateParallaxTextures() {
-    this.drawBrownstoneTexture('hillsFar', PARALLAX.hillsFar.tileWidth, PARALLAX.hillsFar.height, 3);
+    this.drawSkylineTexture('skyline', PARALLAX.skyline.tileWidth, PARALLAX.skyline.height);
+    this.drawBrownstoneTexture('hillsFar', PARALLAX.hillsFar.tileWidth, PARALLAX.hillsFar.height, 8);
     const nearBuildings = this.drawBrownstoneTexture(
       'hillsNear',
       PARALLAX.hillsNear.tileWidth,
       PARALLAX.hillsNear.height,
-      2
+      5
     );
     this.drawWindowsTexture('hillsWindows', PARALLAX.hillsNear.tileWidth, PARALLAX.hillsNear.height, nearBuildings);
+    this.drawParkedCarsTexture('parkedCars', PARALLAX.parkedCars.tileWidth, PARALLAX.parkedCars.height);
     this.drawCloudTexture('clouds', 0xffffff, PARALLAX.clouds.tileWidth, PARALLAX.clouds.height);
+  }
+
+  drawParkedCarsTexture(key, tileWidth, tileHeight) {
+    const g = this.add.graphics();
+    const colors = [0x9f3535, 0x315f83, 0x53704e, 0xc19a3d, 0x7c7470, 0xddd6c8, 0x604d72];
+    let x = 18;
+    let index = 0;
+    while (x < tileWidth - 90) {
+      const bodyW = Phaser.Math.Between(62, 86);
+      const bodyH = Phaser.Math.Between(14, 19);
+      const roofH = Phaser.Math.Between(11, 17);
+      const bottom = tileHeight - 5;
+      const bodyY = bottom - bodyH;
+      const color = colors[index % colors.length];
+      const dark = Phaser.Display.Color.IntegerToColor(color).darken(28).color;
+      const light = Phaser.Display.Color.IntegerToColor(color).lighten(24).color;
+      const wagon = index % 4 === 1;
+      const taxi = index % 6 === 3;
+      // Tires sit behind the body.
+      g.fillStyle(0x17191c, 1);
+      g.fillCircle(x + bodyW * 0.22, bottom - 2, 7);
+      g.fillCircle(x + bodyW * 0.78, bottom - 2, 7);
+      g.fillStyle(0x858b8d, 1);
+      g.fillCircle(x + bodyW * 0.22, bottom - 2, 3);
+      g.fillCircle(x + bodyW * 0.78, bottom - 2, 3);
+      // Distinct hood/trunk proportions and stepped pixel-art body shell.
+      g.fillStyle(0x202328, 1);
+      g.fillRect(x + 2, bodyY - 1, bodyW - 4, bodyH + 2);
+      g.fillStyle(color, 1);
+      g.fillRect(x, bodyY + 4, bodyW, bodyH - 5);
+      g.fillRect(x + 4, bodyY, bodyW - 8, bodyH - 2);
+      g.fillStyle(light, 1);
+      g.fillRect(x + 6, bodyY + 1, bodyW - 12, 2);
+      g.fillStyle(dark, 1);
+      g.fillRect(x + 3, bottom - 8, bodyW - 6, 4);
+      // Cabin: long square wagon roof or sloped sedan roof.
+      const cabinX = x + bodyW * (wagon ? 0.22 : 0.28);
+      const cabinW = bodyW * (wagon ? 0.58 : 0.48);
+      g.fillStyle(0x202328, 1);
+      g.fillRect(cabinX + 3, bodyY - roofH - 2, cabinW - 6, roofH + 3);
+      g.fillStyle(color, 1);
+      g.fillRect(cabinX, bodyY - 3, cabinW, 5);
+      g.fillRect(cabinX + 5, bodyY - roofH, cabinW - 10, roofH);
+      g.fillStyle(0x78919b, 1);
+      g.fillRect(cabinX + 7, bodyY - roofH + 2, cabinW * 0.38, roofH - 4);
+      g.fillRect(cabinX + cabinW * 0.52, bodyY - roofH + 2, cabinW * 0.31, roofH - 4);
+      g.fillStyle(0xb9d0d3, 1);
+      g.fillRect(cabinX + 8, bodyY - roofH + 2, cabinW * 0.32, 2);
+      // Bumpers, lights, handles, and occasional taxi roof sign.
+      g.fillStyle(0xc7c7c2, 1);
+      g.fillRect(x, bottom - 7, 5, 3);
+      g.fillRect(x + bodyW - 5, bottom - 7, 5, 3);
+      g.fillStyle(0xe4d575, 1);
+      g.fillRect(x + bodyW - 3, bodyY + 4, 3, 4);
+      g.fillStyle(0xb23c35, 1);
+      g.fillRect(x, bodyY + 4, 3, 4);
+      g.fillStyle(0xd7d7d2, 1);
+      g.fillRect(x + bodyW * 0.54, bodyY + 4, 6, 1);
+      if (taxi) {
+        g.fillStyle(0x22252a, 1);
+        g.fillRect(cabinX + cabinW * 0.38, bodyY - roofH - 5, 12, 2);
+        g.fillStyle(0xe0b83f, 1);
+        g.fillRect(cabinX + cabinW * 0.4, bodyY - roofH - 8, 9, 3);
+      }
+      x += bodyW + Phaser.Math.Between(35, 78);
+      index++;
+    }
+    g.generateTexture(key, tileWidth, tileHeight);
+    g.destroy();
+  }
+
+  // Slowest city layer: a long, low-contrast horizon of mid-rises, rooftop
+  // tanks, chimneys and antennas. It sits behind both brownstone rows and
+  // moves at half the far layer's speed to create a much deeper streetscape.
+  drawSkylineTexture(key, tileWidth, tileHeight) {
+    const g = this.add.graphics();
+    let x = 0;
+    let index = 0;
+    while (x < tileWidth) {
+      const w = Phaser.Math.Between(46, 92);
+      const h = Phaser.Math.Between(52, 128);
+      const y = tileHeight - h;
+      const shade = Phaser.Math.RND.pick([0xffffff, 0xe0e0e0, 0xc7c7c7]);
+      g.fillStyle(shade, 1);
+      g.fillRect(x, y, w, h);
+      // Varied parapets and rooftop machinery.
+      g.fillStyle(0xa8a8a8, 1);
+      if (index % 3 === 0) {
+        g.fillRect(x + 4, y - 4, w - 8, 4);
+        g.fillRect(x + w * 0.62, y - 11, w * 0.2, 7);
+      } else if (index % 3 === 1) {
+        g.fillRect(x + w * 0.18, y - 5, w * 0.64, 5);
+        g.fillRect(x + w * 0.48, y - 18, 2, 13);
+        g.fillRect(x + w * 0.37, y - 16, w * 0.22, 2);
+      } else {
+        // Distant water tank and its support legs.
+        const tx = x + w * 0.58;
+        g.fillRect(tx + 3, y - 6, 2, 7);
+        g.fillRect(tx + 16, y - 6, 2, 7);
+        g.fillStyle(0xb8b8b8, 1);
+        g.fillRect(tx + 2, y - 18, 17, 3);
+        g.fillRect(tx, y - 15, 21, 8);
+        g.fillRect(tx + 3, y - 7, 15, 2);
+      }
+      // Tiny window columns remain subdued enough to read as distance.
+      g.fillStyle(0x898989, 1);
+      for (let wy = y + 14; wy < tileHeight - 8; wy += 17) {
+        for (let wx = x + 9; wx < x + w - 7; wx += 16) g.fillRect(wx, wy, 5, 7);
+      }
+      x += w + Phaser.Math.Between(5, 14);
+      index++;
+    }
+    g.generateTexture(key, tileWidth, tileHeight);
+    g.destroy();
   }
 
   // Grid of window cell rects for one building's facade - shared by
@@ -459,7 +597,7 @@ export class BootScene extends Phaser.Scene {
   drawBrownstoneTexture(key, tileWidth, tileHeight, count) {
     // Wide enough to read as a gap of sky between separate houses even at
     // the buildings' 2/3-screen scale, not just a seam.
-    const gap = tileWidth * 0.08;
+    const gap = (tileWidth / count) * 0.08;
     const usableWidth = tileWidth - gap * (count - 1);
     const widthWeights = Array.from({ length: count }, () => Phaser.Math.FloatBetween(0.82, 1.18));
     const weightTotal = widthWeights.reduce((sum, weight) => sum + weight, 0);
@@ -468,7 +606,9 @@ export class BootScene extends Phaser.Scene {
     let nextX = 0;
     for (let i = 0; i < count; i++) {
       const w = usableWidth * widthWeights[i] / weightTotal;
-      const h = Phaser.Math.Clamp(baseHeight + Phaser.Math.Between(-18, 12), tileHeight * 0.62, tileHeight);
+      const roofTank = Phaser.Math.Between(0, 3) === 0;
+      const maxHeight = roofTank ? tileHeight - 18 : tileHeight;
+      const h = Phaser.Math.Clamp(baseHeight + Phaser.Math.Between(-18, 12), tileHeight * 0.62, maxHeight);
       const windowCols = w > tileWidth / count * 1.06 ? 3 : 2;
       buildings.push({
         x: nextX,
@@ -481,8 +621,10 @@ export class BootScene extends Phaser.Scene {
         stoopSide: Phaser.Math.Between(0, 2),
         facadeTone: Phaser.Math.RND.pick([0xffffff, 0xe9e9e9, 0xd8d8d8]),
         cornice: Phaser.Math.Between(0, 2),
-        fireEscape: Phaser.Math.Between(0, 2) === 0,
-        roofBox: Phaser.Math.Between(0, 3) === 0
+        facadeType: Phaser.Math.Between(0, 3),
+        fireEscape: Phaser.Math.Between(0, 1) === 0,
+        roofBox: !roofTank && Phaser.Math.Between(0, 3) === 0,
+        roofTank
       });
       nextX += w + gap;
     }
@@ -491,6 +633,35 @@ export class BootScene extends Phaser.Scene {
     for (const b of buildings) {
       g.fillStyle(b.facadeTone, 1);
       g.fillRect(b.x, b.y, b.w, b.h);
+      // Each facade family gets different large-scale massing before the
+      // shared windows and stoop details are applied.
+      if (b.facadeType === 0) {
+        // Projecting central bay.
+        g.fillStyle(0xefefef, 1);
+        g.fillRect(b.x + b.w * 0.24, b.y + 8, b.w * 0.52, b.h - 18);
+        g.fillStyle(0xc3c3c3, 1);
+        g.fillRect(b.x + b.w * 0.21, b.y + 8, 3, b.h - 18);
+        g.fillRect(b.x + b.w * 0.76, b.y + 8, 3, b.h - 18);
+      } else if (b.facadeType === 1) {
+        // Recessed side panels and a darker rusticated ground floor.
+        g.fillStyle(0xc8c8c8, 1);
+        g.fillRect(b.x + 3, b.y + 10, b.w * 0.15, b.h - 20);
+        g.fillRect(b.x + b.w * 0.82, b.y + 10, b.w * 0.15, b.h - 20);
+        g.fillStyle(0xb4b4b4, 1);
+        g.fillRect(b.x, tileHeight - 28, b.w, 28);
+      } else if (b.facadeType === 2) {
+        // Narrow horizontal stone courses across the full elevation.
+        g.fillStyle(0xd0d0d0, 1);
+        for (let bandY = b.y + 14; bandY < tileHeight - 16; bandY += 18) {
+          g.fillRect(b.x + 2, bandY, b.w - 4, 2);
+        }
+      } else {
+        // Dark storefront-like base with a shallow projecting canopy.
+        g.fillStyle(0x9e9e9e, 1);
+        g.fillRect(b.x + 3, tileHeight - 30, b.w - 6, 24);
+        g.fillStyle(0xcfcfcf, 1);
+        g.fillRect(b.x, tileHeight - 32, b.w, 4);
+      }
       // Cornice ridge along the roofline - visibly dimmer, not just less
       // opaque, so it still reads once the whole texture is tinted.
       g.fillStyle(0xc2c2c2, 1);
@@ -511,6 +682,25 @@ export class BootScene extends Phaser.Scene {
         g.fillStyle(0x8f8f8f, 1);
         g.fillRect(b.x + b.w * 0.61, b.y - 5, b.w * 0.18, 3);
       }
+      if (b.roofTank) {
+        const tx = b.x + b.w * 0.55;
+        const tw = Math.max(16, b.w * 0.28);
+        // Spindly timber support frame beneath a banded wooden tank.
+        g.fillStyle(0x777777, 1);
+        g.fillRect(tx + 3, b.y - 2, 3, 5);
+        g.fillRect(tx + tw - 6, b.y - 2, 3, 5);
+        g.fillRect(tx + 4, b.y, tw - 8, 2);
+        g.fillStyle(0xaaaaaa, 1);
+        g.fillRect(tx + 3, b.y - 14, tw - 6, 2);
+        g.fillRect(tx + 1, b.y - 12, tw - 2, 8);
+        g.fillRect(tx + 3, b.y - 4, tw - 6, 2);
+        g.fillStyle(0x858585, 1);
+        g.fillRect(tx, b.y - 10, tw, 2);
+        g.fillRect(tx + 1, b.y - 5, tw - 2, 2);
+        g.fillRect(tx + tw * 0.48, b.y - 14, 2, 10);
+        g.fillStyle(0xc7c7c7, 1);
+        g.fillRect(tx + 4, b.y - 13, tw - 8, 1);
+      }
       // Window openings - dark by day, get a warm lit overlay at night.
       g.fillStyle(0x8f8f8f, 1);
       const windows = this.windowCells(b);
@@ -525,14 +715,40 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0xd0d0d0, 1);
       g.fillRect(b.x + 2, b.y + b.h * 0.43, b.w - 4, 2);
       if (b.fireEscape) {
-        g.fillStyle(0x747474, 1);
-        const fx = b.x + b.w * 0.58;
-        for (let r = 0; r < b.windowRows - 1; r++) {
-          const fy = b.y + b.h * (0.24 + r * 0.19);
-          g.fillRect(fx, fy, b.w * 0.32, 2);
-          g.fillRect(fx + 2, fy, 2, b.h * 0.14);
-          g.fillRect(fx + b.w * 0.28, fy, 2, b.h * 0.14);
+        const IRON=0x5b5b5b,EDGE=0x777777;
+        const fx = b.x + b.w * 0.5;
+        const fw = b.w * 0.42;
+        const floors = b.windowRows - 1;
+        const floorGap = b.h * 0.18;
+        for (let r = 0; r < floors; r++) {
+          const fy = b.y + b.h * 0.27 + r * floorGap;
+          // Deep platform, upright railing posts, and double horizontal rail.
+          g.fillStyle(IRON, 1);
+          g.fillRect(fx, fy, fw, 3);
+          g.fillRect(fx, fy - 10, 2, 12);
+          g.fillRect(fx + fw * 0.33, fy - 10, 2, 12);
+          g.fillRect(fx + fw * 0.66, fy - 10, 2, 12);
+          g.fillRect(fx + fw - 2, fy - 10, 2, 12);
+          g.fillRect(fx, fy - 10, fw, 2);
+          g.fillStyle(EDGE, 1);
+          g.fillRect(fx, fy - 5, fw, 1);
+          // Alternating stepped diagonals read as the familiar zigzag stairs.
+          if (r < floors - 1) {
+            const stairLeft = r % 2 === 0;
+            for (let step = 0; step < 6; step++) {
+              const sx = stairLeft ? fx + fw - 5 - step * 3 : fx + 3 + step * 3;
+              g.fillStyle(IRON, 1);
+              g.fillRect(sx, fy + 2 + step * 3, 5, 2);
+            }
+          }
         }
+        // Drop ladder from the lowest platform toward the sidewalk.
+        const ladderX = fx + fw - 7;
+        const ladderTop = b.y + b.h * 0.27 + (floors - 1) * floorGap + 3;
+        g.fillStyle(IRON, 1);
+        g.fillRect(ladderX, ladderTop, 2, tileHeight - ladderTop - 8);
+        g.fillRect(ladderX + 6, ladderTop, 2, tileHeight - ladderTop - 8);
+        for (let ly = ladderTop + 4; ly < tileHeight - 9; ly += 6) g.fillRect(ladderX, ly, 8, 1);
       }
       // Stoop: a couple of stacked steps up to the (implied) front door.
       g.fillStyle(0xb5b5b5, 1);

@@ -7,7 +7,7 @@ import { PARALLAX, GAME_WIDTH, GAME_HEIGHT, GROUND_Y } from '../config.js';
 // scroll() just moves the tile layers each frame.
 export class Parallax {
   constructor(scene) {
-    const { sun, hillsFar, hillsNear, clouds } = PARALLAX;
+    const { sun, skyline, hillsFar, hillsNear, parkedCars, clouds } = PARALLAX;
 
     this.sky = scene.add.graphics().setDepth(-11);
 
@@ -17,6 +17,11 @@ export class Parallax {
     this.moonOuter = scene.add.circle(sun.x, sun.y, sun.radius * 0.8, 0xe3e8f2).setDepth(-9).setAlpha(0);
     this.moonCraterA = scene.add.circle(sun.x - 6, sun.y - 4, 3, 0xc7cede).setDepth(-9).setAlpha(0);
     this.moonCraterB = scene.add.circle(sun.x + 6, sun.y + 6, 4, 0xc7cede).setDepth(-9).setAlpha(0);
+
+    this.skyline = scene.add
+      .tileSprite(0, GROUND_Y - skyline.height, GAME_WIDTH, skyline.height, 'skyline')
+      .setOrigin(0, 0)
+      .setDepth(-8.5);
 
     this.hillsFar = scene.add
       .tileSprite(0, GROUND_Y - hillsFar.height, GAME_WIDTH, hillsFar.height, 'hillsFar')
@@ -41,14 +46,21 @@ export class Parallax {
       .setOrigin(0, 0)
       .setDepth(-5)
       .setAlpha(0);
+
+    this.parkedCars = scene.add
+      .tileSprite(0, GROUND_Y - parkedCars.height, GAME_WIDTH, parkedCars.height, 'parkedCars')
+      .setOrigin(0, 0)
+      .setDepth(-4);
   }
 
   scroll(speed, delta) {
     const dt = delta / 1000;
+    this.skyline.tilePositionX += speed * PARALLAX.skyline.speedFactor * dt;
     this.hillsFar.tilePositionX += speed * PARALLAX.hillsFar.speedFactor * dt;
     this.clouds.tilePositionX += speed * PARALLAX.clouds.speedFactor * dt;
     this.hillsNear.tilePositionX += speed * PARALLAX.hillsNear.speedFactor * dt;
     this.hillsWindows.tilePositionX = this.hillsNear.tilePositionX;
+    this.parkedCars.tilePositionX += speed * PARALLAX.parkedCars.speedFactor * dt;
   }
 
   applyPalette(palette) {
@@ -64,8 +76,10 @@ export class Parallax {
     this.moonCraterB.setY(palette.moonY + 6).setAlpha(palette.moonAlpha);
 
     this.hillsFar.setTint(palette.hillFar);
+    this.skyline.setTint(palette.hillFar).setAlpha(0.58);
     this.hillsNear.setTint(palette.hillNear);
     this.clouds.setTint(palette.cloud);
     this.hillsWindows.setAlpha(palette.windowGlow);
+    this.parkedCars.setTint(palette.cloud);
   }
 }

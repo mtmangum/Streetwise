@@ -40,8 +40,8 @@ const TYPES = [
   { key: 'obstacle-crate', aspect: 1, height: 50, weight: dayWeight },
   { key: 'obstacle-hydrant0', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, weight: dayWeight },
   { key: 'obstacle-shoppingcart', aspect: 40 / 30, height: 45, weight: dayWeight },
-  { key: 'obstacle-hotdogcart', aspect: 44 / 38, height: 57, weight: dayWeight },
-  { key: 'obstacle-parkingmeter', aspect: 18 / 38, height: 57, weight: dayWeight },
+  { key: 'obstacle-hotdogcart', aspect: 44 / 50, height: 75, weight: dayWeight },
+  { key: 'obstacle-parkingmeter', aspect: 22 / 40, height: 60, weight: dayWeight },
   // Night: derelict city
   { key: 'obstacle-cat0', animation: 'obstacle-cat-hiss', aspect: 30 / 27, height: 44, weight: nightWeight },
   { key: 'obstacle-trashfire0', animation: 'obstacle-fire-flicker', aspect: 28 / 36, height: 60, weight: nightWeight },

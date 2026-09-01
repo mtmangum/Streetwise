@@ -87,8 +87,12 @@ export const PARALLAX = {
   sun: { x: GAME_WIDTH - 90, y: 55, radius: 26, coreRadius: 14 },
   // Near brownstones reach ~2/3 up the screen (240 of 360) - widened along
   // with the height bump so individual buildings don't end up needle-thin.
-  hillsFar: { tileWidth: 180, height: 190, speedFactor: 0.15 },
-  hillsNear: { tileWidth: 160, height: 240, speedFactor: 0.35 },
+  // Long strips keep individual brownstone combinations from visibly
+  // repeating every couple of houses.
+  skyline: { tileWidth: 960, height: 145, speedFactor: 0.07 },
+  hillsFar: { tileWidth: 720, height: 190, speedFactor: 0.15 },
+  hillsNear: { tileWidth: 640, height: 240, speedFactor: 0.35 },
+  parkedCars: { tileWidth: 1200, height: 48, speedFactor: 0.52 },
   clouds: { tileWidth: 220, height: 50, y: 24, speedFactor: 0.08 }
 };
 
