@@ -1,72 +1,57 @@
-// Procedural pixel-art frames for the player character, built the same way
-// BootScene generates its other placeholder textures (Graphics -> fillRect
-// -> generateTexture), just with more parts and multiple poses so they can
-// be strung into idle/walk/jump animations. No external art files needed.
-//
-// Chibi proportions on purpose: the head block is nearly half the sprite's
-// height, which is what reads as "cute early-90s mascot" at this pixel
-// density rather than a realistically-proportioned figure.
-//
-// Everything is defined in a 14x20 "grid unit" coordinate space, then
-// scaled up by PLAYER_GRID.pixelSize when drawn.
-export const PLAYER_GRID = { cols: 14, rows: 20, pixelSize: 3 };
-
-const PALETTE = {
-  hair: 0x6b4226,
-  skin: 0xe8b48a,
-  dress: 0xe8607e,
-  dressShade: 0xc94860,
-  shoes: 0x2b2b3d,
-  eye: 0x3fa25c
+// 16-bit-style procedural art: 21x30 logical pixels at 2x preserves the old
+// 42x60 footprint while providing 2.25x more drawable detail.
+export const PLAYER_GRID = { cols: 21, rows: 30, pixelSize: 2 };
+const C = { outline:0x241b2b, hairDark:0x3f261e, hair:0x71412b, hairLight:0xa5653c, skinDark:0xc47b67, skin:0xf0b59a, skinLight:0xffd2b4, dressDark:0x9e294f, dress:0xe34b75, dressLight:0xff7892, stocking:0xf2d5c8, shoe:0x27273d, shoeLight:0x51516d, eye:0x282038, eyeLight:0x8ee17f };
+const r=(x,y,w,h,color)=>({x,y,w,h,color});
+const BASE=[
+  r(4,1,13,1,C.outline),r(2,3,17,9,C.outline),r(3,2,14,10,C.hairDark),r(4,2,11,1,C.hairLight),
+  r(5,3,11,8,C.hair),r(3,5,3,8,C.hairDark),r(15,4,3,9,C.hairDark),r(8,5,8,6,C.skinDark),
+  r(8,4,7,6,C.skin),r(9,5,5,2,C.skinLight),r(14,7,1,2,C.eye),r(14,7,1,1,C.eyeLight),
+  r(14,10,2,1,C.skinDark),r(8,12,4,2,C.outline),r(9,11,3,3,C.skin),r(5,14,11,8,C.outline),
+  r(6,14,9,7,C.dress),r(7,14,3,6,C.dressLight),r(13,16,2,5,C.dressDark),r(3,21,15,5,C.outline),
+  r(4,21,13,4,C.dress),r(5,21,4,3,C.dressLight),r(12,22,5,3,C.dressDark)
+];
+const arm=(x,y,flip=false)=>[r(x,y,3,6,C.outline),r(x+1,y,2,4,C.dress),r(x+(flip?0:1),y+4,2,3,C.skinDark),r(x+(flip?0:1),y+4,1,2,C.skin)];
+const leg=(x,y,dx=0)=>[r(x,y,3,4,C.outline),r(x+1,y,2,3,C.stocking),r(x+dx,y+3,5,2,C.outline),r(x+dx+1,y+3,4,1,C.shoeLight),r(x+dx,y+4,5,1,C.shoe)];
+const POSES={
+  idle0:[...arm(15,15),...leg(6,25),...leg(12,25,-1)],idle1:[...arm(15,14),...leg(6,25),...leg(12,25,-1),r(4,20,2,1,C.dressLight)],
+  walk0:[...arm(15,13),...leg(4,24,-2),...leg(13,25),r(3,22,2,2,C.dressDark)],walk1:[...arm(16,14),...leg(6,25,-1),...leg(11,24)],
+  walk2:[...arm(15,16),...leg(7,25,-1),...leg(12,25,-1),r(16,21,2,2,C.dressDark)],walk3:[...arm(14,16),...leg(12,24),...leg(4,25,-2),r(16,22,2,2,C.dressDark)],
+  walk4:[...arm(15,15),...leg(11,25,-1),...leg(6,24,-1)],walk5:[...arm(16,14),...leg(7,25,-1),...leg(12,25,-1)],
+  jumpRise:[...arm(15,11),...leg(6,23,-1),...leg(12,23,-1),r(3,22,2,2,C.dressDark)],jumpFall:[...arm(14,13),...leg(5,24,-2),...leg(12,23),r(16,21,2,3,C.dressDark)],
+  stumble:[...arm(1,12,true),...arm(16,17),...leg(2,24,-2),...leg(14,25),r(2,10,3,2,C.skin),r(18,15,2,2,C.skinLight)]
 };
 
-// Big bob-cut head (full head block in hair color, with the face inset on
-// the front/lower side so a fringe of hair still frames it), neck, bodice,
-// and a two-tier flared skirt. These stay put across every standing pose -
-// only the arm and feet move, which is enough to sell a walk cycle at this
-// size.
-const BASE = [
-  { x: 2, y: 0, w: 10, h: 9, color: PALETTE.hair },
-  { x: 6, y: 2, w: 5, h: 6, color: PALETTE.skin },
-  { x: 9, y: 5, w: 1, h: 1, color: PALETTE.eye },
-  { x: 6, y: 9, w: 2, h: 1, color: PALETTE.skin },
-  { x: 4, y: 10, w: 6, h: 3, color: PALETTE.dress },
-  { x: 3, y: 13, w: 8, h: 2, color: PALETTE.dress },
-  { x: 1, y: 15, w: 12, h: 2, color: PALETTE.dressShade }
-];
-
-function arm(x, y) {
-  return { x, y, w: 2, h: 3, color: PALETTE.skin };
-}
-
-function shoe(x, y) {
-  return { x, y, w: 2, h: 2, color: PALETTE.shoes };
-}
-
-// Two-pose "scissor" stride (apart / passing) alternated with a mirror of
-// itself - the same trick classic small-sprite run cycles use to fake a
-// 4-frame gait out of two leg silhouettes.
-const POSES = {
-  idle0: [arm(10, 11), shoe(4, 17), shoe(8, 17)],
-  idle1: [arm(10, 10), shoe(4, 17), shoe(8, 17)],
-  walk0: [arm(10, 10), shoe(2, 17), shoe(9, 18)],
-  walk1: [arm(10, 11), shoe(5, 17), shoe(7, 17)],
-  walk2: [arm(10, 12), shoe(9, 18), shoe(2, 17)],
-  walk3: [arm(10, 11), shoe(5, 17), shoe(7, 17)],
-  jump0: [arm(10, 8), shoe(4, 16), shoe(8, 16)],
-  // Off-balance: both arms flailing, feet splayed wide and uneven. Used
-  // both upright (the instant-of-impact reaction) and rotated via tween
-  // for the "knocked down" pose - see Player.stumble()/fallDown().
-  stumble: [
-    { x: 1, y: 9, w: 2, h: 3, color: PALETTE.skin },
-    { x: 11, y: 12, w: 2, h: 3, color: PALETTE.skin },
-    shoe(0, 17),
-    shoe(11, 18)
+// Full-body recovery drawings cannot reuse the upright BASE. These authored
+// silhouettes make the hit read as a forward fall rather than rotating a
+// rigid standing sprite around its ankle.
+const SPECIAL_POSES={
+  fallForward:[
+    // Hair and face pitched toward the pavement.
+    r(10,13,10,2,C.outline),r(8,15,12,8,C.outline),r(9,14,10,8,C.hairDark),
+    r(10,15,8,5,C.hair),r(11,15,5,1,C.hairLight),r(16,19,3,3,C.skin),r(18,21,2,1,C.skinDark),
+    // Torso and skirt trail up and back as the hands shoot forward.
+    r(5,11,8,9,C.outline),r(6,12,7,7,C.dress),r(6,12,3,5,C.dressLight),
+    r(2,9,6,8,C.outline),r(3,10,5,6,C.dressDark),r(1,7,4,4,C.outline),r(2,8,3,3,C.stocking),
+    r(13,20,7,3,C.outline),r(14,20,6,2,C.skin),r(17,22,4,2,C.outline),r(18,22,3,1,C.skinLight),
+    r(3,16,4,5,C.outline),r(4,17,3,4,C.stocking),r(2,20,6,2,C.outline),r(3,20,5,1,C.shoeLight)
+  ],
+  prone:[
+    // Face-down body lies along the bottom of the same 42x60 texture.
+    r(1,22,8,6,C.outline),r(2,21,7,6,C.hairDark),r(3,21,5,3,C.hair),r(7,24,3,2,C.skinDark),
+    r(8,20,9,7,C.outline),r(9,21,8,5,C.dress),r(10,21,3,2,C.dressLight),
+    r(15,22,5,5,C.outline),r(16,23,4,3,C.dressDark),
+    r(4,26,11,3,C.outline),r(5,26,9,2,C.skin),r(17,25,4,3,C.outline),r(17,26,4,2,C.stocking),
+    r(18,27,3,2,C.shoe),r(0,28,21,1,C.outline)
+  ],
+  kneel:[
+    // Hands-and-knees push-up frame before she springs upright.
+    r(9,10,10,2,C.outline),r(8,12,11,8,C.outline),r(9,11,9,8,C.hairDark),r(10,12,7,5,C.hair),
+    r(15,16,3,3,C.skin),r(6,18,11,7,C.outline),r(7,18,9,6,C.dress),r(8,18,3,3,C.dressLight),
+    r(15,23,5,3,C.outline),r(16,23,4,2,C.skin),r(3,22,6,5,C.outline),r(4,22,5,4,C.dressDark),
+    r(2,26,7,3,C.outline),r(3,26,6,2,C.stocking),r(13,26,6,3,C.outline),r(14,26,5,2,C.shoeLight)
   ]
 };
 
-export const PLAYER_POSES = Object.keys(POSES);
-
-export function playerFrameParts(pose) {
-  return [...BASE, ...POSES[pose]];
-}
+export const PLAYER_POSES=[...Object.keys(POSES),...Object.keys(SPECIAL_POSES)];
+export function playerFrameParts(pose){return SPECIAL_POSES[pose]??[...BASE,...POSES[pose]];}

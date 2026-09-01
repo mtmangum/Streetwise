@@ -15,8 +15,11 @@
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
     #app canvas {
+      max-width: calc(100vw - 16px);
+      max-height: calc(100vh - 16px);
       border: 2px solid #444;
       border-radius: 8px;
+      box-sizing: border-box;
     }
   </style>
 </head>

@@ -1,22 +1,7 @@
 import { Entity } from './Entity.js';
 import { PLAYER, GROUND_Y } from '../config.js';
 
-// A stumble/fall told in four beats - recoil, overshoot into the topple,
-// bounce on impact, settle - reads much more like losing your balance than
-// a single rigid rotation would. Get-up mirrors that with its own beats:
-// push off the ground, wobble upright, settle standing.
-const FALL_TWEENS = [
-  { angle: -12, scaleX: 1.08, scaleY: 0.92, duration: 70, ease: 'Quad.easeOut' },
-  { angle: 95, duration: 220, ease: 'Back.easeIn' },
-  { angle: 80, scaleX: 1.15, scaleY: 0.88, duration: 90, ease: 'Quad.easeOut' },
-  { scaleX: 1, scaleY: 1, duration: 90, ease: 'Quad.easeOut' }
-];
-
-const GET_UP_TWEENS = [
-  { angle: 65, scaleX: 0.92, scaleY: 1.08, duration: 130, ease: 'Quad.easeOut' },
-  { angle: -6, duration: 160, ease: 'Quad.easeInOut' },
-  { angle: 0, scaleX: 1, scaleY: 1, duration: 120, ease: 'Quad.easeOut' }
-];
+const RECOVERY_TIMING = { recoil: 65, fall: 90, down: 130, pushUp: 110, stand: 70 };
 
 // Inheritance: Player extends Entity and gets update()/bounds/destroy for
 // free. It only needs to define what makes it a player.
@@ -32,7 +17,7 @@ export class Player extends Entity {
     this.sprite.anims.play('player-idle');
 
     // True while the stumble/fall/get-up sequence owns the sprite's pose
-    // and rotation — normal idle/walk/jump switching is suspended until it
+    // — normal idle/walk/jump switching is suspended until it
     // clears (or, on the fatal hit, never clears).
     this.recovering = false;
     this.recoveryTimer = null;
@@ -48,6 +33,15 @@ export class Player extends Entity {
       this.recoveryTimer.remove();
       this.recoveryTimer = null;
     }
+    this.sprite.setAngle(0).setScale(1);
+  }
+
+  _nextRecoveryPose(texture, delay, next) {
+    this.sprite.setTexture(texture);
+    this.recoveryTimer = this.scene.time.delayedCall(delay, () => {
+      this.recoveryTimer = null;
+      next?.();
+    });
   }
 
   // Private-ish (by convention) — internal detail callers shouldn't need.
@@ -55,10 +49,15 @@ export class Player extends Entity {
     return this.sprite.body.blocked.down || this.sprite.body.touching.down;
   }
 
+  // Returns whether it actually jumped (ignored while airborne or
+  // recovering) - PlayScene uses that to decide whether to echo the jump
+  // to the dog a beat later, rather than echoing every keypress.
   jump() {
     if (this._isOnGround && !this.recovering) {
       this.sprite.body.setVelocityY(PLAYER.jumpVelocity);
+      return true;
     }
+    return false;
   }
 
   // Called once per frame while the run is active (PlayScene drives this
@@ -67,37 +66,31 @@ export class Player extends Entity {
   onUpdate() {
     if (this.recovering) return;
     if (!this._isOnGround) {
-      this.sprite.anims.play('player-jump', true);
+      this.sprite.anims.stop();
+      this.sprite.setTexture(this.sprite.body.velocity.y < 40 ? 'player-jumpRise' : 'player-jumpFall');
     } else {
       this.sprite.anims.play('player-walk', true);
     }
   }
 
-  // Non-fatal hit: stumble, topple, bounce, then climb back up and resume
-  // the run (rotation/squash via tween rather than hand-drawing "lying
-  // down" and "getting up" frames).
+  // Non-fatal hit: recoil, pitch forward, land face-down, push to her knees
+  // and spring back up. Each beat has its own drawn silhouette; the standing
+  // sprite is never rotated like a rigid cardboard cutout.
   stumble() {
     this._cancelRecovery();
     this.recovering = true;
     this.sprite.anims.stop();
-    this.sprite.setTexture('player-stumble');
-
-    this.scene.tweens.chain({
-      targets: this.sprite,
-      tweens: FALL_TWEENS,
-      onComplete: () => {
-        this.recoveryTimer = this.scene.time.delayedCall(300, () => {
-          this.recoveryTimer = null;
-          this.scene.tweens.chain({
-            targets: this.sprite,
-            tweens: GET_UP_TWEENS,
-            onComplete: () => {
+    this._nextRecoveryPose('player-stumble', RECOVERY_TIMING.recoil, () =>
+      this._nextRecoveryPose('player-fallForward', RECOVERY_TIMING.fall, () =>
+        this._nextRecoveryPose('player-prone', RECOVERY_TIMING.down, () =>
+          this._nextRecoveryPose('player-kneel', RECOVERY_TIMING.pushUp, () =>
+            this._nextRecoveryPose('player-idle0', RECOVERY_TIMING.stand, () => {
               this.recovering = false;
-            }
-          });
-        });
-      }
-    });
+            })
+          )
+        )
+      )
+    );
   }
 
   // Fatal hit (health hit zero): fall and stay down. Recovering never
@@ -106,8 +99,11 @@ export class Player extends Entity {
     this._cancelRecovery();
     this.recovering = true;
     this.sprite.anims.stop();
-    this.sprite.setTexture('player-stumble');
-    this.scene.tweens.chain({ targets: this.sprite, tweens: FALL_TWEENS });
+    this._nextRecoveryPose('player-stumble', RECOVERY_TIMING.recoil, () =>
+      this._nextRecoveryPose('player-fallForward', RECOVERY_TIMING.fall, () => {
+        this.sprite.setTexture('player-prone');
+      })
+    );
   }
 
   // Polymorphism: PlayScene calls entity.onCollide(player) on whatever it

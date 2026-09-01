@@ -8,6 +8,12 @@ const gameConfig = {
   parent: 'app',
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT
+  },
   pixelArt: true, // keeps sprite edges crisp, no smoothing blur
   physics: {
     default: 'arcade',

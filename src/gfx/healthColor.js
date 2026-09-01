@@ -16,6 +16,12 @@ function lerp(a, b, t) {
   return Math.round(a + (b - a) * t);
 }
 
+// Health past `max` (see HEALTH.overchargeMax in config.js) renders in this
+// fixed neon green rather than continuing the ramp above, which already
+// tops out at green at fraction 1 - overcharge needs to read as visibly
+// distinct, not just "still green".
+export const OVERCHARGE_COLOR = 0x39ff6a;
+
 export function healthBarColor(fraction) {
   const f = Math.min(1, Math.max(0, fraction));
   for (let i = 0; i < STOPS.length - 1; i++) {

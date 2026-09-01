@@ -1,12 +1,17 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, WORLD, HEALTH } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, WORLD, HEALTH, DAY_CYCLE, DOG } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
 import { Parallax } from '../entities/Parallax.js';
-import { healthBarColor } from '../gfx/healthColor.js';
+import { Dog } from '../entities/Dog.js';
+import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
+import { dayNightPalette } from '../gfx/dayNightPalette.js';
 
-const HEALTH_BAR = { x: 16, y: 14, width: 200, height: 16, padding: 2 };
+// `width` is the 0..max track; `overchargeWidth` is extra track for the
+// max..overchargeMax stretch, rendered as a distinct sparking color rather
+// than continuing the normal color ramp (which already tops out at green).
+const HEALTH_BAR = { x: 16, y: 14, width: 200, overchargeWidth: 96, height: 16, padding: 2 };
 
 export class PlayScene extends Phaser.Scene {
   constructor() {
@@ -20,11 +25,21 @@ export class PlayScene extends Phaser.Scene {
     this.scrollSpeed = WORLD.baseScrollSpeed;
     this.health = HEALTH.start;
     this.avoidedCount = 0;
+    this.overchargeActive = false;
+    this.dayPhase = 0;
 
     this.parallax = new Parallax(this);
     this.ground = new Ground(this);
+    // Applied once here so the sunny-day look is already in place on the
+    // "Press Space to start" screen, before update() (and dayPhase
+    // progression) ever runs.
+    const startPalette = dayNightPalette(0);
+    this.parallax.applyPalette(startPalette);
+    this.ground.setTint(startPalette.ground);
+
     this.player = new Player(this);
     this.physics.add.collider(this.player.sprite, this.ground.body);
+    this.dog = new Dog(this);
 
     // Every non-player game object lives here. PlayScene doesn't care what
     // type each one is — it just calls entity.update() on all of them.
@@ -40,12 +55,19 @@ export class PlayScene extends Phaser.Scene {
     );
 
     // Health bar replaces a numeric score: it grows and shifts toward green
-    // as obstacles are dodged, shrinks back toward red on every hit.
+    // as obstacles are dodged, shrinks back toward red on every hit, and
+    // past 100% keeps extending in a sparking overcharge color.
+    const trackWidth = HEALTH_BAR.width + HEALTH_BAR.overchargeWidth;
     this.healthBarBg = this.add
-      .rectangle(HEALTH_BAR.x, HEALTH_BAR.y, HEALTH_BAR.width, HEALTH_BAR.height, 0x14161c)
+      .rectangle(HEALTH_BAR.x, HEALTH_BAR.y, trackWidth, HEALTH_BAR.height, 0x14161c)
       .setOrigin(0, 0)
       .setStrokeStyle(2, 0x000000, 0.5)
       .setDepth(20);
+    // Boundary tick marking where "full" ends and overcharge begins.
+    this.add
+      .rectangle(HEALTH_BAR.x + HEALTH_BAR.width, HEALTH_BAR.y, 2, HEALTH_BAR.height, 0x000000, 0.6)
+      .setOrigin(0, 0)
+      .setDepth(22);
     this.healthBarFill = this.add
       .rectangle(
         HEALTH_BAR.x + HEALTH_BAR.padding,
@@ -56,6 +78,30 @@ export class PlayScene extends Phaser.Scene {
       )
       .setOrigin(0, 0)
       .setDepth(21);
+    this.overchargeBarFill = this.add
+      .rectangle(
+        HEALTH_BAR.x + HEALTH_BAR.width,
+        HEALTH_BAR.y + HEALTH_BAR.padding,
+        0,
+        HEALTH_BAR.height - HEALTH_BAR.padding * 2,
+        OVERCHARGE_COLOR
+      )
+      .setOrigin(0, 0)
+      .setDepth(21);
+    this.sparkStars = [0.28, 0.55, 0.82].map((t) =>
+      this.add
+        .star(
+          HEALTH_BAR.x + HEALTH_BAR.width + HEALTH_BAR.overchargeWidth * t,
+          HEALTH_BAR.y + HEALTH_BAR.height / 2,
+          5,
+          2,
+          5,
+          0xaef2c1,
+          1
+        )
+        .setDepth(23)
+        .setVisible(false)
+    );
     this.updateHealthBar();
 
     this.overlayText = this.add
@@ -75,7 +121,14 @@ export class PlayScene extends Phaser.Scene {
   handleInput() {
     if (this.state === 'ready') return this.startRun();
     if (this.state === 'gameover') return this.restart();
-    this.player.jump();
+    if (this.player.jump()) {
+      // The obstacle she just cleared reaches the dog's (screen-fixed)
+      // position trailDistance/scrollSpeed later - that travel time is the
+      // real delay, not a flat number, or the echo desyncs from the
+      // obstacle at any scroll speed but the one it was tuned for.
+      const travelMs = (DOG.trailDistance / this.scrollSpeed) * 1000;
+      this.time.delayedCall(travelMs + DOG.jumpReactionMs, () => this.dog.jump());
+    }
   }
 
   startRun() {
@@ -95,23 +148,61 @@ export class PlayScene extends Phaser.Scene {
   }
 
   updateHealthBar() {
-    const fraction = Phaser.Math.Clamp(this.health / HEALTH.max, 0, 1);
-    this.healthBarFill.width = (HEALTH_BAR.width - HEALTH_BAR.padding * 2) * fraction;
-    this.healthBarFill.fillColor = healthBarColor(fraction);
+    const normalFraction = Phaser.Math.Clamp(this.health, 0, HEALTH.max) / HEALTH.max;
+    const overchargeFraction =
+      this.health > HEALTH.max
+        ? Phaser.Math.Clamp((this.health - HEALTH.max) / (HEALTH.overchargeMax - HEALTH.max), 0, 1)
+        : 0;
+
+    const normalWidth = (HEALTH_BAR.width - HEALTH_BAR.padding * 2) * normalFraction;
+    const overchargeWidth = overchargeFraction * (HEALTH_BAR.overchargeWidth - HEALTH_BAR.padding);
+
+    this.healthBarFill.width = normalWidth;
+    this.healthBarFill.fillColor = healthBarColor(normalFraction);
+    this.overchargeBarFill.width = overchargeWidth;
+
+    this.setOverchargeFx(overchargeFraction > 0);
+    this.sparkStars.forEach((star, index) => {
+      const starThreshold = [0.28, 0.55, 0.82][index];
+      star.setVisible(overchargeFraction >= starThreshold);
+    });
+  }
+
+  setOverchargeFx(active) {
+    if (active === this.overchargeActive) return;
+    this.overchargeActive = active;
+
+    if (active) {
+      this.sparkTween = this.tweens.add({
+        targets: this.sparkStars,
+        scale: { from: 0.6, to: 1.3 },
+        alpha: { from: 0.5, to: 1 },
+        duration: 220,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+    } else {
+      if (this.sparkTween) {
+        this.sparkTween.stop();
+        this.sparkTween = null;
+      }
+      this.sparkStars.forEach((s) => s.setVisible(false).setScale(1).setAlpha(1));
+    }
   }
 
   // Called by Obstacle when it scrolls safely past the player.
   onObstacleAvoided() {
     if (this.state !== 'running') return;
     this.avoidedCount += 1;
-    this.health = Phaser.Math.Clamp(this.health + HEALTH.gainPerAvoid, 0, HEALTH.max);
+    this.health = Phaser.Math.Clamp(this.health + HEALTH.gainPerAvoid, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
   }
 
   // Called by Player.onCollide when an obstacle hits it.
   takeDamage() {
     if (this.state !== 'running') return;
-    this.health = Phaser.Math.Clamp(this.health - HEALTH.lossPerHit, 0, HEALTH.max);
+    this.health = Phaser.Math.Clamp(this.health - HEALTH.lossPerHit, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
 
     if (this.health <= 0) {
@@ -126,13 +217,13 @@ export class PlayScene extends Phaser.Scene {
     if (this.state !== 'running') return;
     this.state = 'gameover';
     this.physics.pause();
+    this.dog.rest();
     this.overlayText.setText(`Game over — dodged ${this.avoidedCount}\nSpace / tap to try again`);
     this.overlayText.setVisible(true);
   }
 
   spawnObstacle() {
-    const height = Phaser.Math.Between(30, 70);
-    const obstacle = new Obstacle(this, height, this.scrollSpeed);
+    const obstacle = new Obstacle(this, this.scrollSpeed, this.dayPhase);
     obstacle.sprite.setData('entity', obstacle);
     this.obstacleGroup.add(obstacle.sprite);
     this.entities.push(obstacle);
@@ -149,9 +240,15 @@ export class PlayScene extends Phaser.Scene {
       ramp
     );
 
+    this.dayPhase = Phaser.Math.Clamp(this.elapsed / DAY_CYCLE.durationSeconds, 0, 1);
+    const palette = dayNightPalette(this.dayPhase);
+    this.parallax.applyPalette(palette);
+    this.ground.setTint(palette.ground);
+
     this.ground.scroll(this.scrollSpeed, delta);
     this.parallax.scroll(this.scrollSpeed, delta);
     this.player.update(time, delta);
+    this.dog.update(delta);
 
     // Same call, different behavior per entity type — no type-checking here.
     for (const entity of this.entities) {
@@ -162,7 +259,10 @@ export class PlayScene extends Phaser.Scene {
 
     if (time > this.nextSpawnAt) {
       this.spawnObstacle();
-      const gap = Phaser.Math.Between(900, 1500) - ramp * 300;
+      // Keep obstacles readable as individual challenges. The previous gap
+      // compressed to 600ms at top speed, which could create near-impossible
+      // back-to-back jumps as the world accelerated.
+      const gap = Phaser.Math.Between(1250, 1950) - ramp * 150;
       this.nextSpawnAt = time + gap;
     }
   }
