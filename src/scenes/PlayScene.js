@@ -36,6 +36,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextCrowAt = Infinity;
     this.nextSeagullAt = Infinity;
     this.lastObstacleFamily = null;
+    this.firstObstacleSpawned = false;
     this.clusterSpawnsRemaining = 0;
     this.scrollSpeed = WORLD.baseScrollSpeed;
     this.health = HEALTH.start;
@@ -536,8 +537,10 @@ export class PlayScene extends Phaser.Scene {
       this.scrollSpeed,
       this.dayPhase,
       this.lastObstacleFamily,
-      easyStart
+      easyStart,
+      !this.firstObstacleSpawned
     );
+    this.firstObstacleSpawned = true;
     this.lastObstacleFamily = obstacle.family;
     obstacle.sprite.setData('entity', obstacle);
     this.obstacleGroup.add(obstacle.sprite);

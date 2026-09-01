@@ -37,11 +37,11 @@ function allDayWeight() {
 // every spawn a randomly taller or shorter version of the same prop.
 const TYPES = [
   // Day: sunny neighborhood
-  { key: 'obstacle-mailbox', aspect: 22 / 34, height: 56, weight: dayWeight },
-  { key: 'obstacle-cone', aspect: 18 / 30, height: 46, weight: dayWeight },
+  { key: 'obstacle-mailbox', aspect: 22 / 34, height: 56, safeFirst: true, weight: dayWeight },
+  { key: 'obstacle-cone', aspect: 18 / 30, height: 46, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-child0', animation: 'obstacle-child-jumprope', aspect: 30 / 28, height: 42, groundOffset: 3, weight: daylightOnlyWeight },
-  { key: 'obstacle-trashbin0', animation: 'obstacle-trashbin-flies', aspect: 30 / 36, height: 54, weight: dayWeight },
-  { key: 'obstacle-crate', aspect: 1, height: 50, weight: dayWeight },
+  { key: 'obstacle-trashbin0', animation: 'obstacle-trashbin-flies', aspect: 30 / 36, height: 54, safeFirst: true, weight: dayWeight },
+  { key: 'obstacle-crate', aspect: 1, height: 50, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-hydrant0', family: 'hydrant', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
   { key: 'obstacle-hydrant-long0', family: 'hydrant', animation: 'obstacle-hydrant-long-spray', aspect: 90 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
   { key: 'obstacle-shoppingcart0', animation: 'obstacle-shoppingcart-roll', aspect: 56 / 42, height: 68, speedFactor: 1.18, flipX: true, weight: dayWeight },
@@ -51,7 +51,7 @@ const TYPES = [
   { key: 'obstacle-cat0', animation: 'obstacle-cat-hiss', aspect: 30 / 27, height: 44, groundOffset: 2, weight: nightWeight },
   { key: 'obstacle-trashfire0', animation: 'obstacle-fire-flicker', aspect: 28 / 36, height: 60, weight: nightWeight },
   { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-flies', aspect: 48 / 20, height: 28, weight: nightWeight },
-  { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, weight: allDayWeight },
+  { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, safeFirst: true, weight: allDayWeight },
   { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 76, weight: nightWeight },
   { key: 'obstacle-garbagebags0', animation: 'obstacle-rat-tail', aspect: 48 / 44, height: 118, weight: nightWeight },
   { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 30 / 48, height: 70, chasesAfterAvoid: true, weight: nightWeight },
@@ -62,11 +62,12 @@ function obstacleFamily(type) {
   return type.family ?? type.key.replace(/\d+$/, '');
 }
 
-function pickType(phase, excludedFamily, stationaryOnly) {
+function pickType(phase, excludedFamily, stationaryOnly, safeFirstOnly) {
   const weighted = TYPES.map((t) => ({
     ...t,
     w: obstacleFamily(t) === excludedFamily ||
-      (stationaryOnly && (t.speedFactor !== undefined || t.chasesAfterAvoid))
+      (stationaryOnly && (t.speedFactor !== undefined || t.chasesAfterAvoid)) ||
+      (safeFirstOnly && !t.safeFirst)
       ? 0
       : t.weight(phase)
   }));
@@ -83,8 +84,8 @@ function pickType(phase, excludedFamily, stationaryOnly) {
 // different behavior — that's the polymorphism payoff: PlayScene's update
 // loop treats every entity the same way and each one does its own thing.
 export class Obstacle extends Entity {
-  constructor(scene, speed, phase, excludedFamily = null, stationaryOnly = false) {
-    const type = pickType(phase, excludedFamily, stationaryOnly);
+  constructor(scene, speed, phase, excludedFamily = null, stationaryOnly = false, safeFirstOnly = false) {
+    const type = pickType(phase, excludedFamily, stationaryOnly, safeFirstOnly);
     const height = type.height;
     const width = Math.round(height * type.aspect);
     // Spawn far enough right that the widest obstacle is still fully
