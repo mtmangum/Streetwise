@@ -10,6 +10,7 @@ export class Dog {
     this.sprite = scene.add
       .sprite(PLAYER.startX - DOG.trailDistance, GROUND_Y, 'dog-idle')
       .setOrigin(0, 1)
+      .setScale(DOG.displayScale)
       .setDepth(9);
     this.sprite.anims.play('dog-idle');
     this.jumping = false;

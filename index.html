@@ -15,8 +15,14 @@
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
     #app canvas {
+      /* The renderer now supplies a native 1600x720 canvas. Keep it
+         responsive without asking CSS to manufacture the extra pixels. */
+      width: 1600px;
+      height: 720px;
       max-width: calc(100vw - 16px);
       max-height: calc(100vh - 16px);
+      object-fit: contain;
+      image-rendering: pixelated;
       border: 2px solid #444;
       border-radius: 8px;
       box-sizing: border-box;

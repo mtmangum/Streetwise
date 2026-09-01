@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, WORLD, HEALTH, DAY_CYCLE, DOG } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, WORLD, HEALTH, DAY_CYCLE, DOG } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -19,6 +19,12 @@ export class PlayScene extends Phaser.Scene {
   }
 
   create() {
+    // Render the original 800x360 gameplay view into a true 1600x720 canvas.
+    // Centering the 2x camera preserves all authored world coordinates and
+    // collision timing while doubling the backing resolution.
+    this.cameras.main.setZoom(RENDER_SCALE);
+    this.cameras.main.centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+
     this.state = 'ready'; // ready | running | gameover
     this.elapsed = 0;
     this.nextSpawnAt = 0;
@@ -108,6 +114,7 @@ export class PlayScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Press Space or tap to start', {
         fontFamily: 'sans-serif',
         fontSize: '22px',
+        resolution: RENDER_SCALE,
         color: '#ffffff',
         align: 'center'
       })

@@ -13,9 +13,19 @@ function dayWeight(phase) {
   return 1 - (phase - DUSK_START) / (1 - DUSK_START);
 }
 
+function daylightOnlyWeight(phase) {
+  return phase < DUSK_START ? 1 : 0;
+}
+
 function nightWeight(phase) {
   if (phase <= DUSK_START) return 0;
   return (phase - DUSK_START) / (1 - DUSK_START);
+}
+
+// Some street props belong in either roster and remain eligible throughout
+// the full day-to-night transition.
+function allDayWeight() {
+  return 1;
 }
 
 // Each type has one authored display height and keeps its texture's aspect
@@ -25,14 +35,22 @@ const TYPES = [
   // Day: sunny neighborhood
   { key: 'obstacle-mailbox', aspect: 22 / 34, height: 56, weight: dayWeight },
   { key: 'obstacle-cone', aspect: 18 / 30, height: 46, weight: dayWeight },
-  { key: 'obstacle-child0', animation: 'obstacle-child-jumprope', aspect: 30 / 28, height: 42, weight: dayWeight },
+  { key: 'obstacle-child0', animation: 'obstacle-child-jumprope', aspect: 30 / 28, height: 42, weight: daylightOnlyWeight },
   { key: 'obstacle-trashbin', aspect: 30 / 36, height: 54, weight: dayWeight },
   { key: 'obstacle-crate', aspect: 1, height: 50, weight: dayWeight },
+  { key: 'obstacle-hydrant0', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, weight: dayWeight },
+  { key: 'obstacle-shoppingcart', aspect: 40 / 30, height: 45, weight: dayWeight },
+  { key: 'obstacle-hotdogcart', aspect: 44 / 38, height: 57, weight: dayWeight },
+  { key: 'obstacle-parkingmeter', aspect: 18 / 38, height: 57, weight: dayWeight },
   // Night: derelict city
   { key: 'obstacle-cat0', animation: 'obstacle-cat-hiss', aspect: 30 / 27, height: 44, weight: nightWeight },
-  { key: 'obstacle-trashfire0', animation: 'obstacle-fire-flicker', aspect: 24 / 32, height: 56, weight: nightWeight },
-  { key: 'obstacle-sleeping', aspect: 42 / 15, height: 21, weight: nightWeight },
-  { key: 'obstacle-boombox', aspect: 38 / 23, height: 35, weight: nightWeight }
+  { key: 'obstacle-trashfire0', animation: 'obstacle-fire-flicker', aspect: 28 / 36, height: 60, weight: nightWeight },
+  { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-flies', aspect: 48 / 20, height: 28, weight: nightWeight },
+  { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, weight: allDayWeight },
+  { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 62, weight: nightWeight },
+  { key: 'obstacle-garbagebags0', animation: 'obstacle-rat-tail', aspect: 38 / 22, height: 33, weight: nightWeight },
+  { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 24 / 38, height: 57, weight: nightWeight },
+  { key: 'obstacle-streetwalker0', animation: 'obstacle-streetwalker-idle', aspect: 24 / 38, height: 57, weight: nightWeight }
 ];
 
 function pickType(phase) {

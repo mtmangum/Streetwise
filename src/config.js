@@ -1,5 +1,6 @@
 export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 360;
+export const RENDER_SCALE = 2;
 
 export const GROUND_HEIGHT = 60;
 export const GROUND_Y = GAME_HEIGHT - GROUND_HEIGHT;
@@ -15,7 +16,8 @@ export const PLAYER = {
 // world scrolls under them both, like PLAYER above) - "trailing behind" is
 // just a fixed x offset, not a chase; only the jump arc actually moves.
 export const DOG = {
-  trailDistance: 90,
+  trailDistance: 130,
+  displayScale: 1.25,
   // The delay before the dog echoes a jump is NOT this fixed number - it's
   // computed as trailDistance / current scroll speed (how long the same
   // obstacle takes to travel from the player's x to the dog's, since both
@@ -24,7 +26,7 @@ export const DOG = {
   // personality - see PlayScene.handleInput(). A fixed delay alone jumped
   // the dog too early at low speed and too late at high speed.
   jumpReactionMs: 50,
-  jumpDurationMs: 480,
+  jumpDurationMs: 540,
   // Tall obstacles reach ~65px; the player's real jump apex (from
   // PLAYER.gravity/jumpVelocity) is ~112px. This needs real clearance
   // margin, not just a stylized hop - it was 46 and visibly clipped tall

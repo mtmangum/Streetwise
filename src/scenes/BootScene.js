@@ -50,12 +50,27 @@ export class BootScene extends Phaser.Scene {
     this.drawChildObstacle('obstacle-child1', true);
     this.drawTrashBinObstacle('obstacle-trashbin');
     this.drawCrateObstacle('obstacle-crate');
+    this.drawHydrantObstacle('obstacle-hydrant0', false);
+    this.drawHydrantObstacle('obstacle-hydrant1', true);
+    this.drawShoppingCartObstacle('obstacle-shoppingcart');
+    this.drawHotDogCartObstacle('obstacle-hotdogcart');
+    this.drawParkingMeterObstacle('obstacle-parkingmeter');
     this.drawCatObstacle('obstacle-cat0', false);
     this.drawCatObstacle('obstacle-cat1', true);
     this.drawTrashFireObstacle('obstacle-trashfire0', false);
     this.drawTrashFireObstacle('obstacle-trashfire1', true);
-    this.drawSleepingObstacle('obstacle-sleeping');
-    this.drawBoomboxObstacle('obstacle-boombox');
+    this.drawSleepingObstacle('obstacle-sleeping0', false);
+    this.drawSleepingObstacle('obstacle-sleeping1', true);
+    this.drawBoomboxObstacle('obstacle-boombox0', false);
+    this.drawBoomboxObstacle('obstacle-boombox1', true);
+    this.drawSteamStackObstacle('obstacle-steamstack0', false);
+    this.drawSteamStackObstacle('obstacle-steamstack1', true);
+    this.drawGarbageBagsObstacle('obstacle-garbagebags0', false);
+    this.drawGarbageBagsObstacle('obstacle-garbagebags1', true);
+    this.drawCopObstacle('obstacle-cop0', false);
+    this.drawCopObstacle('obstacle-cop1', true);
+    this.drawStreetwalkerObstacle('obstacle-streetwalker0', false);
+    this.drawStreetwalkerObstacle('obstacle-streetwalker1', true);
   }
 
   // Obstacles use a 2x logical-pixel grid, matching the denser character
@@ -192,14 +207,26 @@ export class BootScene extends Phaser.Scene {
     ]);
   }
 
-  // Burning trash can: a battered, banded barrel beneath a two-frame,
-  // three-color flame. Alternating silhouettes provide a lively flicker.
+  // Open-topped burn barrel: the battered 55-gallon steel drum and tall,
+  // two-frame flame are the familiar street-corner silhouette from an '80s
+  // city movie. The black mouth stays visible beneath the fire so this reads
+  // as a barrel rather than the daytime municipal trash basket.
   drawTrashFireObstacle(key, flip) {
-    const O=0x26242a,D=COLORS.trashCanDark,M=COLORS.trashCan,L=0x858074,F=COLORS.flameOuter,Y=COLORS.flameInner,H=0xfff0a1;
-    const flame=flip?[[6,2,5,8,F],[11,5,7,8,F],[15,1,4,9,F],[8,8,10,8,F],[10,7,6,8,Y],[12,9,3,6,H]]:[[5,5,6,8,F],[9,1,5,12,F],[14,4,5,10,F],[7,9,11,7,F],[9,7,7,9,Y],[11,9,3,6,H]];
-    this.drawObstacleTexture(key,24,32,[...flame,
-      [2,14,20,4,O],[4,17,16,14,O],[3,15,18,2,L],[5,17,14,12,M],[6,18,3,10,L],[16,18,3,10,D],
-      [5,20,14,2,D],[5,25,14,2,D],[7,21,1,4,0x999184],[11,18,2,11,0x4c4843],[4,29,16,3,O],[6,29,12,1,L]
+    const O=0x17161a,DEEP=0x09090b,D=COLORS.trashCanDark,M=COLORS.trashCan,L=0x89847b,HI=0xb0aaa0,R=0x75442f,F=COLORS.flameOuter,Y=COLORS.flameInner,H=0xfff0a1;
+    const flame=flip
+      ? [[7,3,5,10,F],[11,6,7,10,F],[17,1,4,12,F],[8,10,12,8,F],[11,8,7,10,Y],[14,10,3,7,H]]
+      : [[6,6,6,10,F],[10,1,5,15,F],[15,5,6,12,F],[8,11,13,7,F],[10,8,8,10,Y],[13,10,3,7,H]];
+    this.drawObstacleTexture(key,28,36,[...flame,
+      // Rolled rim and the dark open mouth of the drum.
+      [3,15,22,4,O],[5,14,18,2,L],[4,16,20,3,DEEP],[7,17,14,2,0x302820],[3,18,22,2,HI],
+      // Broad cylindrical steel body with bowed sides and vertical wear.
+      [4,19,20,14,O],[5,19,18,14,M],[5,20,3,12,L],[8,20,2,12,HI],[20,20,3,12,D],
+      // Rolled strengthening ribs make it unmistakably a 55-gallon drum.
+      [4,21,20,3,O],[5,21,18,1,HI],[5,23,18,1,D],
+      [4,28,20,3,O],[5,28,18,1,L],[5,30,18,1,D],
+      // Battered rust patches, soot, and a heavy bottom rim.
+      [16,24,5,2,R],[18,26,3,1,0x9a5b36],[7,25,2,2,D],[11,19,7,2,0x3b3734],
+      [3,32,22,3,O],[5,32,18,1,HI],[6,34,16,2,D],[8,35,12,1,O]
     ]);
   }
 
@@ -208,26 +235,159 @@ export class BootScene extends Phaser.Scene {
   // iconography - no blood, no X-eyes) rather than anything graphic; reads
   // as "a collapsed/sleeping shape," same register as a pedestrian
   // road-sign icon, not a caricature.
-  drawSleepingObstacle(key) {
+  drawSleepingObstacle(key, flip) {
     const O=0x171822,D=COLORS.sleepingBody,M=0x464858,L=0x686b7d,SK=0xa86f61,S=0xd99a82,SH=0x3c3445;
-    this.drawObstacleTexture(key,42,15,[
-      [1,7,10,7,O],[3,5,7,3,O],[4,6,6,5,S],[3,8,3,4,SK],[7,7,2,1,SH],
-      [9,8,23,6,O],[10,7,18,6,M],[11,7,8,2,L],[25,9,10,5,D],[30,10,10,4,O],
-      [33,9,8,3,SH],[31,12,11,3,O],[32,12,9,1,0x6c5d62],[8,12,24,3,O],[12,12,13,1,D],
-      [0,14,42,1,0x12131a]
+    const GLASS=0x4d765a,GLINT=0x94b58c,LABEL=0xd7c59a,FLY=0x111014,WING=0xaaa6ad;
+    const flies=flip
+      ? [[5,2,2,1,FLY],[4,1,1,1,WING],[7,5,2,1,FLY],[9,4,1,1,WING],[13,2,2,1,FLY],[15,3,1,1,WING]]
+      : [[3,4,2,1,FLY],[3,3,1,1,WING],[8,1,2,1,FLY],[10,2,1,1,WING],[12,5,2,1,FLY],[11,4,1,1,WING]];
+    this.drawObstacleTexture(key,48,20,[
+      ...flies,
+      // Resting figure.
+      [1,12,10,7,O],[3,10,7,3,O],[4,11,6,5,S],[3,13,3,4,SK],[7,12,2,1,SH],
+      [9,13,23,6,O],[10,12,18,6,M],[11,12,8,2,L],[25,14,10,5,D],[30,15,10,4,O],
+      [33,14,8,3,SH],[31,17,11,3,O],[32,17,9,1,0x6c5d62],[8,17,24,3,O],[12,17,13,1,D],
+      // Green glass bottle on its side, with a neck, label and tiny glint.
+      [39,15,7,4,O],[40,15,5,3,GLASS],[37,16,4,2,O],[37,16,3,1,GLINT],
+      [42,15,2,3,LABEL],[45,16,2,2,O],[40,15,1,1,GLINT],
+      [0,19,48,1,0x12131a]
     ]);
   }
 
-  // Boombox: classic 90s two-speaker stereo with a carry handle.
-  drawBoomboxObstacle(key) {
-    const O=0x15151c,D=COLORS.boomboxDark,M=COLORS.boomboxBody,L=COLORS.boomboxLight,HI=0xb8c1d4,R=0xe75656;
-    this.drawObstacleTexture(key,38,23,[
-      [7,1,24,2,O],[5,3,4,6,O],[29,3,4,6,O],[8,3,22,2,L],[8,5,3,3,D],[27,5,3,3,D],
-      [1,7,36,15,O],[3,8,32,13,M],[4,9,30,3,L],[14,9,10,2,D],[15,9,8,1,HI],
-      [5,12,10,9,O],[7,13,6,6,D],[8,14,4,4,L],[9,15,2,2,O],
-      [23,12,10,9,O],[25,13,6,6,D],[26,14,4,4,L],[27,15,2,2,O],
-      [16,13,6,2,D],[17,14,4,1,0x77a6bc],[16,17,2,2,R],[20,17,2,2,0xe0c34d],
-      [2,21,5,2,O],[31,21,5,2,O],[3,21,3,1,HI],[32,21,3,1,HI]
+  // Big silver '80s ghettoblaster, modeled after the visual reference: long
+  // tuner strip, central cassette deck, top handle, and two dominant woofers.
+  // The alternate frame expands the cones and nudges the cabinet down a pixel
+  // so the bass looks physical rather than merely blinking.
+  drawBoomboxObstacle(key, boom) {
+    const O=0x111216,DEEP=0x07080a,D=COLORS.boomboxDark,M=0x777b7d,L=0xb9bdbe,HI=0xe4e6e4,R=0xdf5548,BLUE=0x7194a4,TAPE=0x292b2c;
+    const y=boom?2:1;
+    const cone=boom
+      ? [[3,y+14,14,11,O],[4,y+15,12,9,HI],[5,y+15,10,9,DEEP],[7,y+17,6,5,D],[9,y+18,2,3,0x414448],
+         [27,y+14,14,11,O],[28,y+15,12,9,HI],[29,y+15,10,9,DEEP],[31,y+17,6,5,D],[33,y+18,2,3,0x414448]]
+      : [[4,y+15,12,10,O],[5,y+15,10,9,L],[6,y+16,8,7,DEEP],[8,y+18,4,3,D],[9,y+19,2,2,0x414448],
+         [28,y+15,12,10,O],[29,y+15,10,9,L],[30,y+16,8,7,DEEP],[32,y+18,4,3,D],[33,y+19,2,2,0x414448]];
+    const waves=boom?[[0,10,1,4,BLUE],[43,10,1,4,BLUE],[1,8,1,2,BLUE],[42,8,1,2,BLUE]]:[];
+    this.drawObstacleTexture(key,44,28,[
+      ...waves,
+      // Tall folding handle and rows of chunky top controls.
+      [7,y,30,2,O],[6,y+1,2,6,O],[36,y+1,2,6,O],[8,y+1,28,1,HI],
+      [10,y+4,3,2,O],[15,y+3,3,3,O],[20,y+3,8,3,O],[31,y+3,2,3,O],
+      // Silver cabinet, small tweeters and the long radio tuner window.
+      [1,y+6,42,20,O],[2,y+7,40,18,M],[3,y+7,38,5,L],
+      [3,y+8,5,4,O],[4,y+9,3,2,DEEP],[36,y+8,5,4,O],[37,y+9,3,2,DEEP],
+      [9,y+8,26,4,O],[10,y+8,24,3,TAPE],[11,y+9,14,1,BLUE],[27,y+9,6,1,R],[12,y+11,20,1,D],
+      // Oversized bass speakers dominate the lower half.
+      ...cone,
+      // Central cassette door with two visible tape reels and deck controls.
+      [17,y+13,10,9,O],[18,y+14,8,6,TAPE],[19,y+15,6,1,L],[19,y+17,2,2,D],[23,y+17,2,2,D],
+      [20,y+17,1,1,R],[24,y+17,1,1,R],[18,y+21,8,2,L],[19,y+21,6,1,D],
+      [17,y+23,10,2,M],[19,y+23,2,1,DEEP],[22,y+23,3,1,DEEP],
+      // Feet and bottom trim.
+      [2,y+25,40,2,O],[4,y+25,8,1,HI],[32,y+25,8,1,HI]
+    ]);
+  }
+
+  // NYC-style street steam chimney: a tall orange-and-white striped tube on
+  // a traffic-cone base. Two offset cloud silhouettes send the steam sideways
+  // as if caught between buildings, matching the supplied photo reference.
+  drawSteamStackObstacle(key, flip) {
+    const O=0x4a2822,D=0xa43f27,M=COLORS.coneOrange,L=0xf08a45,W=0xe7ddd1,WS=0xbebbc0,WH=0xf7f5ef,SOOT=0x3b3736;
+    const steam=flip
+      ? [[2,2,12,3,WS],[0,5,18,5,WS],[5,1,8,8,WH],[9,7,12,4,WH],[2,10,15,3,WS],[14,5,8,5,WH]]
+      : [[0,4,11,4,WS],[3,1,12,7,WH],[7,7,14,5,WS],[1,9,11,4,WH],[12,3,9,6,WH],[16,9,6,3,WS]];
+    this.drawObstacleTexture(key,34,42,[
+      ...steam,
+      // Soot-darkened open pipe mouth and tall striped chimney.
+      [20,8,9,3,O],[21,8,7,2,SOOT],[19,10,11,23,O],[20,10,9,22,M],
+      [21,10,7,5,D],[20,15,9,4,W],[21,15,7,1,WH],
+      [20,19,9,5,M],[21,19,2,5,L],[20,24,9,4,W],[21,24,7,1,WH],
+      [20,28,9,5,M],[21,28,2,5,L],[26,29,2,3,D],
+      // Wide safety-cone collar and weighted street base.
+      [17,32,15,7,O],[18,32,13,7,M],[20,32,9,2,L],[19,35,11,4,M],
+      [15,38,19,3,O],[16,38,17,2,L],[13,40,21,2,O],[16,40,16,1,M],
+      // Scuffs and reflective wear.
+      [22,17,3,1,0xc7beb2],[25,25,2,1,0xb5ada4],[19,36,2,1,D]
+    ]);
+  }
+
+  drawHydrantObstacle(key, flip) {
+    const O=0x51251f,D=0xa63b2c,M=0xd95237,L=0xf27a54,STEEL=0xb8c2c7,W=0xc9edf2,HI=0xf2ffff;
+    const spray=flip
+      ? [[17,13,6,3,HI],[21,11,6,4,W],[25,9,6,4,HI],[29,10,5,4,W],
+         [32,12,5,5,HI],[35,15,3,6,W],[36,21,2,3,HI],[32,19,2,2,W],[29,23,2,2,HI]]
+      : [[17,14,6,3,W],[21,12,6,4,HI],[25,10,6,4,W],[29,10,5,4,HI],
+         [32,12,5,5,W],[35,16,3,6,HI],[36,22,2,3,W],[33,20,2,2,HI],[30,24,2,2,W]];
+    this.drawObstacleTexture(key,38,28,[...spray,
+      [7,5,10,3,O],[9,3,6,3,O],[10,3,4,2,STEEL],[5,7,14,3,O],[6,7,12,2,L],
+      [7,9,10,15,O],[8,9,8,14,M],[9,10,2,12,L],[5,12,4,7,O],[3,13,4,5,O],[4,14,3,3,M],
+      [16,11,4,8,O],[17,12,2,6,STEEL],[6,19,12,5,O],[7,19,10,3,D],[3,23,19,4,O],[5,23,15,2,L]
+    ]);
+  }
+
+  drawShoppingCartObstacle(key) {
+    const O=0x24262b,D=0x555b62,M=0x899198,L=0xc2c8ca,R=0xb84b3e,B=0x385b83,T=0x8b643d;
+    this.drawObstacleTexture(key,40,30,[
+      [3,3,7,2,O],[2,2,4,2,L],[8,4,3,18,O],[10,6,27,3,O],[11,7,24,2,L],
+      [10,9,26,13,O],[12,10,22,10,D],[12,11,22,2,M],[13,14,20,2,M],[14,18,18,2,M],
+      [13,10,7,7,B],[21,12,7,8,T],[28,10,5,6,R],[16,9,4,3,L],[25,9,3,4,0xd0b56d],
+      [10,21,25,3,O],[12,21,21,1,L],[12,23,3,4,O],[31,23,3,4,O],
+      [11,26,6,4,O],[12,27,4,2,M],[29,26,6,4,O],[30,27,4,2,M]
+    ]);
+  }
+
+  drawHotDogCartObstacle(key) {
+    const O=0x202126,D=0x8e2f28,R=0xd34a3c,Y=0xe2b942,L=0xf1e3c8,STEEL=0xa9b2b4,GLASS=0x86a9b2;
+    this.drawObstacleTexture(key,44,38,[
+      [8,1,28,2,O],[5,3,34,3,O],[7,3,30,2,R],[4,6,36,3,O],[5,6,34,2,Y],
+      [7,9,30,10,O],[8,9,28,9,GLASS],[9,10,26,2,0xcce0df],[10,13,8,4,L],[20,12,7,5,R],[29,11,5,6,Y],
+      [5,18,34,14,O],[6,19,32,12,R],[7,20,30,3,Y],[9,24,12,5,L],[25,24,9,3,D],
+      [3,31,38,3,O],[5,31,34,1,STEEL],[8,33,4,3,O],[33,33,4,3,O],
+      [6,34,8,4,O],[8,35,4,2,STEEL],[31,34,8,4,O],[33,35,4,2,STEEL]
+    ]);
+  }
+
+  drawParkingMeterObstacle(key) {
+    const O=0x1e2529,D=0x405058,M=0x6f8188,L=0xb5c1c3,GLASS=0x91b6bd,R=0xd6574b;
+    this.drawObstacleTexture(key,18,38,[
+      [4,1,10,2,O],[2,3,14,10,O],[3,3,12,9,M],[5,4,8,5,GLASS],[6,5,6,2,L],[7,8,4,2,D],
+      [4,11,10,3,O],[6,12,6,2,L],[8,13,2,18,O],[9,14,2,17,M],[7,30,4,4,O],
+      [5,33,8,3,O],[3,35,12,3,O],[5,35,8,1,L],[13,7,2,2,R]
+    ]);
+  }
+
+  drawGarbageBagsObstacle(key, flip) {
+    const O=0x111316,D=0x24282b,M=0x3b4042,L=0x606566,RAT=0x6f5148,TAIL=0xb08375;
+    const tail=flip
+      ? [[28,14,7,2,TAIL],[34,12,3,2,TAIL],[36,10,2,3,RAT]]
+      : [[28,15,5,2,TAIL],[32,15,4,1,TAIL],[35,13,3,2,RAT]];
+    this.drawObstacleTexture(key,38,22,[...tail,
+      [2,10,12,10,O],[4,7,8,5,O],[6,5,4,3,O],[4,10,8,9,M],[6,11,2,6,L],
+      [10,8,14,13,O],[13,5,8,5,O],[15,3,4,3,O],[12,9,10,11,D],[14,10,3,7,M],
+      [21,12,11,9,O],[23,9,7,5,O],[25,8,3,2,O],[23,13,7,7,M],[25,14,2,4,L],
+      [0,20,35,2,O]
+    ]);
+  }
+
+  drawCopObstacle(key, flip) {
+    const O=0x151923,N=0x263a5a,B=0x355783,L=0x6686aa,SK=0xc98b75,S=0xe6ad92,W=0xd7dde2,G=0xd2b750;
+    const light=flip?0xe75656:0x5d8de8;
+    this.drawObstacleTexture(key,24,38,[
+      [7,1,10,3,O],[5,4,14,3,O],[7,3,10,2,N],[8,6,8,7,O],[9,6,6,6,S],[10,7,2,1,SK],[14,8,1,1,O],
+      [6,12,12,15,O],[7,12,10,14,N],[8,13,4,3,B],[13,13,3,3,L],[11,14,2,3,G],[7,18,10,2,O],
+      [3,14,4,12,O],[4,15,3,10,B],[17,14,4,12,O],[17,15,3,10,B],[19,22,4,3,light],[20,22,2,1,W],
+      [7,26,5,11,O],[8,26,3,10,N],[13,26,5,11,O],[14,26,3,10,N],[6,36,7,2,O],[13,36,7,2,O]
+    ]);
+  }
+
+  drawStreetwalkerObstacle(key, flip) {
+    const O=0x231824,H=0x5a2e31,SK=0xb97868,S=0xdc9b85,P=0xb33f72,PL=0xe06b9b,D=0x442744,BOOT=0x17141b;
+    const armY=flip?17:15;
+    this.drawObstacleTexture(key,24,38,[
+      [7,1,10,3,O],[5,3,14,10,O],[6,2,12,5,H],[7,5,10,7,S],[8,5,3,2,SK],[14,7,1,1,O],[6,10,3,4,H],
+      [7,12,10,14,O],[8,12,8,13,P],[9,13,3,5,PL],[7,22,10,4,D],
+      [4,14,4,12,O],[5,15,3,armY-12,P],[3,armY,4,3,S],[17,14,4,11,O],[17,15,3,9,P],[19,22,3,3,S],
+      [8,25,4,11,O],[9,25,3,10,SK],[14,25,4,11,O],[14,25,3,10,SK],
+      [7,34,6,4,BOOT],[13,34,7,4,BOOT],[8,34,4,1,PL],[15,34,3,1,PL]
     ]);
   }
 
@@ -269,7 +429,7 @@ export class BootScene extends Phaser.Scene {
   // drawBrownstoneTexture (always-visible dark "glass" openings) and
   // drawWindowsTexture (the subset that gets a warm lit-glow overlay at
   // night), so the two line up pixel-for-pixel.
-  windowCells(b, cols, rows) {
+  windowCells(b, cols = b.windowCols, rows = b.windowRows) {
     const marginX = b.w * 0.15;
     const marginY = b.h * 0.12;
     const cellW = (b.w - marginX * 2) / cols;
@@ -288,8 +448,8 @@ export class BootScene extends Phaser.Scene {
     return cells;
   }
 
-  // A row of uniform-height brownstones - cornice, window openings, and a
-  // stoop - reading as attached rowhouses whether tinted warm brownstone by
+  // A varied row of brownstones - distinct widths, heights, cornices, window
+  // grids and stoops - reading as attached rowhouses whether tinted warm by
   // day or dark and derelict by night (see Parallax.applyPalette). Cornice
   // /stoop/glass are drawn as genuinely different base shades (not the same
   // color at different alpha, which composites to a no-op over an opaque
@@ -299,30 +459,89 @@ export class BootScene extends Phaser.Scene {
   drawBrownstoneTexture(key, tileWidth, tileHeight, count) {
     // Wide enough to read as a gap of sky between separate houses even at
     // the buildings' 2/3-screen scale, not just a seam.
-    const gap = tileWidth * 0.12;
-    const bw = (tileWidth - gap * (count - 1)) / count;
+    const gap = tileWidth * 0.08;
+    const usableWidth = tileWidth - gap * (count - 1);
+    const widthWeights = Array.from({ length: count }, () => Phaser.Math.FloatBetween(0.82, 1.18));
+    const weightTotal = widthWeights.reduce((sum, weight) => sum + weight, 0);
     const baseHeight = tileHeight * 0.88;
     const buildings = [];
+    let nextX = 0;
     for (let i = 0; i < count; i++) {
-      const h = Phaser.Math.Clamp(baseHeight + Phaser.Math.Between(-4, 4), tileHeight * 0.6, tileHeight);
-      const x = i * (bw + gap);
-      buildings.push({ x, y: tileHeight - h, w: bw, h, stoopW: bw * 0.4 });
+      const w = usableWidth * widthWeights[i] / weightTotal;
+      const h = Phaser.Math.Clamp(baseHeight + Phaser.Math.Between(-18, 12), tileHeight * 0.62, tileHeight);
+      const windowCols = w > tileWidth / count * 1.06 ? 3 : 2;
+      buildings.push({
+        x: nextX,
+        y: tileHeight - h,
+        w,
+        h,
+        windowCols,
+        windowRows: Phaser.Math.Between(3, 4),
+        stoopW: w * Phaser.Math.FloatBetween(0.34, 0.48),
+        stoopSide: Phaser.Math.Between(0, 2),
+        facadeTone: Phaser.Math.RND.pick([0xffffff, 0xe9e9e9, 0xd8d8d8]),
+        cornice: Phaser.Math.Between(0, 2),
+        fireEscape: Phaser.Math.Between(0, 2) === 0,
+        roofBox: Phaser.Math.Between(0, 3) === 0
+      });
+      nextX += w + gap;
     }
 
     const g = this.add.graphics();
     for (const b of buildings) {
-      g.fillStyle(0xffffff, 1);
+      g.fillStyle(b.facadeTone, 1);
       g.fillRect(b.x, b.y, b.w, b.h);
       // Cornice ridge along the roofline - visibly dimmer, not just less
       // opaque, so it still reads once the whole texture is tinted.
-      g.fillStyle(0xcfcfcf, 1);
-      g.fillRect(b.x, b.y, b.w, 4);
+      g.fillStyle(0xc2c2c2, 1);
+      if (b.cornice === 0) {
+        g.fillRect(b.x, b.y, b.w, 4);
+        g.fillRect(b.x + 3, b.y - 2, b.w - 6, 2);
+      } else if (b.cornice === 1) {
+        g.fillRect(b.x, b.y, b.w, 3);
+        g.fillRect(b.x + b.w * 0.12, b.y + 4, b.w * 0.76, 2);
+      } else {
+        g.fillRect(b.x, b.y, b.w, 6);
+        g.fillStyle(0xaaaaaa, 1);
+        g.fillRect(b.x, b.y + 3, b.w, 2);
+      }
+      if (b.roofBox) {
+        g.fillStyle(0xb6b6b6, 1);
+        g.fillRect(b.x + b.w * 0.58, b.y - 7, b.w * 0.25, 7);
+        g.fillStyle(0x8f8f8f, 1);
+        g.fillRect(b.x + b.w * 0.61, b.y - 5, b.w * 0.18, 3);
+      }
       // Window openings - dark by day, get a warm lit overlay at night.
       g.fillStyle(0x8f8f8f, 1);
-      for (const win of this.windowCells(b, 2, 3)) g.fillRect(win.x, win.y, win.w, win.h);
+      const windows = this.windowCells(b);
+      for (const win of windows) {
+        g.fillRect(win.x, win.y, win.w, win.h);
+        g.fillStyle(0xbcbcbc, 1);
+        g.fillRect(win.x + win.w / 2 - 1, win.y, 2, win.h);
+        g.fillStyle(0x8f8f8f, 1);
+      }
+      // Belt courses and the occasional dark iron fire escape break up the
+      // otherwise flat facades without competing with gameplay silhouettes.
+      g.fillStyle(0xd0d0d0, 1);
+      g.fillRect(b.x + 2, b.y + b.h * 0.43, b.w - 4, 2);
+      if (b.fireEscape) {
+        g.fillStyle(0x747474, 1);
+        const fx = b.x + b.w * 0.58;
+        for (let r = 0; r < b.windowRows - 1; r++) {
+          const fy = b.y + b.h * (0.24 + r * 0.19);
+          g.fillRect(fx, fy, b.w * 0.32, 2);
+          g.fillRect(fx + 2, fy, 2, b.h * 0.14);
+          g.fillRect(fx + b.w * 0.28, fy, 2, b.h * 0.14);
+        }
+      }
       // Stoop: a couple of stacked steps up to the (implied) front door.
       g.fillStyle(0xb5b5b5, 1);
-      const stoopX = b.x + (b.w - b.stoopW) / 2;
+      const stoopX = b.stoopSide === 0
+        ? b.x + b.w * 0.08
+        : b.stoopSide === 1 ? b.x + (b.w - b.stoopW) / 2 : b.x + b.w - b.stoopW - b.w * 0.08;
+      g.fillStyle(0x777777, 1);
+      g.fillRect(stoopX + b.stoopW * 0.28, tileHeight - 20, b.stoopW * 0.44, 12);
+      g.fillStyle(0xb5b5b5, 1);
       g.fillRect(stoopX, tileHeight - 6, b.stoopW, 6);
       g.fillRect(stoopX + b.stoopW * 0.2, tileHeight - 10, b.stoopW * 0.6, 4);
     }
@@ -340,7 +559,7 @@ export class BootScene extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(0xf2d38a, 1);
     for (const b of buildings) {
-      for (const win of this.windowCells(b, 2, 3)) {
+      for (const win of this.windowCells(b)) {
         if (Math.random() < 0.45) g.fillRect(win.x, win.y, win.w, win.h);
       }
     }
@@ -392,6 +611,59 @@ export class BootScene extends Phaser.Scene {
         { key: 'obstacle-trashfire1' }
       ],
       frameRate: 9,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-sleeping-flies',
+      frames: [{ key: 'obstacle-sleeping0' }, { key: 'obstacle-sleeping1' }],
+      frameRate: 4,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-boombox-boom',
+      frames: [
+        { key: 'obstacle-boombox0' },
+        { key: 'obstacle-boombox1' },
+        { key: 'obstacle-boombox0' }
+      ],
+      frameRate: 7,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-steamstack-puff',
+      frames: [
+        { key: 'obstacle-steamstack0' },
+        { key: 'obstacle-steamstack1' }
+      ],
+      frameRate: 5,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-hydrant-spray',
+      frames: [{ key: 'obstacle-hydrant0' }, { key: 'obstacle-hydrant1' }],
+      frameRate: 8,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-rat-tail',
+      frames: [{ key: 'obstacle-garbagebags0' }, { key: 'obstacle-garbagebags1' }],
+      frameRate: 5,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-cop-patrol',
+      frames: [{ key: 'obstacle-cop0' }, { key: 'obstacle-cop1' }],
+      frameRate: 3,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-streetwalker-idle',
+      frames: [
+        { key: 'obstacle-streetwalker0' },
+        { key: 'obstacle-streetwalker0' },
+        { key: 'obstacle-streetwalker1' }
+      ],
+      frameRate: 3,
       repeat: -1
     });
 
