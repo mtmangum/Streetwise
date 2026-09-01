@@ -71,8 +71,10 @@ export class BootScene extends Phaser.Scene {
     this.drawSteamStackObstacle('obstacle-steamstack1', true);
     this.drawGarbageBagsObstacle('obstacle-garbagebags0', false);
     this.drawGarbageBagsObstacle('obstacle-garbagebags1', true);
-    this.drawCopObstacle('obstacle-cop0', false);
-    this.drawCopObstacle('obstacle-cop1', true);
+    this.drawCopObstacle('obstacle-cop0', 0);
+    this.drawCopObstacle('obstacle-cop1', 1);
+    this.drawCopObstacle('obstacle-cop2', 2);
+    this.drawCopObstacle('obstacle-cop3', 3);
     this.drawStreetwalkerObstacle('obstacle-streetwalker0', false);
     this.drawStreetwalkerObstacle('obstacle-streetwalker1', true);
     this.drawPigeonFrame('pigeon-fly0', 0);
@@ -346,23 +348,30 @@ export class BootScene extends Phaser.Scene {
   }
 
   drawShoppingCartObstacle(key, roll) {
-    const O=0x22252a,D=0x50575d,M=0x818a8f,L=0xc2c8ca,R=0xa84b42,B=0x435d78,T=0x786044,Y=0xb99a4d;
+    const O=0x22252a,D=0x50575d,M=0x818a8f,L=0xcbd0d1,R=0xa84b42,B=0x435d78,T=0x786044,Y=0xb99a4d,G=0x607054;
     const wheels=roll
-      ? [[9,26,7,6,O],[11,28,3,2,L],[31,26,7,6,O],[33,28,3,2,L]]
-      : [[9,26,7,6,O],[11,27,3,4,M],[31,26,7,6,O],[33,27,3,4,M]];
-    this.drawObstacleTexture(key,44,32,[
-      // Tall rear handle and colored plastic grip.
-      [2,2,10,3,O],[2,1,8,2,R],[10,3,3,20,O],[11,4,2,18,L],
-      // Deep sloped wire basket—the front wall angles inward at the base.
-      [11,6,30,3,O],[12,7,28,2,L],[12,9,28,13,O],[14,10,25,11,D],
-      [14,10,2,11,M],[20,10,2,11,M],[26,10,2,11,M],[32,10,2,11,M],[38,10,2,9,M],
-      [13,12,27,2,M],[14,16,25,2,M],[15,20,23,2,M],
-      // Fold-down child seat and an uneven load of bags and boxes.
-      [13,9,9,8,O],[14,10,7,6,B],[16,11,3,3,L],
-      [23,11,7,8,T],[30,13,7,7,R],[25,10,4,4,Y],[34,11,4,4,0x657553],
-      // Under-basket chassis, lower rack, and caster forks.
-      [10,21,29,3,O],[12,21,25,1,L],[13,24,23,2,O],[15,24,19,1,M],
-      [11,23,3,5,O],[34,23,3,5,O],
+      ? [[10,34,10,8,O],[13,36,4,2,L],[39,34,10,8,O],[42,36,4,2,L],
+         [14,35,2,6,M],[11,38,8,2,M],[43,35,2,6,M],[40,38,8,2,M]]
+      : [[10,34,10,8,O],[14,35,2,6,M],[11,37,8,2,M],[39,34,10,8,O],
+         [43,35,2,6,M],[40,37,8,2,M],[13,36,4,2,L],[42,36,4,2,L]];
+    this.drawObstacleTexture(key,56,42,[
+      // Tall rear push frame and broad colored handle grip.
+      [2,4,15,4,O],[2,2,12,3,R],[14,5,4,28,O],[15,6,2,26,L],
+      // Junk remains visible behind the open cage instead of becoming a
+      // single dark basket mass.
+      [19,13,10,15,B],[21,11,6,4,L],[29,16,10,12,T],[32,13,6,5,Y],
+      [39,14,8,14,R],[45,17,6,10,G],[25,19,7,9,0x9a7650],
+      // Sloped cage perimeter: wide mouth, narrower floor, stepped front.
+      [15,9,38,3,O],[16,10,36,1,L],[16,11,3,19,O],[18,28,31,3,O],
+      [50,11,4,5,O],[49,15,4,6,O],[48,20,4,6,O],[47,25,4,5,O],
+      // Bright wire grid with transparent cells between each bar.
+      [19,11,2,18,M],[26,11,2,18,L],[33,11,2,18,M],[40,11,2,18,L],[47,11,2,16,M],
+      [17,14,35,2,M],[17,20,34,2,L],[18,26,31,2,M],
+      // Fold-down child seat is attached to the rear cage wall.
+      [18,11,11,10,O],[19,12,9,8,B],[21,13,5,2,L],[22,16,3,3,O],
+      // Chassis, open lower rack, and clearly separated caster forks.
+      [15,29,35,4,O],[17,30,31,1,L],[17,33,31,2,O],[20,35,25,2,M],
+      [15,31,4,6,O],[47,31,4,6,O],[18,32,2,5,L],[48,32,2,5,L],
       ...wheels
     ]);
   }
@@ -409,25 +418,58 @@ export class BootScene extends Phaser.Scene {
   drawGarbageBagsObstacle(key, flip) {
     const O=0x111316,D=0x24282b,M=0x3b4042,L=0x606566,RAT=0x6f5148,TAIL=0xb08375;
     const tail=flip
-      ? [[28,14,7,2,TAIL],[34,12,3,2,TAIL],[36,10,2,3,RAT]]
-      : [[28,15,5,2,TAIL],[32,15,4,1,TAIL],[35,13,3,2,RAT]];
-    this.drawObstacleTexture(key,38,22,[...tail,
-      [2,10,12,10,O],[4,7,8,5,O],[6,5,4,3,O],[4,10,8,9,M],[6,11,2,6,L],
-      [10,8,14,13,O],[13,5,8,5,O],[15,3,4,3,O],[12,9,10,11,D],[14,10,3,7,M],
-      [21,12,11,9,O],[23,9,7,5,O],[25,8,3,2,O],[23,13,7,7,M],[25,14,2,4,L],
-      [0,20,35,2,O]
+      ? [[37,34,7,2,TAIL],[43,31,3,4,TAIL],[45,28,3,4,RAT],[46,28,1,1,0xe0c451]]
+      : [[36,35,6,2,TAIL],[41,35,5,1,TAIL],[44,32,4,3,RAT],[46,32,1,1,0xe0c451]];
+    this.drawObstacleTexture(key,48,44,[...tail,
+      // Tall tied bags form an unmistakable curbside heap.
+      [1,19,16,23,O],[4,14,10,8,O],[7,10,5,6,O],[4,19,11,21,M],[6,21,3,16,L],[11,20,3,18,D],
+      [12,11,20,32,O],[16,6,12,8,O],[20,2,5,6,O],[15,12,15,29,D],[18,14,5,22,M],[24,12,5,25,L],
+      [29,19,17,23,O],[32,14,11,8,O],[36,10,5,6,O],[31,20,13,21,M],[34,22,4,15,L],[40,20,3,18,D],
+      // Smaller front bags overlap the seams and give the pile depth.
+      [7,27,19,16,O],[10,24,12,6,O],[14,21,5,5,O],[9,28,15,13,D],[12,29,4,9,M],
+      [23,29,17,13,O],[26,25,11,7,O],[30,22,5,5,O],[25,30,13,11,M],[28,31,4,8,L],
+      // Glossy creases, stretched plastic, and pavement contact shadow.
+      [6,18,5,2,L],[18,10,8,2,M],[34,18,6,2,L],[13,35,7,2,M],[29,36,5,2,D],
+      [0,41,47,3,O],[3,41,40,1,D]
     ]);
   }
 
-  drawCopObstacle(key, flip) {
-    const O=0x151923,N=0x263a5a,B=0x355783,L=0x6686aa,SK=0xc98b75,S=0xe6ad92,W=0xd7dde2,G=0xd2b750;
-    const light=flip?0xe75656:0x5d8de8;
-    this.drawObstacleTexture(key,24,38,[
-      [7,1,10,3,O],[5,4,14,3,O],[7,3,10,2,N],[8,6,8,7,O],[9,6,6,6,S],[10,7,2,1,SK],[14,8,1,1,O],
-      [6,12,12,15,O],[7,12,10,14,N],[8,13,4,3,B],[13,13,3,3,L],[11,14,2,3,G],[7,18,10,2,O],
-      [3,14,4,12,O],[4,15,3,10,B],[17,14,4,12,O],[17,15,3,10,B],[19,22,4,3,light],[20,22,2,1,W],
-      [7,26,5,11,O],[8,26,3,10,N],[13,26,5,11,O],[14,26,3,10,N],[6,36,7,2,O],[13,36,7,2,O]
-    ]);
+  drawCopObstacle(key, phase) {
+    const O=0x151923,N=0x263a5a,B=0x355783,L=0x6686aa,SK=0xc98b75,S=0xe6ad92,G=0xd2b750,SHOE=0x11141b,CLUB=0x4d3528,CLUBL=0x805c43;
+    const bob=phase%2;
+    const arms=[
+      [[2,14,5,5,O],[1,17,4,8,B],[1,23,4,3,S]],
+      [[3,14,4,11,O],[4,15,3,9,B],[4,23,3,3,S]],
+      [[3,14,4,11,O],[4,15,3,9,B],[4,23,3,3,S]],
+      [[3,14,4,10,O],[4,15,3,8,B],[4,22,3,3,S]]
+    ][phase];
+    const legs=[
+      [[5,25,6,10,O],[6,26,4,8,N],[2,34,10,4,SHOE],[14,26,5,10,O],[15,27,3,8,N],[14,35,8,3,SHOE]],
+      [[7,26,5,10,O],[8,27,3,8,N],[5,35,8,3,SHOE],[13,26,5,10,O],[14,27,3,8,N],[13,35,8,3,SHOE]],
+      [[6,26,5,10,O],[7,27,3,8,N],[4,35,8,3,SHOE],[13,25,6,10,O],[14,26,4,8,N],[13,34,10,4,SHOE]],
+      [[7,26,5,10,O],[8,27,3,8,N],[5,35,8,3,SHOE],[13,26,5,10,O],[14,27,3,8,N],[13,35,8,3,SHOE]]
+    ][phase];
+    const raisedArm=[
+      [[20,21,5,7,O],[21,16,4,7,B],[21,13,4,4,S]],
+      [[20,21,5,7,O],[19,16,5,7,B],[18,12,4,5,S]],
+      [[20,21,5,7,O],[17,17,6,6,B],[15,13,5,5,S]],
+      [[20,21,5,7,O],[19,16,5,7,B],[18,12,4,5,S]]
+    ][phase];
+    const club=[
+      [[22,1,4,13,CLUB],[23,2,2,11,CLUBL]],
+      [[19,10,4,5,CLUB],[21,6,4,5,CLUB],[23,2,4,5,CLUB],[24,2,2,4,CLUBL]],
+      [[16,11,4,5,CLUB],[13,8,4,5,CLUB],[10,5,4,5,CLUB],[7,2,4,5,CLUB],[8,2,2,4,CLUBL]],
+      [[19,10,4,5,CLUB],[18,6,4,5,CLUB],[17,2,4,5,CLUB],[18,2,2,4,CLUBL]]
+    ][phase];
+    const body=[
+      // Hat, face, and torso bob on the passing frames.
+      [7,1+bob,10,3,O],[5,4+bob,14,3,O],[7,3+bob,10,2,N],
+      [8,6+bob,8,7,O],[9,6+bob,6,6,S],[10,7+bob,2,1,SK],[14,8+bob,1,1,O],
+      [6,12+bob,12,15,O],[7,12+bob,10,14,N],[8,13+bob,4,3,B],[13,13+bob,3,3,L],
+      [11,14+bob,2,3,G],[7,18+bob,10,2,O],
+      ...arms,...legs
+    ].map(([x,y,w,h,color])=>[x+3,y+10,w,h,color]);
+    this.drawObstacleTexture(key,30,48,[...club,...raisedArm,...body]);
   }
 
   drawStreetwalkerObstacle(key, flip) {
@@ -996,8 +1038,13 @@ export class BootScene extends Phaser.Scene {
     });
     this.anims.create({
       key: 'obstacle-cop-patrol',
-      frames: [{ key: 'obstacle-cop0' }, { key: 'obstacle-cop1' }],
-      frameRate: 3,
+      frames: [
+        { key: 'obstacle-cop0' },
+        { key: 'obstacle-cop1' },
+        { key: 'obstacle-cop2' },
+        { key: 'obstacle-cop3' }
+      ],
+      frameRate: 8,
       repeat: -1
     });
     this.anims.create({

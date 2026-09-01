@@ -45,6 +45,23 @@ export const WORLD = {
   rampSeconds: 90
 };
 
+// Obstacle cadence alternates between normal beats, short playable clusters,
+// and deliberate lulls so the run has phrasing instead of a metronomic spawn.
+export const SPAWN_RHYTHM = {
+  clusterChance: 0.28,
+  lullChance: 0.22,
+  clusterExtraMin: 1,
+  clusterExtraMax: 2,
+  clusterGapMinMs: 780,
+  clusterGapMaxMs: 1020,
+  postClusterRestMinMs: 2200,
+  postClusterRestMaxMs: 3200,
+  lullMinMs: 2800,
+  lullMaxMs: 4300,
+  steadyMinMs: 1250,
+  steadyMaxMs: 1900
+};
+
 // One full day -> night arc per run. dayPhase (0-1) drives everything in
 // src/gfx/dayNightPalette.js - sky/hill/ground color, sun/moon position -
 // plus which obstacle types are in rotation (see Obstacle.js). Phase
@@ -113,5 +130,6 @@ export const HEALTH = {
   start: 100,
   gainPerAvoid: 8,
   lossPerHit: 30,
+  crowLossPerHit: 70,
   invulnerabilityMs: 900
 };

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, WORLD, HEALTH, DAY_CYCLE, DOG } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -13,7 +13,7 @@ import { dayNightPalette } from '../gfx/dayNightPalette.js';
 // `width` is the 0..max track; `overchargeWidth` is extra track for the
 // max..overchargeMax stretch, rendered as a distinct sparking color rather
 // than continuing the normal color ramp (which already tops out at green).
-const HEALTH_BAR = { x: 16, y: 14, width: 200, overchargeWidth: 96, height: 16, padding: 2 };
+const HEALTH_BAR = { x: 16, y: 14, width: 360, overchargeWidth: 160, height: 16, padding: 2 };
 
 export class PlayScene extends Phaser.Scene {
   constructor() {
@@ -33,6 +33,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextPigeonAt = Infinity;
     this.nextCrowAt = Infinity;
     this.lastObstacleFamily = null;
+    this.clusterSpawnsRemaining = 0;
     this.scrollSpeed = WORLD.baseScrollSpeed;
     this.health = HEALTH.start;
     this.damageInvulnerableUntil = 0;
@@ -96,22 +97,25 @@ export class PlayScene extends Phaser.Scene {
       .rectangle(
         HEALTH_BAR.x + HEALTH_BAR.padding,
         HEALTH_BAR.y + HEALTH_BAR.padding,
-        0,
+        HEALTH_BAR.width - HEALTH_BAR.padding * 2,
         HEALTH_BAR.height - HEALTH_BAR.padding * 2,
         healthBarColor(HEALTH.start / HEALTH.max)
       )
       .setOrigin(0, 0)
+      .setScale(0, 1)
       .setDepth(21);
     this.overchargeBarFill = this.add
       .rectangle(
         HEALTH_BAR.x + HEALTH_BAR.width,
         HEALTH_BAR.y + HEALTH_BAR.padding,
-        0,
+        HEALTH_BAR.overchargeWidth - HEALTH_BAR.padding,
         HEALTH_BAR.height - HEALTH_BAR.padding * 2,
         OVERCHARGE_COLOR
       )
       .setOrigin(0, 0)
+      .setScale(0, 1)
       .setDepth(21);
+    this.healthBarTexture = this.add.graphics().setDepth(22);
     this.sparkStars = [0.28, 0.55, 0.82].map((t) =>
       this.add
         .star(
@@ -311,15 +315,53 @@ export class PlayScene extends Phaser.Scene {
     const normalWidth = (HEALTH_BAR.width - HEALTH_BAR.padding * 2) * normalFraction;
     const overchargeWidth = overchargeFraction * (HEALTH_BAR.overchargeWidth - HEALTH_BAR.padding);
 
-    this.healthBarFill.width = normalWidth;
+    this.healthBarFill.setScale(normalFraction, 1);
     this.healthBarFill.fillColor = healthBarColor(normalFraction);
-    this.overchargeBarFill.width = overchargeWidth;
+    this.overchargeBarFill.setScale(overchargeFraction, 1);
+    this.updateHealthBarTexture(normalWidth, overchargeWidth);
 
     this.setOverchargeFx(overchargeFraction > 0);
     this.sparkStars.forEach((star, index) => {
       const starThreshold = [0.28, 0.55, 0.82][index];
       star.setVisible(overchargeFraction >= starThreshold);
     });
+  }
+
+  updateHealthBarTexture(normalWidth, overchargeWidth) {
+    const g = this.healthBarTexture;
+    if (!g) return;
+    g.clear();
+    const innerY = HEALTH_BAR.y + HEALTH_BAR.padding;
+    const innerHeight = HEALTH_BAR.height - HEALTH_BAR.padding * 2;
+    const normalX = HEALTH_BAR.x + HEALTH_BAR.padding;
+
+    if (normalWidth > 0) {
+      // Glossy upper edge and a dark lower lip give the normal fill depth.
+      g.fillStyle(0xffffff, 0.3);
+      g.fillRect(normalX, innerY, normalWidth, 2);
+      g.fillStyle(0x10151a, 0.28);
+      g.fillRect(normalX, innerY + innerHeight - 2, normalWidth, 2);
+      // Closely spaced meter divisions make growth readable at a glance.
+      g.fillStyle(0x10151a, 0.25);
+      for (let x = normalX + 12; x < normalX + normalWidth; x += 14) {
+        g.fillRect(x, innerY + 2, 1, innerHeight - 4);
+      }
+    }
+
+    if (overchargeWidth > 0) {
+      const overX = HEALTH_BAR.x + HEALTH_BAR.width;
+      g.fillStyle(0xe6ffeb, 0.48);
+      g.fillRect(overX, innerY, overchargeWidth, 2);
+      g.fillStyle(0x087a38, 0.42);
+      g.fillRect(overX, innerY + innerHeight - 2, overchargeWidth, 2);
+      // Repeating diagonal energy cuts distinguish overcharge from ordinary
+      // health even when both sections are green.
+      g.lineStyle(2, 0xd9ffe3, 0.38);
+      for (let x = overX + 5; x < overX + overchargeWidth; x += 13) {
+        const endX = Math.min(x + 7, overX + overchargeWidth);
+        g.lineBetween(x, innerY + innerHeight - 2, endX, innerY + 2);
+      }
+    }
   }
 
   setOverchargeFx(active) {
@@ -354,11 +396,11 @@ export class PlayScene extends Phaser.Scene {
   }
 
   // Called by Player.onCollide when an obstacle hits it.
-  takeDamage(reaction = 'ground') {
+  takeDamage(reaction = 'ground', damage = HEALTH.lossPerHit) {
     if (this.state !== 'running') return;
     if (this.time.now < this.damageInvulnerableUntil) return;
     this.damageInvulnerableUntil = this.time.now + HEALTH.invulnerabilityMs;
-    this.health = Phaser.Math.Clamp(this.health - HEALTH.lossPerHit, 0, HEALTH.overchargeMax);
+    this.health = Phaser.Math.Clamp(this.health - damage, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
 
     if (this.health <= 0) {
@@ -396,6 +438,33 @@ export class PlayScene extends Phaser.Scene {
     obstacle.sprite.setData('entity', obstacle);
     this.obstacleGroup.add(obstacle.sprite);
     this.entities.push(obstacle);
+  }
+
+  scheduleNextObstacleSpawn(time, ramp) {
+    let gap;
+    if (this.clusterSpawnsRemaining > 0) {
+      this.clusterSpawnsRemaining -= 1;
+      gap = this.clusterSpawnsRemaining > 0
+        ? Phaser.Math.Between(SPAWN_RHYTHM.clusterGapMinMs, SPAWN_RHYTHM.clusterGapMaxMs)
+        : Phaser.Math.Between(SPAWN_RHYTHM.postClusterRestMinMs, SPAWN_RHYTHM.postClusterRestMaxMs);
+    } else {
+      const roll = Math.random();
+      if (roll < SPAWN_RHYTHM.clusterChance) {
+        this.clusterSpawnsRemaining = Phaser.Math.Between(
+          SPAWN_RHYTHM.clusterExtraMin,
+          SPAWN_RHYTHM.clusterExtraMax
+        );
+        gap = Phaser.Math.Between(SPAWN_RHYTHM.clusterGapMinMs, SPAWN_RHYTHM.clusterGapMaxMs);
+      } else if (roll < SPAWN_RHYTHM.clusterChance + SPAWN_RHYTHM.lullChance) {
+        gap = Phaser.Math.Between(SPAWN_RHYTHM.lullMinMs, SPAWN_RHYTHM.lullMaxMs);
+      } else {
+        gap = Phaser.Math.Between(SPAWN_RHYTHM.steadyMinMs, SPAWN_RHYTHM.steadyMaxMs);
+      }
+    }
+
+    // Preserve reaction time as speed rises without flattening the authored
+    // cluster/lull contrast.
+    this.nextSpawnAt = time + gap - ramp * 100;
   }
 
   spawnPigeon() {
@@ -526,11 +595,7 @@ export class PlayScene extends Phaser.Scene {
 
     if (time > this.nextSpawnAt && this.birdGroup.countActive(true) === 0) {
       this.spawnObstacle();
-      // Keep obstacles readable as individual challenges. The previous gap
-      // compressed to 600ms at top speed, which could create near-impossible
-      // back-to-back jumps as the world accelerated.
-      const gap = Phaser.Math.Between(1250, 1950) - ramp * 150;
-      this.nextSpawnAt = time + gap;
+      this.scheduleNextObstacleSpawn(time, ramp);
     }
 
     if (time > this.nextPigeonAt && this.canSpawnBird()) {

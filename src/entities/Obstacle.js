@@ -44,7 +44,7 @@ const TYPES = [
   { key: 'obstacle-crate', aspect: 1, height: 50, weight: dayWeight },
   { key: 'obstacle-hydrant0', family: 'hydrant', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
   { key: 'obstacle-hydrant-long0', family: 'hydrant', animation: 'obstacle-hydrant-long-spray', aspect: 90 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
-  { key: 'obstacle-shoppingcart0', animation: 'obstacle-shoppingcart-roll', aspect: 44 / 32, height: 48, speedFactor: 1.18, flipX: true, weight: dayWeight },
+  { key: 'obstacle-shoppingcart0', animation: 'obstacle-shoppingcart-roll', aspect: 56 / 42, height: 68, speedFactor: 1.18, flipX: true, weight: dayWeight },
   { key: 'obstacle-hotdogcart', aspect: 44 / 64, height: 96, weight: dayWeight },
   { key: 'obstacle-parkingmeter', aspect: 18 / 60, height: 75, weight: dayWeight },
   // Night: derelict city
@@ -53,8 +53,8 @@ const TYPES = [
   { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-flies', aspect: 48 / 20, height: 28, weight: nightWeight },
   { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, weight: allDayWeight },
   { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 76, weight: nightWeight },
-  { key: 'obstacle-garbagebags0', animation: 'obstacle-rat-tail', aspect: 38 / 22, height: 33, weight: nightWeight },
-  { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 24 / 38, height: 70, chasesAfterAvoid: true, weight: nightWeight },
+  { key: 'obstacle-garbagebags0', animation: 'obstacle-rat-tail', aspect: 48 / 44, height: 118, weight: nightWeight },
+  { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 30 / 48, height: 70, chasesAfterAvoid: true, weight: nightWeight },
   { key: 'obstacle-streetwalker0', animation: 'obstacle-streetwalker-idle', aspect: 24 / 38, height: 57, weight: nightWeight }
 ];
 

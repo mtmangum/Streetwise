@@ -1,5 +1,5 @@
 import { Entity } from './Entity.js';
-import { PLAYER, GROUND_Y } from '../config.js';
+import { PLAYER, GROUND_Y, HEALTH } from '../config.js';
 
 const RECOVERY_TIMING = { recoil: 65, fall: 90, down: 130, pushUp: 110, stand: 70 };
 
@@ -207,6 +207,6 @@ export class Player extends Entity {
   }
 
   onCrowCollide() {
-    this.scene.takeDamage('air');
+    this.scene.takeDamage('air', HEALTH.crowLossPerHit);
   }
 }
