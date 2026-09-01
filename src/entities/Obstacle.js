@@ -62,10 +62,13 @@ function obstacleFamily(type) {
   return type.family ?? type.key.replace(/\d+$/, '');
 }
 
-function pickType(phase, excludedFamily) {
+function pickType(phase, excludedFamily, stationaryOnly) {
   const weighted = TYPES.map((t) => ({
     ...t,
-    w: obstacleFamily(t) === excludedFamily ? 0 : t.weight(phase)
+    w: obstacleFamily(t) === excludedFamily ||
+      (stationaryOnly && (t.speedFactor !== undefined || t.chasesAfterAvoid))
+      ? 0
+      : t.weight(phase)
   }));
   const total = weighted.reduce((sum, t) => sum + t.w, 0);
   let roll = Math.random() * total;
@@ -80,8 +83,8 @@ function pickType(phase, excludedFamily) {
 // different behavior — that's the polymorphism payoff: PlayScene's update
 // loop treats every entity the same way and each one does its own thing.
 export class Obstacle extends Entity {
-  constructor(scene, speed, phase, excludedFamily = null) {
-    const type = pickType(phase, excludedFamily);
+  constructor(scene, speed, phase, excludedFamily = null, stationaryOnly = false) {
+    const type = pickType(phase, excludedFamily, stationaryOnly);
     const height = type.height;
     const width = Math.round(height * type.aspect);
     // Spawn far enough right that the widest obstacle is still fully

@@ -48,6 +48,9 @@ export const WORLD = {
 // Obstacle cadence alternates between normal beats, short playable clusters,
 // and deliberate lulls so the run has phrasing instead of a metronomic spawn.
 export const SPAWN_RHYTHM = {
+  easyStartSeconds: 20,
+  easyGapMinMs: 4000,
+  easyGapMaxMs: 5500,
   clusterChance: 0.28,
   lullChance: 0.22,
   clusterExtraMin: 1,
@@ -129,6 +132,8 @@ export const HEALTH = {
   overchargeMax: 160,
   start: 100,
   gainPerAvoid: 8,
+  pigeonBoost: 35,
+  drainPerSecond: 1,
   lossPerHit: 30,
   crowLossPerHit: 70,
   invulnerabilityMs: 900

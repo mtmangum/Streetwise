@@ -7,6 +7,7 @@ import { Parallax } from '../entities/Parallax.js';
 import { Dog } from '../entities/Dog.js';
 import { Pigeon } from '../entities/Pigeon.js';
 import { Crow } from '../entities/Crow.js';
+import { Seagull } from '../entities/Seagull.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 
@@ -32,6 +33,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextSpawnAt = 0;
     this.nextPigeonAt = Infinity;
     this.nextCrowAt = Infinity;
+    this.nextSeagullAt = Infinity;
     this.lastObstacleFamily = null;
     this.clusterSpawnsRemaining = 0;
     this.scrollSpeed = WORLD.baseScrollSpeed;
@@ -287,8 +289,10 @@ export class PlayScene extends Phaser.Scene {
 
   startRun() {
     this.state = 'running';
-    this.nextPigeonAt = this.time.now + Phaser.Math.Between(7000, 12000);
-    this.nextCrowAt = this.time.now + Phaser.Math.Between(5000, 9000);
+    const easyStartMs = SPAWN_RHYTHM.easyStartSeconds * 1000;
+    this.nextPigeonAt = this.time.now + easyStartMs + Phaser.Math.Between(3000, 7000);
+    this.nextCrowAt = this.time.now + easyStartMs + Phaser.Math.Between(2000, 6000);
+    this.nextSeagullAt = this.time.now + Phaser.Math.Between(45000, 75000);
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
@@ -433,7 +437,14 @@ export class PlayScene extends Phaser.Scene {
   }
 
   spawnObstacle() {
-    const obstacle = new Obstacle(this, this.scrollSpeed, this.dayPhase, this.lastObstacleFamily);
+    const easyStart = this.elapsed < SPAWN_RHYTHM.easyStartSeconds;
+    const obstacle = new Obstacle(
+      this,
+      this.scrollSpeed,
+      this.dayPhase,
+      this.lastObstacleFamily,
+      easyStart
+    );
     this.lastObstacleFamily = obstacle.family;
     obstacle.sprite.setData('entity', obstacle);
     this.obstacleGroup.add(obstacle.sprite);
@@ -442,7 +453,10 @@ export class PlayScene extends Phaser.Scene {
 
   scheduleNextObstacleSpawn(time, ramp) {
     let gap;
-    if (this.clusterSpawnsRemaining > 0) {
+    if (this.elapsed < SPAWN_RHYTHM.easyStartSeconds) {
+      this.clusterSpawnsRemaining = 0;
+      gap = Phaser.Math.Between(SPAWN_RHYTHM.easyGapMinMs, SPAWN_RHYTHM.easyGapMaxMs);
+    } else if (this.clusterSpawnsRemaining > 0) {
       this.clusterSpawnsRemaining -= 1;
       gap = this.clusterSpawnsRemaining > 0
         ? Phaser.Math.Between(SPAWN_RHYTHM.clusterGapMinMs, SPAWN_RHYTHM.clusterGapMaxMs)
@@ -481,6 +495,13 @@ export class PlayScene extends Phaser.Scene {
     this.entities.push(crow);
   }
 
+  spawnSeagull() {
+    const seagull = new Seagull(this, this.scrollSpeed);
+    seagull.sprite.setData('entity', seagull);
+    this.birdGroup.add(seagull.sprite);
+    this.entities.push(seagull);
+  }
+
   canSpawnBird() {
     if (this.birdGroup.countActive(true) > 0) return false;
     // An obstacle already close to Nicole should resolve before a bird begins
@@ -492,11 +513,20 @@ export class PlayScene extends Phaser.Scene {
 
   collectPigeon(x, y) {
     if (this.state !== 'running') return;
-    // A powered bird strike is the jackpot: fill both the normal track and
-    // the complete overcharge extension to the absolute life-force cap.
+    this.health = Phaser.Math.Clamp(this.health + HEALTH.pigeonBoost, 0, HEALTH.overchargeMax);
+    this.updateHealthBar();
+    this.burstBirdReward(x, y, 'LIFE BOOST!', '#f2e88f');
+  }
+
+  collectSeagull(x, y) {
+    if (this.state !== 'running') return;
     this.health = HEALTH.overchargeMax;
     this.updateHealthBar();
     this.rainHealthSparks();
+    this.burstBirdReward(x, y, 'FULL LIFE!', '#b8ffbf');
+  }
+
+  burstBirdReward(x, y, label, color) {
 
     const burstColors = [0xffffff, 0xd8d8d2, 0xa8adb5, 0x777d87];
     for (let i = 0; i < 14; i++) {
@@ -519,12 +549,12 @@ export class PlayScene extends Phaser.Scene {
     }
 
     const bonusText = this.add
-      .text(x, y - 22, 'FULL LIFE!', {
+      .text(x, y - 22, label, {
         fontFamily: 'sans-serif',
         fontSize: '12px',
         fontStyle: 'bold',
         resolution: RENDER_SCALE,
-        color: '#b8ffbf',
+        color,
         stroke: '#17331d',
         strokeThickness: 3
       })
@@ -569,6 +599,17 @@ export class PlayScene extends Phaser.Scene {
     if (this.state !== 'running') return;
 
     this.elapsed += delta / 1000;
+    this.health = Phaser.Math.Clamp(
+      this.health - HEALTH.drainPerSecond * (delta / 1000),
+      0,
+      HEALTH.overchargeMax
+    );
+    this.updateHealthBar();
+    if (this.health <= 0) {
+      this.player.fallDown();
+      this.gameOver();
+      return;
+    }
     const ramp = Phaser.Math.Clamp(this.elapsed / WORLD.rampSeconds, 0, 1);
     this.scrollSpeed = Phaser.Math.Linear(
       WORLD.baseScrollSpeed,
@@ -605,6 +646,10 @@ export class PlayScene extends Phaser.Scene {
     if (time > this.nextCrowAt && this.canSpawnBird()) {
       this.spawnCrow();
       this.nextCrowAt = time + Phaser.Math.Between(12000, 20000);
+    }
+    if (time > this.nextSeagullAt && this.canSpawnBird()) {
+      this.spawnSeagull();
+      this.nextSeagullAt = time + Phaser.Math.Between(60000, 100000);
     }
   }
 }

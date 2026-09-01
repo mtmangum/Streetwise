@@ -80,6 +80,9 @@ export class BootScene extends Phaser.Scene {
     this.drawPigeonFrame('pigeon-fly0', 0);
     this.drawPigeonFrame('pigeon-fly1', 1);
     this.drawPigeonFrame('pigeon-fly2', 2);
+    this.drawSeagullFrame('seagull-fly0', 0);
+    this.drawSeagullFrame('seagull-fly1', 1);
+    this.drawSeagullFrame('seagull-fly2', 2);
     this.drawCrowFrame('crow-fly0', 0);
     this.drawCrowFrame('crow-fly1', 1);
     this.drawCrowFrame('crow-fly2', 2);
@@ -512,6 +515,21 @@ export class BootScene extends Phaser.Scene {
       [6,6,13,6,O],[7,6,11,5,D],[8,7,7,2,M],[2,5,6,6,O],[3,6,5,4,D],
       [0,7,4,2,O],[0,8,3,1,L],[4,6,1,1,EYE],
       [18,7,7,3,O],[19,7,5,2,D],[21,6,4,2,O]
+    ]);
+  }
+
+  drawSeagullFrame(key, wingPose) {
+    const O=0x313844,D=0x7d8791,W=0xf4f1e6,L=0xd7dce0,BEAK=0xe8a333,EYE=0x111820;
+    const wings = wingPose === 0
+      ? [[9,0,6,9,O],[10,1,5,7,W],[14,4,8,5,O],[15,5,6,3,L]]
+      : wingPose === 1
+        ? [[8,6,14,5,O],[9,7,12,3,W],[16,9,8,3,O],[17,9,6,2,L]]
+        : [[10,4,10,6,O],[11,5,8,3,W],[15,8,7,5,O],[16,9,5,3,L]];
+    this.drawObstacleTexture(key,30,15,[
+      ...wings,
+      [7,6,15,6,O],[8,6,13,5,W],[10,7,8,3,L],[3,5,7,6,O],[4,6,6,4,W],
+      [0,7,5,2,BEAK],[5,6,1,1,EYE],
+      [21,7,9,3,O],[22,7,7,2,W],[25,6,5,2,O]
     ]);
   }
 
@@ -1077,6 +1095,17 @@ export class BootScene extends Phaser.Scene {
         { key: 'crow-fly1' }
       ],
       frameRate: 11,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'seagull-fly',
+      frames: [
+        { key: 'seagull-fly0' },
+        { key: 'seagull-fly1' },
+        { key: 'seagull-fly2' },
+        { key: 'seagull-fly1' }
+      ],
+      frameRate: 8,
       repeat: -1
     });
 
