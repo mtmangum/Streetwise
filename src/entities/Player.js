@@ -21,6 +21,7 @@ export class Player extends Entity {
     // clears (or, on the fatal hit, never clears).
     this.recovering = false;
     this.recoveryTimer = null;
+    this.powerJumpUsed = false;
   }
 
   // A second hit can land mid-recovery (a different obstacle, while still
@@ -55,9 +56,21 @@ export class Player extends Entity {
   jump() {
     if (this._isOnGround && !this.recovering) {
       this.sprite.body.setVelocityY(PLAYER.jumpVelocity);
+      this.powerJumpUsed = false;
       return true;
     }
     return false;
+  }
+
+  // A second press during ascent converts the regular hop into one higher
+  // power jump. Limiting it to the rising half of the arc keeps this from
+  // behaving like an unlimited mid-air double jump.
+  powerJump() {
+    if (this.recovering || this._isOnGround || this.powerJumpUsed) return false;
+    if (this.sprite.body.velocity.y >= 0) return false;
+    this.powerJumpUsed = true;
+    this.sprite.body.setVelocityY(PLAYER.powerJumpVelocity);
+    return true;
   }
 
   // Called once per frame while the run is active (PlayScene drives this
@@ -69,6 +82,7 @@ export class Player extends Entity {
       this.sprite.anims.stop();
       this.sprite.setTexture(this.sprite.body.velocity.y < 40 ? 'player-jumpRise' : 'player-jumpFall');
     } else {
+      this.powerJumpUsed = false;
       this.sprite.anims.play('player-walk', true);
     }
   }

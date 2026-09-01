@@ -71,6 +71,9 @@ export class BootScene extends Phaser.Scene {
     this.drawCopObstacle('obstacle-cop1', true);
     this.drawStreetwalkerObstacle('obstacle-streetwalker0', false);
     this.drawStreetwalkerObstacle('obstacle-streetwalker1', true);
+    this.drawPigeonFrame('pigeon-fly0', 0);
+    this.drawPigeonFrame('pigeon-fly1', 1);
+    this.drawPigeonFrame('pigeon-fly2', 2);
   }
 
   // Obstacles use a 2x logical-pixel grid, matching the denser character
@@ -337,43 +340,40 @@ export class BootScene extends Phaser.Scene {
 
   drawHotDogCartObstacle(key) {
     const O=0x202126,D=0x8e2f28,R=0xd34a3c,Y=0xe2b942,L=0xf1e3c8,STEEL=0xa9b2b4,GLASS=0x86a9b2,NAVY=0x27375c;
-    this.drawObstacleTexture(key,44,50,[
+    this.drawObstacleTexture(key,44,56,[
       // Broad alternating-panel umbrella with a scalloped valance.
       [18,1,8,1,O],[11,2,22,2,O],[6,4,32,2,O],[3,6,38,4,O],[1,9,42,3,O],
       [18,2,8,2,R],[12,3,8,3,NAVY],[24,3,8,3,NAVY],[7,5,10,4,R],[17,4,10,6,R],[27,5,10,4,R],
       [3,7,7,3,NAVY],[10,8,7,2,NAVY],[27,8,7,2,NAVY],[34,7,7,3,NAVY],
       [2,10,7,2,NAVY],[10,10,7,2,R],[18,10,8,2,R],[27,10,7,2,R],[35,10,7,2,NAVY],
       // Center pole visibly connects canopy to cart.
-      [21,11,3,18,O],[22,11,1,18,STEEL],
+      [21,11,3,24,O],[22,11,1,24,STEEL],
       // Stainless serving canopy and ingredient display.
-      [8,17,28,2,O],[5,19,34,3,O],[7,19,30,2,R],[4,22,36,3,O],[5,22,34,2,Y],
-      [7,25,30,10,O],[8,25,28,9,GLASS],[9,26,26,2,0xcce0df],[10,29,8,4,L],[20,28,7,5,R],[29,27,5,6,Y],
+      [8,23,28,2,O],[5,25,34,3,O],[7,25,30,2,R],[4,28,36,3,O],[5,28,34,2,Y],
+      [7,31,30,10,O],[8,31,28,9,GLASS],[9,32,26,2,0xcce0df],[10,35,8,4,L],[20,34,7,5,R],[29,33,5,6,Y],
       // Cart cabinet, service panel and counter lip.
-      [5,34,34,10,O],[6,35,32,8,R],[7,36,30,3,Y],[9,40,12,3,L],[25,40,9,3,D],
-      [3,43,38,3,O],[5,43,34,1,STEEL],[8,45,4,3,O],[33,45,4,3,O],
+      [5,40,34,10,O],[6,41,32,8,R],[7,42,30,3,Y],[9,46,12,3,L],[25,46,9,3,D],
+      [3,49,38,3,O],[5,49,34,1,STEEL],[8,51,4,3,O],[33,51,4,3,O],
       // Two large street-cart wheels.
-      [6,46,8,4,O],[8,47,4,2,STEEL],[31,46,8,4,O],[33,47,4,2,STEEL]
+      [6,52,8,4,O],[8,53,4,2,STEEL],[31,52,8,4,O],[33,53,4,2,STEEL]
     ]);
   }
 
   drawParkingMeterObstacle(key) {
     const O=0x1b2023,DEEP=0x111517,D=0x3e494d,M=0x68767a,L=0xaab5b6,HI=0xd8dedc,GLASS=0x92afb0,BLUE=0x35577b,R=0xc85045,G=0x75a36a;
-    this.drawObstacleTexture(key,22,40,[
-      // Heavy stepped arch gives the meter its traditional rounded crown.
-      [7,1,8,1,O],[4,2,14,2,O],[2,4,18,4,O],[1,7,20,8,O],
-      [7,2,8,1,HI],[5,3,12,2,L],[3,5,16,3,M],[2,8,18,6,D],
-      // Glass timer window nested inside the dome.
-      [5,5,12,7,O],[6,5,10,6,GLASS],[7,6,8,2,HI],[8,8,6,2,D],
-      [10,6,1,4,M],[13,6,1,4,M],[7,10,8,1,O],
-      // Thick divider and blue coin/control face inspired by the reference.
-      [1,13,20,4,O],[2,13,18,2,L],[3,16,16,12,O],[4,16,14,11,BLUE],
-      [5,17,5,7,DEEP],[6,18,3,4,L],[7,19,1,3,O],[11,17,5,2,HI],
-      [12,20,4,2,R],[12,23,2,2,G],[15,23,2,2,HI],[5,25,12,2,D],
-      // Round lower mechanism housing, keyhole and cast-metal shoulders.
-      [3,27,16,8,O],[4,27,14,7,M],[5,28,12,5,D],[7,29,8,3,DEEP],
-      [9,29,4,4,O],[10,30,2,2,L],[5,33,12,2,L],
-      // Narrow post, collar, and weighted foot.
-      [8,34,6,5,O],[9,34,4,5,M],[7,38,8,2,O],[5,39,12,1,O],[8,38,6,1,HI]
+    this.drawObstacleTexture(key,18,60,[
+      // Compact rounded single-space meter head.
+      [6,1,6,1,O],[3,2,12,2,O],[1,4,16,6,O],[0,8,18,10,O],
+      [6,2,6,1,HI],[4,3,10,2,L],[2,5,14,5,M],[1,9,16,8,D],
+      // Arched glass timer window and small mechanical dial.
+      [4,5,10,8,O],[5,5,8,7,GLASS],[6,6,6,2,HI],[7,9,4,2,D],[9,6,1,5,M],
+      // Simple coin slot and traditional lower round mechanism.
+      [1,14,16,4,O],[2,14,14,2,L],[3,17,12,8,O],[4,17,10,7,BLUE],
+      [5,18,6,2,HI],[11,18,2,3,R],[5,21,2,2,G],[9,21,3,2,DEEP],
+      [4,24,10,3,O],[6,24,6,2,M],[8,24,2,2,L],
+      // Long, slender cast-metal pole—the defining classic silhouette.
+      [7,26,4,29,O],[8,26,2,29,M],[9,27,1,27,L],
+      [6,54,6,3,O],[7,54,4,2,HI],[5,56,8,3,O],[3,59,12,1,O]
     ]);
   }
 
@@ -413,6 +413,22 @@ export class BootScene extends Phaser.Scene {
     ]);
   }
 
+  drawPigeonFrame(key, wingPose) {
+    const O=0x252832,D=0x555b66,M=0x858b94,L=0xbcc0c5,NECK=0x5f7473,EYE=0xe4bb4f;
+    const wings = wingPose === 0
+      ? [[8,1,5,7,O],[9,2,4,6,L],[12,4,6,5,O],[13,5,5,3,M]]
+      : wingPose === 1
+        ? [[8,6,10,5,O],[9,7,8,3,L],[13,9,7,3,O],[14,9,6,2,M]]
+        : [[9,5,8,5,O],[10,6,7,3,L],[12,9,5,4,O],[13,9,4,3,M]];
+    this.drawObstacleTexture(key,24,14,[
+      ...wings,
+      [6,6,12,6,O],[7,6,10,5,M],[8,7,6,2,L],[3,5,6,6,O],[4,6,5,4,NECK],
+      [1,7,4,2,O],[0,8,4,1,0xd2a34b],[5,6,1,1,EYE],
+      [17,7,6,3,O],[18,7,5,2,D],[20,6,4,2,O],
+      [9,11,2,3,O],[10,11,1,2,0xb06d55],[14,11,2,3,O],[15,11,1,2,0xb06d55]
+    ]);
+  }
+
   // Neutral base (grey body, white highlight band) so it can be recolored
   // across the day/night cycle with a plain tint - see Ground.setTint().
   generateGroundTexture() {
@@ -445,13 +461,17 @@ export class BootScene extends Phaser.Scene {
       5
     );
     this.drawWindowsTexture('hillsWindows', PARALLAX.hillsNear.tileWidth, PARALLAX.hillsNear.height, nearBuildings);
+    this.drawPedestriansTexture('pedestrians0', PARALLAX.pedestrians.tileWidth, PARALLAX.pedestrians.height, false);
+    this.drawPedestriansTexture('pedestrians1', PARALLAX.pedestrians.tileWidth, PARALLAX.pedestrians.height, true);
     this.drawParkedCarsTexture('parkedCars', PARALLAX.parkedCars.tileWidth, PARALLAX.parkedCars.height);
     this.drawCloudTexture('clouds', 0xffffff, PARALLAX.clouds.tileWidth, PARALLAX.clouds.height);
   }
 
   drawParkedCarsTexture(key, tileWidth, tileHeight) {
     const g = this.add.graphics();
-    const colors = [0x9f3535, 0x315f83, 0x53704e, 0xc19a3d, 0x7c7470, 0xddd6c8, 0x604d72];
+    // Restrained, low-saturation curbside palette keeps these solid cars
+    // visually behind the brighter interactive obstacle roster.
+    const colors = [0x615d5d, 0x565b5e, 0x595e59, 0x69645a, 0x5f5d5c, 0x716f6a, 0x5c585f];
     let x = 18;
     let index = 0;
     while (x < tileWidth - 90) {
@@ -490,28 +510,74 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(color, 1);
       g.fillRect(cabinX, bodyY - 3, cabinW, 5);
       g.fillRect(cabinX + 5, bodyY - roofH, cabinW - 10, roofH);
-      g.fillStyle(0x78919b, 1);
+      g.fillStyle(0x555d60, 1);
       g.fillRect(cabinX + 7, bodyY - roofH + 2, cabinW * 0.38, roofH - 4);
       g.fillRect(cabinX + cabinW * 0.52, bodyY - roofH + 2, cabinW * 0.31, roofH - 4);
-      g.fillStyle(0xb9d0d3, 1);
+      g.fillStyle(0x737a7b, 1);
       g.fillRect(cabinX + 8, bodyY - roofH + 2, cabinW * 0.32, 2);
       // Bumpers, lights, handles, and occasional taxi roof sign.
       g.fillStyle(0xc7c7c2, 1);
       g.fillRect(x, bottom - 7, 5, 3);
       g.fillRect(x + bodyW - 5, bottom - 7, 5, 3);
-      g.fillStyle(0xe4d575, 1);
+      g.fillStyle(0x77725f, 1);
       g.fillRect(x + bodyW - 3, bodyY + 4, 3, 4);
-      g.fillStyle(0xb23c35, 1);
+      g.fillStyle(0x5d4847, 1);
       g.fillRect(x, bodyY + 4, 3, 4);
       g.fillStyle(0xd7d7d2, 1);
       g.fillRect(x + bodyW * 0.54, bodyY + 4, 6, 1);
       if (taxi) {
         g.fillStyle(0x22252a, 1);
         g.fillRect(cabinX + cabinW * 0.38, bodyY - roofH - 5, 12, 2);
-        g.fillStyle(0xe0b83f, 1);
+        g.fillStyle(0x756b53, 1);
         g.fillRect(cabinX + cabinW * 0.4, bodyY - roofH - 8, 9, 3);
       }
-      x += bodyW + Phaser.Math.Between(35, 78);
+      // Cars bunch into curbside clusters, followed by believable stretches
+      // of open curb rather than repeating at one mechanical interval.
+      const gap = index % 4 === 2
+        ? Phaser.Math.Between(92, 155)
+        : Phaser.Math.Between(10, 34);
+      x += bodyW + gap;
+      index++;
+    }
+    g.generateTexture(key, tileWidth, tileHeight);
+    g.destroy();
+  }
+
+  drawPedestriansTexture(key, tileWidth, tileHeight, flip) {
+    const g = this.add.graphics();
+    const tones = [0x35363b, 0x46474c, 0x57585c, 0x3e4148];
+    let x = 28;
+    let index = 0;
+    while (x < tileWidth - 30) {
+      const tall = index % 3 === 0;
+      const h = tall ? 48 : [40, 43, 45][index % 3];
+      const feetY = tileHeight - 2;
+      const headY = feetY - h;
+      const tone = tones[index % tones.length];
+      const stride = flip ? 4 : -4;
+      // Head, neck and a varied coat/jacket silhouette.
+      g.fillStyle(tone, 1);
+      g.fillCircle(x + 8, headY + 5, tall ? 5 : 4);
+      if (index % 4 === 1) g.fillRect(x + 3, headY + 1, 10, 2); // brimmed hat
+      g.fillRect(x + 6, headY + 9, 4, 4);
+      g.fillRect(x + 3, headY + 12, 11, tall ? 20 : 17);
+      if (index % 3 === 1) g.fillRect(x + 1, headY + 16, 15, 10); // bulky coat
+      // Counter-swinging arms and alternating walking legs.
+      g.fillRect(x + (flip ? 1 : 12), headY + 14, 3, 17);
+      g.fillRect(x + (flip ? 13 : 1), headY + 15, 3, 15);
+      g.fillRect(x + 5, headY + 29, 4, feetY - headY - 29);
+      g.fillRect(x + 10, headY + 29, 4, feetY - headY - 29);
+      g.fillRect(x + 5 + stride, feetY - 4, 8, 4);
+      g.fillRect(x + 10 - stride, feetY - 4, 8, 4);
+      // Occasional briefcase or shopping bag adds another readable profile.
+      if (index % 4 === 2) {
+        g.fillRect(x + 15, headY + 24, 8, 9);
+        g.fillRect(x + 17, headY + 21, 4, 3);
+      }
+      const groupGap = index % 5 === 3
+        ? [124, 148, 166][index % 3]
+        : [42, 58, 69, 51][index % 4];
+      x += groupGap;
       index++;
     }
     g.generateTexture(key, tileWidth, tileHeight);
@@ -880,6 +946,17 @@ export class BootScene extends Phaser.Scene {
         { key: 'obstacle-streetwalker1' }
       ],
       frameRate: 3,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'pigeon-fly',
+      frames: [
+        { key: 'pigeon-fly0' },
+        { key: 'pigeon-fly1' },
+        { key: 'pigeon-fly2' },
+        { key: 'pigeon-fly1' }
+      ],
+      frameRate: 9,
       repeat: -1
     });
 

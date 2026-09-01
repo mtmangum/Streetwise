@@ -7,7 +7,7 @@ import { PARALLAX, GAME_WIDTH, GAME_HEIGHT, GROUND_Y } from '../config.js';
 // scroll() just moves the tile layers each frame.
 export class Parallax {
   constructor(scene) {
-    const { sun, skyline, hillsFar, hillsNear, parkedCars, clouds } = PARALLAX;
+    const { sun, skyline, hillsFar, hillsNear, pedestrians, parkedCars, clouds } = PARALLAX;
 
     this.sky = scene.add.graphics().setDepth(-11);
 
@@ -47,10 +47,19 @@ export class Parallax {
       .setDepth(-5)
       .setAlpha(0);
 
+    this.pedestrians = scene.add
+      .tileSprite(0, GROUND_Y - pedestrians.height, GAME_WIDTH, pedestrians.height, 'pedestrians0')
+      .setOrigin(0, 0)
+      .setDepth(-4.5)
+      .setAlpha(0.52);
+    this.pedestrianFrame = 0;
+    this.pedestrianFrameTime = 0;
+
     this.parkedCars = scene.add
       .tileSprite(0, GROUND_Y - parkedCars.height, GAME_WIDTH, parkedCars.height, 'parkedCars')
       .setOrigin(0, 0)
-      .setDepth(-4);
+      .setDepth(-4)
+      .setAlpha(1);
   }
 
   scroll(speed, delta) {
@@ -60,7 +69,14 @@ export class Parallax {
     this.clouds.tilePositionX += speed * PARALLAX.clouds.speedFactor * dt;
     this.hillsNear.tilePositionX += speed * PARALLAX.hillsNear.speedFactor * dt;
     this.hillsWindows.tilePositionX = this.hillsNear.tilePositionX;
+    this.pedestrians.tilePositionX += speed * PARALLAX.pedestrians.speedFactor * dt;
     this.parkedCars.tilePositionX += speed * PARALLAX.parkedCars.speedFactor * dt;
+    this.pedestrianFrameTime += delta;
+    if (this.pedestrianFrameTime >= 180) {
+      this.pedestrianFrameTime %= 180;
+      this.pedestrianFrame = 1 - this.pedestrianFrame;
+      this.pedestrians.setTexture(`pedestrians${this.pedestrianFrame}`);
+    }
   }
 
   applyPalette(palette) {
@@ -80,6 +96,7 @@ export class Parallax {
     this.hillsNear.setTint(palette.hillNear);
     this.clouds.setTint(palette.cloud);
     this.hillsWindows.setAlpha(palette.windowGlow);
-    this.parkedCars.setTint(palette.cloud);
+    this.pedestrians.setTint(palette.cloud);
+    this.parkedCars.setTint(palette.hillFar);
   }
 }

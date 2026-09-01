@@ -9,6 +9,7 @@ export const PLAYER = {
   startX: 170,
   gravity: 1400,
   jumpVelocity: -560,
+  powerJumpVelocity: -720,
   runSpeed: 0 // player stays put on screen; world scrolls under it
 };
 
@@ -92,6 +93,7 @@ export const PARALLAX = {
   skyline: { tileWidth: 960, height: 145, speedFactor: 0.07 },
   hillsFar: { tileWidth: 720, height: 190, speedFactor: 0.15 },
   hillsNear: { tileWidth: 640, height: 240, speedFactor: 0.35 },
+  pedestrians: { tileWidth: 1000, height: 58, speedFactor: 0.43 },
   parkedCars: { tileWidth: 1200, height: 48, speedFactor: 0.52 },
   clouds: { tileWidth: 220, height: 50, y: 24, speedFactor: 0.08 }
 };

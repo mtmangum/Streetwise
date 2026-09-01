@@ -5,6 +5,7 @@ import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
 import { Parallax } from '../entities/Parallax.js';
 import { Dog } from '../entities/Dog.js';
+import { Pigeon } from '../entities/Pigeon.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 
@@ -28,6 +29,7 @@ export class PlayScene extends Phaser.Scene {
     this.state = 'ready'; // ready | running | gameover
     this.elapsed = 0;
     this.nextSpawnAt = 0;
+    this.nextPigeonAt = Infinity;
     this.scrollSpeed = WORLD.baseScrollSpeed;
     this.health = HEALTH.start;
     this.avoidedCount = 0;
@@ -56,6 +58,18 @@ export class PlayScene extends Phaser.Scene {
       this.player.sprite,
       this.obstacleGroup,
       (playerSprite, obstacleSprite) => this.handleCollision(obstacleSprite),
+      null,
+      this
+    );
+
+    this.pigeonGroup = this.physics.add.group();
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.pigeonGroup,
+      (_playerSprite, pigeonSprite) => {
+        const pigeon = pigeonSprite.getData('entity');
+        if (pigeon) pigeon.onCollide(this.player);
+      },
       null,
       this
     );
@@ -110,12 +124,42 @@ export class PlayScene extends Phaser.Scene {
     );
     this.updateHealthBar();
 
-    this.overlayText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Press Space or tap to start', {
+    const panelX = GAME_WIDTH / 2 - 190;
+    const panelY = GAME_HEIGHT / 2 - 64;
+    this.overlayPanel = this.add.graphics().setDepth(19);
+    this.overlayPanel.fillStyle(0x05070c, 0.45);
+    this.overlayPanel.fillRoundedRect(panelX + 4, panelY + 5, 380, 128, 14);
+    this.overlayPanel.fillStyle(0x121823, 0.94);
+    this.overlayPanel.fillRoundedRect(panelX, panelY, 380, 128, 14);
+    this.overlayPanel.lineStyle(2, 0xe0752f, 0.9);
+    this.overlayPanel.strokeRoundedRect(panelX, panelY, 380, 128, 14);
+    this.overlayPanel.fillStyle(0xf2c14e, 1);
+    this.overlayPanel.fillRoundedRect(panelX + 18, panelY + 13, 344, 3, 2);
+
+    this.overlayTitle = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 34, 'RUN THE CITY', {
         fontFamily: 'sans-serif',
         fontSize: '22px',
+        fontStyle: 'bold',
         resolution: RENDER_SCALE,
-        color: '#ffffff',
+        color: '#f2c14e',
+        stroke: '#090b10',
+        strokeThickness: 4,
+        align: 'center'
+      })
+      .setOrigin(0.5)
+      .setDepth(20);
+
+    this.overlayText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20, 'SPACE / TAP  —  JUMP\nDOUBLE-PRESS  —  POWER JUMP', {
+        fontFamily: 'sans-serif',
+        fontSize: '16px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#eef3f6',
+        stroke: '#090b10',
+        strokeThickness: 3,
+        lineSpacing: 7,
         align: 'center'
       })
       .setOrigin(0.5)
@@ -135,11 +179,16 @@ export class PlayScene extends Phaser.Scene {
       // obstacle at any scroll speed but the one it was tuned for.
       const travelMs = (DOG.trailDistance / this.scrollSpeed) * 1000;
       this.time.delayedCall(travelMs + DOG.jumpReactionMs, () => this.dog.jump());
+      return;
     }
+    this.player.powerJump();
   }
 
   startRun() {
     this.state = 'running';
+    this.nextPigeonAt = this.time.now + Phaser.Math.Between(7000, 12000);
+    this.overlayPanel.setVisible(false);
+    this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
   }
 
@@ -225,7 +274,10 @@ export class PlayScene extends Phaser.Scene {
     this.state = 'gameover';
     this.physics.pause();
     this.dog.rest();
-    this.overlayText.setText(`Game over — dodged ${this.avoidedCount}\nSpace / tap to try again`);
+    this.overlayTitle.setText('RUN OVER');
+    this.overlayText.setText(`DODGED ${this.avoidedCount}\nSPACE / TAP  —  TRY AGAIN`);
+    this.overlayPanel.setVisible(true);
+    this.overlayTitle.setVisible(true);
     this.overlayText.setVisible(true);
   }
 
@@ -234,6 +286,88 @@ export class PlayScene extends Phaser.Scene {
     obstacle.sprite.setData('entity', obstacle);
     this.obstacleGroup.add(obstacle.sprite);
     this.entities.push(obstacle);
+  }
+
+  spawnPigeon() {
+    const pigeon = new Pigeon(this, this.scrollSpeed);
+    pigeon.sprite.setData('entity', pigeon);
+    this.pigeonGroup.add(pigeon.sprite);
+    this.entities.push(pigeon);
+  }
+
+  collectPigeon(x, y) {
+    if (this.state !== 'running') return;
+    // A powered bird strike is the jackpot: fill both the normal track and
+    // the complete overcharge extension to the absolute life-force cap.
+    this.health = HEALTH.overchargeMax;
+    this.updateHealthBar();
+    this.rainHealthSparks();
+
+    const burstColors = [0xffffff, 0xd8d8d2, 0xa8adb5, 0x777d87];
+    for (let i = 0; i < 14; i++) {
+      const angle = (Math.PI * 2 * i) / 14;
+      const distance = 22 + (i % 4) * 7;
+      const feather = i % 3 === 0
+        ? this.add.circle(x, y, 3 + (i % 2), 0xf4f1e8).setDepth(16)
+        : this.add.rectangle(x, y, 3, 8, burstColors[i % burstColors.length]).setDepth(16);
+      feather.setAngle(i * 31);
+      this.tweens.add({
+        targets: feather,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance + 10,
+        angle: feather.angle + 160,
+        alpha: 0,
+        duration: 520 + (i % 3) * 90,
+        ease: 'Quad.easeOut',
+        onComplete: () => feather.destroy()
+      });
+    }
+
+    const bonusText = this.add
+      .text(x, y - 22, 'FULL LIFE!', {
+        fontFamily: 'sans-serif',
+        fontSize: '12px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#b8ffbf',
+        stroke: '#17331d',
+        strokeThickness: 3
+      })
+      .setOrigin(0.5)
+      .setDepth(17);
+    this.tweens.add({
+      targets: bonusText,
+      y: y - 48,
+      alpha: 0,
+      duration: 900,
+      ease: 'Quad.easeOut',
+      onComplete: () => bonusText.destroy()
+    });
+  }
+
+  rainHealthSparks() {
+    const trackWidth = HEALTH_BAR.width + HEALTH_BAR.overchargeWidth;
+    const colors = [0xf2c14e, 0xcfff79, 0x58f28b, 0xffffff];
+    for (let i = 0; i < 28; i++) {
+      const x = HEALTH_BAR.x + 5 + ((i * 47) % (trackWidth - 10));
+      const startY = HEALTH_BAR.y - 15 - (i % 4) * 5;
+      const spark = i % 3 === 0
+        ? this.add.star(x, startY, 4, 1, 3, colors[i % colors.length]).setDepth(26)
+        : this.add.rectangle(x, startY, 2, 6, colors[i % colors.length]).setDepth(26);
+      spark.setAngle((i * 37) % 180).setScale(i % 5 === 0 ? 1.4 : 1);
+      this.tweens.add({
+        targets: spark,
+        x: x + ((i % 3) - 1) * 7,
+        y: HEALTH_BAR.y + HEALTH_BAR.height + 13 + (i % 5) * 4,
+        angle: spark.angle + 150 + (i % 4) * 35,
+        alpha: 0,
+        scale: 0.35,
+        delay: (i % 10) * 32,
+        duration: 430 + (i % 6) * 55,
+        ease: 'Quad.easeIn',
+        onComplete: () => spark.destroy()
+      });
+    }
   }
 
   update(time, delta) {
@@ -271,6 +405,11 @@ export class PlayScene extends Phaser.Scene {
       // back-to-back jumps as the world accelerated.
       const gap = Phaser.Math.Between(1250, 1950) - ramp * 150;
       this.nextSpawnAt = time + gap;
+    }
+
+    if (time > this.nextPigeonAt) {
+      this.spawnPigeon();
+      this.nextPigeonAt = time + Phaser.Math.Between(11000, 19000);
     }
   }
 }
