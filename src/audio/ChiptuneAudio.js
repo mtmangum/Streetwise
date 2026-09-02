@@ -1,5 +1,18 @@
 const midiToHz = (note) => 440 * (2 ** ((note - 69) / 12));
 
+const MELODY = [76,null,79,null,83,81,79,null,74,null,76,79,81,null,79,null,
+  76,null,79,81,83,null,86,83,81,79,76,null,74,null,71,null];
+const STORM_MELODY = [64,null,null,63,59,null,58,null,64,null,67,null,63,null,58,null,
+  61,null,null,60,56,null,55,null,61,60,56,null,51,null,null,null];
+
+const ARRANGEMENTS = {
+  day: { transpose: 0, bass: [40,40,43,43,36,36,38,38], lead: 'square', pulse: 2 },
+  afternoon: { transpose: 2, bass: [40,43,45,43,38,40,43,38], lead: 'square', pulse: 2 },
+  dusk: { transpose: -2, bass: [38,38,41,41,34,34,36,36], lead: 'triangle', pulse: 4 },
+  night: { transpose: -5, bass: [35,35,38,38,31,31,33,33], lead: 'square', pulse: 4 },
+  storm: { melody: STORM_MELODY, transpose: 0, bass: [28,28,31,29,25,25,30,24], lead: 'square', pulse: 2 }
+};
+
 // Tiny Web Audio synth: no downloaded assets, just square/triangle waves
 // arranged into a looping 8-bit street theme and short gameplay stingers.
 export class ChiptuneAudio {
@@ -8,6 +21,7 @@ export class ChiptuneAudio {
     this.context = scene.sound.context;
     this.musicStep = 0;
     this.musicEvent = null;
+    this.sceneName = 'day';
   }
 
   tone(frequency, duration = 0.1, volume = 0.06, type = 'square', slideTo = null, delay = 0) {
@@ -42,14 +56,30 @@ export class ChiptuneAudio {
     this.musicEvent = null;
   }
 
+  setScene(sceneName) {
+    if (!ARRANGEMENTS[sceneName] || sceneName === this.sceneName) return;
+    this.sceneName = sceneName;
+    // A tiny two-note cue makes the visual transition audible without
+    // interrupting or restarting the main loop.
+    const cue = sceneName === 'storm' ? [47, 40] : [64, 67];
+    cue.forEach((note, index) => this.tone(midiToHz(note), 0.12, 0.025, 'square', null, index * 0.07));
+  }
+
   playMusicStep() {
-    const melody = [76,null,79,null,83,81,79,null,74,null,76,79,81,null,79,null,
-      76,null,79,81,83,null,86,83,81,79,76,null,74,null,71,null];
-    const bass = [40,40,43,43,36,36,38,38];
+    const arrangement = ARRANGEMENTS[this.sceneName];
+    const melody = arrangement.melody ?? MELODY;
     const step = this.musicStep % melody.length;
-    if (melody[step] !== null) this.tone(midiToHz(melody[step]), 0.105, 0.025, 'square');
-    if (step % 4 === 0) this.tone(midiToHz(bass[(step / 4) % bass.length]), 0.22, 0.035, 'triangle');
-    if (step % 2 === 0) this.tone(step % 4 === 0 ? 95 : 125, 0.025, 0.012, 'square');
+    const note = melody[step];
+    const sparseNightBeat = this.sceneName === 'night' && step % 4 === 2;
+    if (note !== null && !sparseNightBeat) {
+      this.tone(midiToHz(note + arrangement.transpose), 0.105, 0.025, arrangement.lead);
+    }
+    if (step % 4 === 0) {
+      this.tone(midiToHz(arrangement.bass[(step / 4) % arrangement.bass.length]), 0.22, 0.035, 'triangle');
+    }
+    if (step % arrangement.pulse === 0) {
+      this.tone(step % 4 === 0 ? 95 : 125, 0.025, this.sceneName === 'storm' ? 0.018 : 0.012, 'square');
+    }
     this.musicStep += 1;
   }
 
@@ -76,6 +106,12 @@ export class ChiptuneAudio {
 
   hit() {
     this.tone(170, 0.28, 0.1, 'sawtooth', 55);
+  }
+
+  thunder() {
+    this.tone(72, 0.7, 0.11, 'sawtooth', 34);
+    this.tone(49, 0.9, 0.08, 'triangle', 29, 0.08);
+    this.tone(96, 0.18, 0.045, 'square', 42, 0.03);
   }
 
   gameOver() {

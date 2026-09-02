@@ -381,6 +381,7 @@ export class BootScene extends Phaser.Scene {
 
   drawHotDogCartObstacle(key) {
     const O=0x202126,D=0x8e2f28,R=0xd34a3c,Y=0xe2b942,L=0xf1e3c8,STEEL=0xa9b2b4,GLASS=0x86a9b2,NAVY=0x27375c;
+    const SKIN=0xb97852,SKINL=0xd79a6e,HAIR=0x3a2923,APRON=0xe2ddd0,SHIRT=0x35617a;
     this.drawObstacleTexture(key,44,64,[
       // Broad alternating-panel umbrella with a scalloped valance.
       [18,1,8,1,O],[11,2,22,2,O],[6,4,32,2,O],[3,6,38,4,O],[1,9,42,3,O],
@@ -389,6 +390,11 @@ export class BootScene extends Phaser.Scene {
       [2,10,7,2,NAVY],[10,10,7,2,R],[18,10,8,2,R],[27,10,7,2,R],[35,10,7,2,NAVY],
       // Center pole visibly connects canopy to cart.
       [21,11,3,32,O],[22,11,1,32,STEEL],
+      // Vendor working behind the cart: cap, face, apron, and serving arm.
+      [29,14,8,2,O],[27,16,11,3,NAVY],[26,18,3,2,NAVY],
+      [29,19,8,8,HAIR],[28,19,8,7,SKIN],[29,20,6,5,SKINL],[34,21,1,1,O],
+      [28,26,10,11,O],[29,27,8,10,SHIRT],[31,28,5,9,APRON],[32,29,3,7,L],
+      [27,27,4,4,SHIRT],[24,29,6,3,SKIN],[23,30,3,2,SKINL],
       // Stainless serving canopy and ingredient display.
       [8,31,28,2,O],[5,33,34,3,O],[7,33,30,2,R],[4,36,36,3,O],[5,36,34,2,Y],
       [7,39,30,10,O],[8,39,28,9,GLASS],[9,40,26,2,0xcce0df],[10,43,8,4,L],[20,42,7,5,R],[29,41,5,6,Y],
@@ -419,21 +425,34 @@ export class BootScene extends Phaser.Scene {
   }
 
   drawGarbageBagsObstacle(key, flip) {
-    const O=0x111316,D=0x24282b,M=0x3b4042,L=0x606566,RAT=0x6f5148,TAIL=0xb08375;
-    const tail=flip
-      ? [[37,34,7,2,TAIL],[43,31,3,4,TAIL],[45,28,3,4,RAT],[46,28,1,1,0xe0c451]]
-      : [[36,35,6,2,TAIL],[41,35,5,1,TAIL],[44,32,4,3,RAT],[46,32,1,1,0xe0c451]];
-    this.drawObstacleTexture(key,48,44,[...tail,
-      // Tall tied bags form an unmistakable curbside heap.
-      [1,19,16,23,O],[4,14,10,8,O],[7,10,5,6,O],[4,19,11,21,M],[6,21,3,16,L],[11,20,3,18,D],
-      [12,11,20,32,O],[16,6,12,8,O],[20,2,5,6,O],[15,12,15,29,D],[18,14,5,22,M],[24,12,5,25,L],
-      [29,19,17,23,O],[32,14,11,8,O],[36,10,5,6,O],[31,20,13,21,M],[34,22,4,15,L],[40,20,3,18,D],
-      // Smaller front bags overlap the seams and give the pile depth.
-      [7,27,19,16,O],[10,24,12,6,O],[14,21,5,5,O],[9,28,15,13,D],[12,29,4,9,M],
-      [23,29,17,13,O],[26,25,11,7,O],[30,22,5,5,O],[25,30,13,11,M],[28,31,4,8,L],
-      // Glossy creases, stretched plastic, and pavement contact shadow.
-      [6,18,5,2,L],[18,10,8,2,M],[34,18,6,2,L],[13,35,7,2,M],[29,36,5,2,D],
-      [0,41,47,3,O],[3,41,40,1,D]
+    const O=0x0c0f12,D=0x1b2126,M=0x303940,L=0x59656a,RAT=0x755548,RATL=0xa47b68,TAIL=0xc09583,EYE=0xe5d55c;
+    const rat=flip
+      ? [
+          [31,17,11,6,RAT],[33,16,8,2,RATL],[40,14,7,7,RAT],[41,13,3,3,RATL],[45,13,2,3,RAT],
+          [44,16,1,1,EYE],[46,18,2,1,RATL],[31,20,3,3,RAT],
+          [31,20,3,2,TAIL],[27,21,5,2,TAIL],[24,19,4,2,TAIL],[22,17,3,2,TAIL]
+        ]
+      : [
+          [32,18,11,6,RAT],[34,17,8,2,RATL],[41,15,7,7,RAT],[42,14,3,3,RATL],[46,14,2,3,RAT],
+          [45,17,1,1,EYE],[46,19,2,1,RATL],[32,21,3,3,RAT],
+          [32,21,3,2,TAIL],[28,20,5,2,TAIL],[25,21,4,2,TAIL],[22,22,4,2,TAIL]
+        ];
+    this.drawObstacleTexture(key,48,44,[
+      // Three distinct stepped silhouettes read as bulging, tied bags.
+      [3,20,2,18,O],[5,16,3,25,O],[8,14,7,28,O],[15,17,3,24,O],[18,22,2,18,O],
+      [6,18,10,21,D],[8,16,6,3,D],[10,12,3,4,O],[8,11,7,2,O],[9,18,3,18,M],[12,20,2,15,L],
+      [14,13,2,27,O],[16,9,3,32,O],[19,7,10,35,O],[29,10,3,31,O],[32,16,2,24,O],
+      [17,11,14,28,D],[20,9,8,3,D],[22,4,4,4,O],[19,3,10,2,O],[20,12,4,24,M],[25,11,3,25,L],
+      [29,23,2,17,O],[31,19,3,22,O],[34,17,8,25,O],[42,20,3,21,O],[45,25,2,15,O],
+      [32,21,12,18,D],[35,19,7,3,D],[37,14,3,4,O],[34,13,9,2,O],[34,23,3,14,M],[39,21,3,16,L],
+      // Smaller front bag overlaps the seams and breaks up the big pile.
+      [10,29,2,12,O],[12,26,4,16,O],[16,24,9,18,O],[25,27,4,14,O],[29,31,2,10,O],
+      [13,28,15,12,M],[17,26,7,3,D],[19,22,3,4,O],[16,21,9,2,O],[16,30,3,8,L],
+      // Creases, tied plastic ears, and a solid pavement-contact shadow.
+      [6,23,4,2,L],[22,15,5,2,L],[35,27,5,2,L],[19,35,6,2,D],
+      [1,40,46,4,O],[5,40,37,1,M],
+      // The rat sits on top instead of disappearing behind the bags.
+      ...rat
     ]);
   }
 
@@ -986,6 +1005,16 @@ export class BootScene extends Phaser.Scene {
       key: 'obstacle-trashbin-flies',
       frames: [{ key: 'obstacle-trashbin0' }, { key: 'obstacle-trashbin1' }],
       frameRate: 5,
+      repeat: -1
+    });
+    this.anims.create({
+      key: 'obstacle-cat-walk',
+      frames: [
+        { key: 'obstacle-cat0' },
+        { key: 'obstacle-cat0' },
+        { key: 'obstacle-cat1' }
+      ],
+      frameRate: 2,
       repeat: -1
     });
     this.anims.create({

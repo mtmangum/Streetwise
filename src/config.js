@@ -10,6 +10,7 @@ export const PLAYER = {
   gravity: 1400,
   jumpVelocity: -560,
   powerJumpVelocity: -720,
+  superJumpChargeMs: 300,
   jumpBufferMs: 120,
   coyoteTimeMs: 80,
   runSpeed: 0 // player stays put on screen; world scrolls under it
@@ -73,6 +74,13 @@ export const SPAWN_RHYTHM = {
 // clamps at 1 (stays night) rather than looping; a restart resets to day.
 export const DAY_CYCLE = {
   durationSeconds: 90
+};
+
+export const STORM = {
+  startSeconds: 105,
+  rainDropCount: 44,
+  lightningMinMs: 4200,
+  lightningMaxMs: 8500
 };
 
 export const COLORS = {

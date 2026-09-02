@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG, PLAYER, STORM } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -8,6 +8,7 @@ import { Dog } from '../entities/Dog.js';
 import { Pigeon } from '../entities/Pigeon.js';
 import { Crow } from '../entities/Crow.js';
 import { Seagull } from '../entities/Seagull.js';
+import { Storm } from '../entities/Storm.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 import { ChiptuneAudio } from '../audio/ChiptuneAudio.js';
@@ -44,6 +45,9 @@ export class PlayScene extends Phaser.Scene {
     this.avoidedCount = 0;
     this.overchargeActive = false;
     this.dayPhase = 0;
+    this.jumpInputHeld = false;
+    this.superChargeActive = false;
+    this.superChargeStartedAt = 0;
     this.audio = new ChiptuneAudio(this);
 
     this.parallax = new Parallax(this);
@@ -58,6 +62,7 @@ export class PlayScene extends Phaser.Scene {
     this.player = new Player(this);
     this.physics.add.collider(this.player.sprite, this.ground.body);
     this.dog = new Dog(this);
+    this.storm = new Storm(this);
 
     // Every non-player game object lives here. PlayScene doesn't care what
     // type each one is — it just calls entity.update() on all of them.
@@ -137,6 +142,29 @@ export class PlayScene extends Phaser.Scene {
     );
     this.updateHealthBar();
 
+    this.superMeterLabel = this.add
+      .text(HEALTH_BAR.x, 39, 'SUPER', {
+        fontFamily: 'monospace',
+        fontSize: '10px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#f2c14e',
+        stroke: '#090b10',
+        strokeThickness: 2
+      })
+      .setOrigin(0, 0.5)
+      .setDepth(23);
+    this.superMeterBg = this.add
+      .rectangle(HEALTH_BAR.x + 48, 34, 150, 10, 0x14161c)
+      .setOrigin(0, 0)
+      .setStrokeStyle(1, 0x000000, 0.8)
+      .setDepth(22);
+    this.superMeterFill = this.add
+      .rectangle(HEALTH_BAR.x + 50, 36, 146, 6, 0x58c8f2)
+      .setOrigin(0, 0)
+      .setScale(0, 1)
+      .setDepth(23);
+
     const panelX = GAME_WIDTH / 2 - 190;
     const panelY = GAME_HEIGHT / 2 - 74;
     this.overlayPanel = this.add.graphics().setDepth(19);
@@ -164,7 +192,7 @@ export class PlayScene extends Phaser.Scene {
       .setDepth(20);
 
     this.overlayText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 23, 'SPACE / TAP  —  JUMP\nDOUBLE-PRESS  —  SUPER JUMP\nPIGEONS BOOST LIFE · RARE SEAGULLS FILL IT', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 23, 'SPACE / TAP  —  JUMP\nPRESS + HOLD  —  CHARGE SUPER JUMP\nPIGEONS BOOST LIFE · RARE SEAGULLS FILL IT', {
         fontFamily: 'sans-serif',
         fontSize: '15px',
         fontStyle: 'bold',
@@ -193,7 +221,7 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const hintControls = this.add
-      .text(0, 13, 'SPACE / TAP  ·  DOUBLE-PRESS', {
+      .text(0, 13, 'TAP TO JUMP  ·  HOLD TO CHARGE', {
         fontFamily: 'monospace',
         fontSize: '11px',
         fontStyle: 'bold',
@@ -260,16 +288,23 @@ export class PlayScene extends Phaser.Scene {
       this.togglePause();
     });
 
-    this.input.keyboard.on('keydown-SPACE', () => this.handleInput());
+    this.input.keyboard.on('keydown-SPACE', (event) => {
+      if (!event.repeat) this.handleInputDown();
+    });
+    this.input.keyboard.on('keyup-SPACE', () => this.handleInputUp());
     this.input.keyboard.on('keydown-P', () => this.togglePause());
     this.input.keyboard.on('keydown-ESC', () => this.togglePause());
-    this.input.on('pointerdown', () => this.handleInput());
+    this.input.on('pointerdown', () => this.handleInputDown());
+    this.input.on('pointerup', () => this.handleInputUp());
+    this.input.on('pointerupoutside', () => this.handleInputUp());
   }
 
-  handleInput() {
+  handleInputDown() {
     if (this.state === 'ready') return this.startRun();
     if (this.state === 'gameover') return this.restart();
     if (this.state === 'paused') return;
+    if (this.jumpInputHeld) return;
+    this.jumpInputHeld = true;
     if (this.player.jump()) {
       this.audio.jump();
       // The obstacle she just cleared reaches the dog's (screen-fixed)
@@ -277,9 +312,45 @@ export class PlayScene extends Phaser.Scene {
       // real delay, not a flat number, or the echo desyncs from the
       // obstacle at any scroll speed but the one it was tuned for.
       this.scheduleDogJump();
-      return;
+      this.beginSuperCharge();
     }
-    if (this.player.powerJump()) this.audio.superJump();
+  }
+
+  handleInputUp() {
+    this.jumpInputHeld = false;
+    if (this.superChargeActive) this.resetSuperCharge();
+  }
+
+  beginSuperCharge() {
+    this.superChargeActive = true;
+    this.superChargeStartedAt = this.time.now;
+    this.superMeterFill.setScale(0, 1).setFillStyle(0x58c8f2);
+    this.superMeterLabel.setColor('#f2c14e');
+  }
+
+  resetSuperCharge() {
+    this.superChargeActive = false;
+    this.superMeterFill.setScale(0, 1).setFillStyle(0x58c8f2);
+    this.superMeterLabel.setColor('#f2c14e');
+  }
+
+  updateSuperCharge() {
+    if (!this.superChargeActive) return;
+    if (!this.jumpInputHeld) return this.resetSuperCharge();
+    const charge = Phaser.Math.Clamp(
+      (this.time.now - this.superChargeStartedAt) / PLAYER.superJumpChargeMs,
+      0,
+      1
+    );
+    this.superMeterFill.setScale(charge, 1);
+    if (charge < 1) return;
+
+    this.superChargeActive = false;
+    if (!this.player.powerJump()) return this.resetSuperCharge();
+    this.audio.superJump();
+    this.superMeterFill.setScale(1, 1).setFillStyle(0xf2c14e);
+    this.superMeterLabel.setColor('#b8ffbf');
+    this.time.delayedCall(280, () => this.resetSuperCharge());
   }
 
   scheduleDogJump() {
@@ -291,6 +362,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.state === 'running') {
       this.audio.jump();
       this.scheduleDogJump();
+      if (this.jumpInputHeld) this.beginSuperCharge();
     }
   }
 
@@ -519,6 +591,8 @@ export class PlayScene extends Phaser.Scene {
   gameOver() {
     if (this.state !== 'running') return;
     this.state = 'gameover';
+    this.jumpInputHeld = false;
+    this.resetSuperCharge();
     this.audio.stop();
     this.audio.gameOver();
     this.physics.pause();
@@ -697,6 +771,9 @@ export class PlayScene extends Phaser.Scene {
     if (this.state !== 'running') return;
 
     this.elapsed += delta / 1000;
+    this.updateSuperCharge();
+    if (!this.storm.active && this.elapsed >= STORM.startSeconds) this.storm.start(time);
+    this.storm.update(time, delta);
     this.health = Phaser.Math.Clamp(
       this.health - HEALTH.drainPerSecond * (delta / 1000),
       0,
@@ -719,6 +796,16 @@ export class PlayScene extends Phaser.Scene {
     const palette = dayNightPalette(this.dayPhase);
     this.parallax.applyPalette(palette);
     this.ground.setTint(palette.ground);
+    const musicScene = this.storm.active
+      ? 'storm'
+      : this.dayPhase >= 1
+        ? 'night'
+        : this.dayPhase >= 2 / 3
+          ? 'dusk'
+          : this.dayPhase >= 1 / 3
+            ? 'afternoon'
+            : 'day';
+    this.audio.setScene(musicScene);
 
     this.ground.scroll(this.scrollSpeed, delta);
     this.parallax.scroll(this.scrollSpeed, delta);

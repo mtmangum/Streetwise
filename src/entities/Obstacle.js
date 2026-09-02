@@ -48,11 +48,11 @@ const TYPES = [
   { key: 'obstacle-hotdogcart', aspect: 44 / 64, height: 96, weight: dayWeight },
   { key: 'obstacle-parkingmeter', aspect: 18 / 60, height: 75, weight: dayWeight },
   // Night: derelict city
-  { key: 'obstacle-cat0', animation: 'obstacle-cat-hiss', aspect: 30 / 27, height: 44, groundOffset: 2, weight: nightWeight },
+  { key: 'obstacle-cat0', animation: 'obstacle-cat-walk', aspect: 30 / 27, height: 44, groundOffset: 2, speedFactor: 0.55, behavior: 'cat', weight: nightWeight },
   { key: 'obstacle-trashfire0', animation: 'obstacle-fire-flicker', aspect: 28 / 36, height: 60, weight: nightWeight },
   { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-flies', aspect: 48 / 20, height: 28, weight: nightWeight },
   { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, safeFirst: true, weight: allDayWeight },
-  { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 76, weight: nightWeight },
+  { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 104, weight: nightWeight },
   { key: 'obstacle-garbagebags0', animation: 'obstacle-rat-tail', aspect: 48 / 44, height: 118, weight: nightWeight },
   { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 30 / 48, height: 70, chasesAfterAvoid: true, weight: nightWeight },
   { key: 'obstacle-streetwalker0', animation: 'obstacle-streetwalker-idle', aspect: 24 / 38, height: 57, weight: nightWeight }
@@ -102,10 +102,13 @@ export class Obstacle extends Entity {
     this.family = obstacleFamily(type);
     this.currentSpeed = speed;
     this.chasesAfterAvoid = type.chasesAfterAvoid ?? false;
+    this.behavior = type.behavior ?? null;
+    this.enraged = false;
     this.chasing = false;
     this.retiring = false;
     this.rewarded = false;
     this.sprite.setDisplaySize(width, height);
+    this.sprite.setDepth(8);
     if (type.flipX) this.sprite.setFlipX(true);
     if (type.animation) this.sprite.anims.play(type.animation);
     this.sprite.body.setAllowGravity(false);
@@ -115,10 +118,22 @@ export class Obstacle extends Entity {
   setSpeed(speed) {
     this.currentSpeed = speed;
     if (this.chasing || this.retiring) return;
-    this.sprite.setVelocityX(-speed * this.speedFactor);
+    const factor = this.enraged ? 1.55 : this.speedFactor;
+    this.sprite.setVelocityX(-speed * factor);
   }
 
   onUpdate(time, delta) {
+    if (
+      this.behavior === 'cat' &&
+      !this.enraged &&
+      this.sprite.x - PLAYER.startX < 300
+    ) {
+      this.enraged = true;
+      this.sprite.anims.play('obstacle-cat-hiss', true);
+      this.sprite.anims.timeScale = 1.8;
+      this.setSpeed(this.currentSpeed);
+    }
+
     if (
       this.chasesAfterAvoid &&
       !this.chasing &&
@@ -145,7 +160,7 @@ export class Obstacle extends Entity {
       if (time >= this.chaseEndsAt) {
         this.chasing = false;
         this.retiring = true;
-        this.sprite.setFlipX(false).setDepth(0);
+        this.sprite.setFlipX(false).setDepth(8);
       }
       return;
     }

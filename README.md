@@ -19,7 +19,7 @@ Open the local URL Vite prints (usually `http://localhost:5173`).
 ## Controls
 
 - **Space / click / tap** — jump, or start/restart the game
-- **Double-press** — turn a rising jump into a super jump
+- **Press and hold** — fill the SUPER meter and boost a rising jump
 - **P / Escape / Pause button** — pause or resume
 
 ## Project structure
@@ -91,34 +91,6 @@ Music and effects are synthesized in real time by Web Audio: a looping
 square-wave chiptune accompanies distinct jump, super-jump, reward, bird,
 damage, and game-over sounds. Audio begins with the first gameplay input
 to comply with browser autoplay rules.
-
-## Architecture
-
-Game objects follow the four pillars of OOP:
-
-- **Encapsulation** — `Entity` and its subclasses own their Phaser sprite
-  and physics body; `PlayScene` never touches sprite internals directly.
-- **Abstraction** — `Entity` is an abstract base class (throws if
-  instantiated directly) exposing a small stable interface: `update()`,
-  `onCollide()`, `bounds`, `destroy()`.
-- **Inheritance** — `Player` and `Obstacle` both extend `Entity` and get
-  lifecycle/bookkeeping for free.
-- **Polymorphism** — `PlayScene` loops over a list of entities and calls
-  `entity.update()` / `entity.onCollide()` on all of them the same way;
-  each subclass supplies its own behavior.
-
-```
-src/entities/
-  Entity.js     Abstract base class
-  Player.js     extends Entity — jump, animate, stumble/fall/get up on hit
-  Obstacle.js   extends Entity — scroll, avoid/hit, self-destroy off screen
-  Pigeon.js     extends Entity — super-jump health boost
-  Seagull.js    extends Entity — rare full-life reward
-  Crow.js       extends Entity — damaging aerial hazard
-  Ground.js     scrolling floor tile (not a collidable-lifecycle Entity)
-  Parallax.js   sky/sun/moon/brownstones/clouds (not a collidable-lifecycle Entity)
-  Dog.js        companion greyhound (not an Entity - cosmetic, no physics/collision)
-```
 
 ## Deployment
 

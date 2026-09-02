@@ -75,9 +75,8 @@ export class Player extends Entity {
     this.powerJumpUsed = false;
   }
 
-  // A second press during ascent converts the regular hop into one higher
-  // power jump. Limiting it to the rising half of the arc keeps this from
-  // behaving like an unlimited mid-air double jump.
+  // A completed hold charge during ascent converts the regular hop into
+  // one higher power jump. PlayScene owns the charge timing and meter.
   powerJump() {
     if (this.recovering || this._isOnGround || this.powerJumpUsed) return false;
     if (this.sprite.body.velocity.y >= 0) return false;
