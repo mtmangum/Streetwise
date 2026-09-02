@@ -823,8 +823,8 @@
 
     { g:"night", name:"Passed-out drunk", key:"obstacle-sleeping0", tw:48, th:28, ingame:40, family:"sleeping", verdict:"ok", was:"Vanished on asphalt / too busy",
       notes:[
-        "Shipped, then cut down twice: from a flat unreadable mound → a detailed figure → this spare version. A slumped khaki-coat mass, a capped head, one bent knee up as the bump to hurdle, a single bottle on its side by his hip, all on a flattened cardboard sheet for contrast against the dark pavement. ~40 rects, down from ~90.",
-        "Texture 48×20 → 48×28, in-game height 28 → 40 so the raised knee affects jump timing."
+        "Redrawn again after the detailed version became a jumbled mass. The proposed panel removes the cardboard and flies, leaving one capped head, one coat mass, one bent knee, one extended leg and a bottle isolated at far right.",
+        "The two game frames now animate only a subtle breath and drifting sleep marks; the body silhouette stays stable."
       ],
       draw:function(){var O="#171822",D="#2e2e38",M="#464858",L="#686b7d",SK="#a86f61",S="#d99a82",SH="#3c3445",
           GLASS="#4d765a",GLINT="#94b58c",LABEL="#d7c59a",FLY="#111014",WING="#aaa6ad";
@@ -836,24 +836,19 @@
           [42,15,2,3,LABEL],[45,16,2,2,O],[40,15,1,1,GLINT],[0,19,48,1,"#12131a"]];}
       ,
       v2:{ tw:48, th:28, ingame:40, verdict:"ok",
-        draw:function(){var O="#33302a",COAT="#847a5c",COAT_D="#5a5340",COLLAR="#c9bf99",
-            PANTS="#4a5470",PANTS_L="#66708c",SKIN="#b88a6e",CAP="#22202a",BOOT="#4a3a2e",
-            GLASS="#7a6a45",GLASS_L="#bfae82",CAP_G="#caa85a",
-            GRND="#2c2b31",CARD="#7a6647",CARD_L="#9a8560",CARD_D="#5c4c34";
+        draw:function(){var O="#24232a",COAT="#756b50",COAT_D="#504936",COAT_L="#a29773",
+            PANTS="#44506d",PANTS_L="#657291",SKIN="#bc886d",CAP="#292633",BOOT="#30271f",
+            GLASS="#72633d",GLASS_L="#b6a36b",GROUND="#25252b",SLEEP="#a7bad0";
           return [
-            [2,25,44,2,GRND],[0,27,48,1,"#0d0d14"],
-            [4,21,40,6,CARD],[5,21,38,1,CARD_L],[5,26,38,1,CARD_D],[18,22,3,1,CARD_D],[32,23,3,1,CARD_D],
-            [10,22,17,3,O],[11,23,15,2,PANTS],[25,21,7,3,O],[26,22,5,2,BOOT],
-            [21,19,9,3,O],[22,20,7,1,GLASS_L],[22,21,7,1,GLASS],[20,19,2,3,O],[20,20,1,1,CAP_G],
-            [10,12,18,12,O],[11,13,16,10,COAT],[11,13,4,3,COLLAR],[12,18,14,1,COAT_D],
-            [18,12,8,2,COAT],
-            [20,16,6,3,O],[21,17,5,2,COAT_D],[25,18,3,3,O],[26,19,2,2,SKIN],
-            [3,12,8,9,O],[4,13,6,6,SKIN],[3,11,7,3,CAP],[4,16,6,1,CAP],
-            [5,17,3,1,O],[4,20,4,1,"#8a5c4c"],
-            [24,16,6,8,O],[25,17,4,7,PANTS],
-            [26,9,7,8,O],[27,10,5,6,PANTS],[28,11,3,3,PANTS_L],
-            [31,12,6,11,O],[32,13,4,9,PANTS],
-            [31,21,8,4,O],[32,22,6,2,BOOT]
+            [7,5,4,1,SLEEP],[10,4,1,2,SLEEP],[13,2,5,1,SLEEP],[17,1,1,2,SLEEP],
+            [2,25,43,2,GROUND],
+            [3,13,9,9,O],[4,14,7,7,SKIN],[3,11,9,4,CAP],[5,17,3,1,O],[10,17,2,2,SKIN],
+            [11,12,18,12,O],[12,13,16,10,COAT],[13,14,8,2,COAT_L],[13,20,14,2,COAT_D],[12,13,4,4,COAT_L],
+            [16,16,10,3,O],[17,17,8,2,COAT_D],[24,18,4,3,O],[25,19,3,2,SKIN],
+            [25,8,9,9,O],[26,9,7,7,PANTS],[27,10,4,3,PANTS_L],
+            [31,14,6,10,O],[32,15,4,8,PANTS],[34,22,7,3,O],[35,22,6,2,BOOT],
+            [19,22,18,4,O],[20,23,15,2,PANTS],[36,22,8,4,O],[38,23,6,2,BOOT],
+            [43,16,3,9,O],[44,17,1,7,GLASS],[43,15,3,2,GLASS_L],[44,14,1,2,O]
           ];}
       }
     },

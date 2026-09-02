@@ -86,6 +86,7 @@ export class BootScene extends Phaser.Scene {
     this.drawMattTexture('matt-pat', 'pat');
     this.drawMattTexture('matt-hug', 'hug');
     this.drawPinkSneakerPickup();
+    this.drawZoomiesTreat();
     this.drawPigeonFrame('pigeon-fly0', 0);
     this.drawPigeonFrame('pigeon-fly1', 1);
     this.drawPigeonFrame('pigeon-fly2', 2);
@@ -378,36 +379,31 @@ export class BootScene extends Phaser.Scene {
   // pavement. Non-graphic - posture and one bottle only. The alt frame just
   // breathes (belly +1px) and moves the flies.
   drawSleepingObstacle(key, flip) {
-    const O=0x33302a,COAT=0x847a5c,COAT_D=0x5a5340,COLLAR=0xc9bf99,
-      PANTS=0x4a5470,PANTS_L=0x66708c,SKIN=0xb88a6e,CAP=0x22202a,BOOT=0x4a3a2e,
-      GLASS=0x7a6a45,GLASS_L=0xbfae82,CAP_G=0xcaa85a,
-      GRND=0x2c2b31,CARD=0x7a6647,CARD_L=0x9a8560,CARD_D=0x5c4c34,FLY=0x141216;
-    const b=flip?1:0;
-    const flies=flip
-      ? [[10,4,1,1,FLY],[15,6,1,1,FLY],[19,3,1,1,FLY]]
-      : [[8,3,1,1,FLY],[13,5,1,1,FLY],[17,2,1,1,FLY]];
+    const O=0x24232a,COAT=0x756b50,COAT_D=0x504936,COAT_L=0xa29773,
+      PANTS=0x44506d,PANTS_L=0x657291,SKIN=0xbc886d,CAP=0x292633,BOOT=0x30271f,
+      GLASS=0x72633d,GLASS_L=0xb6a36b,GROUND=0x25252b,SLEEP=0xa7bad0;
+    const breathe=flip?1:0;
+    const sleepMarks=flip
+      ? [[8,4,4,1,SLEEP],[11,3,1,2,SLEEP],[14,1,5,1,SLEEP],[18,0,1,2,SLEEP]]
+      : [[7,5,4,1,SLEEP],[10,4,1,2,SLEEP],[13,2,5,1,SLEEP],[17,1,1,2,SLEEP]];
     this.drawObstacleTexture(key,48,28,[
-      ...flies,
-      // Pavement shadow, curb line, and a flattened cardboard sheet.
-      [2,25,44,2,GRND],[0,27,48,1,0x0d0d14],
-      [4,21,40,6,CARD],[5,21,38,1,CARD_L],[5,26,38,1,CARD_D],[18,22,3,1,CARD_D],[32,23,3,1,CARD_D],
-      // Far leg lying flat.
-      [10,22,17,3,O],[11,23,15,2,PANTS],[25,21,7,3,O],[26,22,5,2,BOOT],
-      // A bottle on its side by his hip.
-      [21,19,9,3,O],[22,20,7,1,GLASS_L],[22,21,7,1,GLASS],[20,19,2,3,O],[20,20,1,1,CAP_G],
-      // Slumped coat over the torso - one clean mass (breathes 1px).
-      [10,12,18,12,O],[11,13,16,10,COAT],[11,13,4,3,COLLAR],[12,18,14,1,COAT_D],
-      [18,12+b,8,2,COAT],
-      // Near arm resting toward the bottle.
-      [20,16,6,3,O],[21,17,5,2,COAT_D],[25,18,3,3,O],[26,19,2,2,SKIN],
-      // Head and pulled-down cap.
-      [3,12,8,9,O],[4,13,6,6,SKIN],[3,11,7,3,CAP],[4,16,6,1,CAP],
-      [5,17,3,1,O],[4,20,4,1,0x8a5c4c],
-      // Bent near leg - the raised knee is the bump to clear.
-      [24,16,6,8,O],[25,17,4,7,PANTS],
-      [26,9,7,8,O],[27,10,5,6,PANTS],[28,11,3,3,PANTS_L],
-      [31,12,6,11,O],[32,13,4,9,PANTS],
-      [31,21,8,4,O],[32,22,6,2,BOOT]
+      ...sleepMarks,
+      // One quiet ground shadow rather than a second cardboard silhouette.
+      [2,25,43,2,GROUND],
+      // Head at the left: cap, face, closed eye and nose remain separated.
+      [3,13,9,9,O],[4,14,7,7,SKIN],[3,11,9,4,CAP],[5,17,3,1,O],[10,17,2,2,SKIN],
+      // A single slumped coat mass with a breathing shoulder highlight.
+      [11,12,18,12,O],[12,13,16,10,COAT],[13,14+breathe,8,2,COAT_L],
+      [13,20,14,2,COAT_D],[12,13,4,4,COAT_L],
+      // Arm resting cleanly across the torso.
+      [16,16,10,3,O],[17,17,8,2,COAT_D],[24,18,4,3,O],[25,19,3,2,SKIN],
+      // One raised knee, with the shin descending unmistakably to its boot.
+      [25,8,9,9,O],[26,9,7,7,PANTS],[27,10,4,3,PANTS_L],
+      [31,14,6,10,O],[32,15,4,8,PANTS],[34,22,7,3,O],[35,22,6,2,BOOT],
+      // The far leg extends horizontally beneath the torso.
+      [19,22,18,4,O],[20,23,15,2,PANTS],[36,22,8,4,O],[38,23,6,2,BOOT],
+      // A separate upright bottle at the far right, away from the anatomy.
+      [43,16,3,9,O],[44,17,1,7,GLASS],[43,15,3,2,GLASS_L],[44,14,1,2,O]
     ]);
   }
 
@@ -706,6 +702,24 @@ export class BootScene extends Phaser.Scene {
       // Sparse four-point stars stay outside the footwear silhouettes.
       [3,3,1,5,GLOW],[1,5,5,1,GLOW],[36,20,1,5,CY],[34,22,5,1,CY],
       [33,1,1,3,HI],[32,2,3,1,HI]
+    ]);
+  }
+
+  drawZoomiesTreat() {
+    const O=0x5b3218,D=0xa85d24,B=0xd98a3a,L=0xf2bc64,HI=0xffe3a1,CY=0x55eaff,PINK=0xff4b9b;
+    this.drawObstacleTexture('pickup-zoomies-treat',30,22,[
+      // Cyan and pink glints retain the established collectible language.
+      [2,2,1,4,CY],[0,4,5,1,CY],[27,1,1,4,PINK],[25,3,5,1,PINK],
+      [3,18,1,3,PINK],[2,19,3,1,PINK],[27,17,1,3,CY],[26,18,3,1,CY],
+      // Large golden bone biscuit with four rounded knuckles.
+      [3,6,6,4,O],[2,8,5,6,O],[4,12,6,4,O],
+      [21,6,6,4,O],[23,8,5,6,O],[20,12,6,4,O],
+      [7,8,16,7,O],[8,9,14,5,B],
+      [4,7,4,3,L],[3,9,4,4,B],[5,12,4,3,L],
+      [22,7,4,3,L],[23,9,4,4,B],[21,12,4,3,L],
+      [9,9,12,1,HI],[9,13,12,1,D],
+      // Baked dimples make it unmistakably edible rather than a bone icon.
+      [11,10,2,2,D],[16,11,2,2,D],[20,9,1,1,O]
     ]);
   }
 
@@ -1303,7 +1317,7 @@ export class BootScene extends Phaser.Scene {
       repeat: -1
     });
     this.anims.create({
-      key: 'obstacle-sleeping-flies',
+      key: 'obstacle-sleeping-breathe',
       frames: [{ key: 'obstacle-sleeping0' }, { key: 'obstacle-sleeping1' }],
       frameRate: 4,
       repeat: -1

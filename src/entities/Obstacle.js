@@ -7,6 +7,10 @@ import { GAME_WIDTH, GROUND_Y, PLAYER } from '../config.js';
 // line, then a linear handoff from dusk to night so it's all-night by the
 // time dayPhase reaches 1. No overlap during the day/afternoon stretch.
 const DUSK_START = 2 / 3;
+const DOG_CLEARABLE_FAMILIES = new Set([
+  'obstacle-mailbox', 'obstacle-cone', 'obstacle-trashbin',
+  'obstacle-cat', 'obstacle-sleeping', 'obstacle-boombox', 'obstacle-rats'
+]);
 
 function dayWeight(phase) {
   if (phase <= DUSK_START) return 1;
@@ -51,7 +55,7 @@ const TYPES = [
   // Night: derelict city
   { key: 'obstacle-cat0', animation: 'obstacle-cat-run', aspect: 30 / 27, height: 44, groundOffset: 2, speedFactor: 0.55, behavior: 'cat', weight: nightWeight },
   { key: 'obstacle-trashfire0', animation: 'obstacle-fire-flicker', aspect: 28 / 36, height: 60, weight: nightWeight },
-  { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-flies', aspect: 48 / 28, height: 40, weight: nightWeight },
+  { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-breathe', aspect: 48 / 28, height: 40, weight: nightWeight },
   { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, safeFirst: true, weight: allDayWeight },
   { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 52, height: 104, weight: nightWeight },
   { key: 'obstacle-rats0', animation: 'obstacle-rats-scurry', aspect: 44 / 22, height: 24, speedFactor: 1.3, weight: nightWeight },
@@ -101,6 +105,7 @@ export class Obstacle extends Entity {
 
     this.speedFactor = type.speedFactor ?? 1;
     this.family = obstacleFamily(type);
+    this.dogClearable = DOG_CLEARABLE_FAMILIES.has(this.family);
     this.isTall = height >= 68;
     this.hintNotified = false;
     this.currentSpeed = speed;

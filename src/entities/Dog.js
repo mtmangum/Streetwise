@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GROUND_Y, PLAYER, DOG } from '../config.js';
+import { GAME_WIDTH, GROUND_Y, PLAYER, DOG, ZOOMIES } from '../config.js';
 
 // Companion character with scripted jumps and street interactions. She has
 // no physics body, so these authored sequences can stay expressive without
@@ -27,10 +27,12 @@ export class Dog {
     this.markingHydrant = false;
     this.markingElapsed = 0;
     this.returning = false;
+    this.zoomiesActive = false;
+    this.zoomiesElapsed = 0;
   }
 
   jump() {
-    if (this.jumping || this.attackTarget || this.markingHydrant || this.returning) return;
+    if (this.jumping || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return;
     this.jumping = true;
     this.jumpT = 0;
     this.jumpStartX = this.sprite.x;
@@ -42,16 +44,17 @@ export class Dog {
     this.chasingCop = false;
     this.markingHydrant = false;
     this.returning = false;
+    this.zoomiesActive = false;
     this.jumpT = 0;
     this.sprite.x = this.restX;
     this.sprite.y = GROUND_Y;
-    this.sprite.setAngle(0).setFlipX(false).setDepth(9);
+    this.sprite.setAngle(0).setFlipX(false).setDepth(9).clearTint();
     this.markingDrops.forEach((drop) => drop.setVisible(false));
     this.sprite.anims.play('dog-idle', true);
   }
 
   attackCop(cop) {
-    if (this.attackTarget || !cop?.alive) return;
+    if (this.attackTarget || this.zoomiesActive || !cop?.alive) return;
     this.jumping = false;
     this.markingHydrant = false;
     this.returning = false;
@@ -65,7 +68,7 @@ export class Dog {
   }
 
   stopAtHydrant(scrollSpeed) {
-    if (this.jumping || this.attackTarget || this.markingHydrant || this.returning) return false;
+    if (this.jumping || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return false;
     this.markingHydrant = true;
     this.markingElapsed = 0;
     this.markingScrollSpeed = scrollSpeed;
@@ -156,10 +159,48 @@ export class Dog {
     }
   }
 
+  startZoomies() {
+    this.jumping = false;
+    this.attackTarget = null;
+    this.chasingCop = false;
+    this.markingHydrant = false;
+    this.returning = false;
+    this.zoomiesActive = true;
+    this.zoomiesElapsed = 0;
+    this.zoomiesStartX = this.sprite.x;
+    this.markingDrops.forEach((drop) => drop.setVisible(false));
+    this.sprite.setAngle(0).setFlipX(false).setDepth(17).setTint(0x75efff);
+    this.sprite.anims.play('dog-run', true);
+  }
+
+  updateZoomies(delta) {
+    this.zoomiesElapsed += delta;
+    const outbound = this.zoomiesElapsed < ZOOMIES.outboundMs;
+    if (outbound) {
+      const t = Phaser.Math.Clamp(this.zoomiesElapsed / ZOOMIES.outboundMs, 0, 1);
+      this.sprite.x = Phaser.Math.Linear(this.zoomiesStartX, GAME_WIDTH + 40, t * t * (3 - 2 * t));
+      this.sprite.setFlipX(false);
+    } else {
+      const t = Phaser.Math.Clamp(
+        (this.zoomiesElapsed - ZOOMIES.outboundMs) / (ZOOMIES.durationMs - ZOOMIES.outboundMs),
+        0,
+        1
+      );
+      this.sprite.x = Phaser.Math.Linear(GAME_WIDTH + 40, this.restX, t * t * (3 - 2 * t));
+      this.sprite.setFlipX(true);
+    }
+    this.sprite.y = GROUND_Y - Math.abs(Math.sin(this.zoomiesElapsed * 0.025)) * 5;
+    this.sprite.anims.play('dog-run', true);
+    this.scene.clearZoomiesObstacles(this.sprite.getBounds());
+    if (this.zoomiesElapsed >= ZOOMIES.durationMs) this.rest();
+  }
+
   // Called only while the run is active (PlayScene drives this
   // explicitly, same reasoning as Player.update()).
   update(delta) {
-    if (this.attackTarget) {
+    if (this.zoomiesActive) {
+      this.updateZoomies(delta);
+    } else if (this.attackTarget) {
       this.updateAttack(delta);
     } else if (this.markingHydrant) {
       this.updateHydrantStop(delta);

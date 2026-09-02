@@ -175,3 +175,12 @@ export const SNEAKER_BOOST = {
   respawnMinMs: 30000,
   respawnMaxMs: 44000
 };
+
+export const ZOOMIES = {
+  durationMs: 6500,
+  outboundMs: 3900,
+  firstSpawnMinMs: 36000,
+  firstSpawnMaxMs: 52000,
+  respawnMinMs: 52000,
+  respawnMaxMs: 70000
+};

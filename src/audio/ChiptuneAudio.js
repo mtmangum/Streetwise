@@ -115,6 +115,12 @@ export class ChiptuneAudio {
     );
   }
 
+  zoomies() {
+    [55, 67, 79, 91].forEach((note, i) =>
+      this.tone(midiToHz(note), 0.12, 0.055, i % 2 ? 'square' : 'triangle', null, i * 0.045)
+    );
+  }
+
   hit() {
     this.tone(170, 0.28, 0.1, 'sawtooth', 55);
   }

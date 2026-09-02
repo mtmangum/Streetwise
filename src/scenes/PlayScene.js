@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -10,6 +10,7 @@ import { Crow } from '../entities/Crow.js';
 import { Seagull } from '../entities/Seagull.js';
 import { Storm } from '../entities/Storm.js';
 import { SneakerBoost } from '../entities/SneakerBoost.js';
+import { ZoomiesPickup } from '../entities/ZoomiesPickup.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 import { ChiptuneAudio } from '../audio/ChiptuneAudio.js';
@@ -44,6 +45,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextCrowAt = Infinity;
     this.nextSeagullAt = Infinity;
     this.nextSneakerAt = Infinity;
+    this.nextZoomiesAt = Infinity;
     this.lastObstacleFamily = null;
     this.firstObstacleSpawned = false;
     this.firstObstacleHintShown = false;
@@ -307,6 +309,10 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-ESC', () => this.togglePause());
     if (import.meta.env.DEV) {
       this.input.keyboard.on('keydown-F', () => this.skipToFinale());
+      this.input.keyboard.on('keydown-Z', () => {
+        if (this.state === 'ready') this.startRun();
+        if (this.state === 'running') this.activateZoomies(this.dog.sprite.x, this.dog.sprite.y - 25);
+      });
     }
     this.input.on('pointerdown', () => this.handleInputDown());
     this.input.on('pointerup', () => this.handleInputUp());
@@ -385,6 +391,10 @@ export class PlayScene extends Phaser.Scene {
     this.nextSneakerAt = this.time.now + Phaser.Math.Between(
       SNEAKER_BOOST.firstSpawnMinMs,
       SNEAKER_BOOST.firstSpawnMaxMs
+    );
+    this.nextZoomiesAt = this.time.now + Phaser.Math.Between(
+      ZOOMIES.firstSpawnMinMs,
+      ZOOMIES.firstSpawnMaxMs
     );
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
@@ -809,6 +819,45 @@ export class PlayScene extends Phaser.Scene {
     this.registerEntity(new SneakerBoost(this, this.scrollSpeed), this.pickupGroup);
   }
 
+  spawnZoomiesPickup() {
+    this.registerEntity(new ZoomiesPickup(this, this.scrollSpeed), this.pickupGroup);
+  }
+
+  activateZoomies(x, y) {
+    this.dog.startZoomies();
+    this.audio.zoomies();
+    this.showControlHint('STELLA HAS THE ZOOMIES!', 'SMALL HAZARDS GET OUT OF HER WAY');
+    this.showZoomiesImpact(x, y, 12);
+  }
+
+  clearZoomiesObstacles(dogBounds) {
+    for (const entity of this.entities) {
+      if (!entity.alive || !entity.dogClearable) continue;
+      if (!Phaser.Geom.Intersects.RectangleToRectangle(dogBounds, entity.sprite.getBounds())) continue;
+      entity.rewarded = true;
+      const { x, y } = entity.sprite;
+      entity.destroy();
+      this.onObstacleAvoided(x, y - 20, false);
+      this.showZoomiesImpact(x, y, 7);
+    }
+  }
+
+  showZoomiesImpact(x, y, count) {
+    for (let i = 0; i < count; i++) {
+      const streak = this.add.rectangle(x, y, Phaser.Math.Between(7, 18), 2, i % 2 ? 0x55eaff : 0xff4b9b)
+        .setDepth(18)
+        .setAngle(Phaser.Math.Between(-35, 35));
+      this.tweens.add({
+        targets: streak,
+        x: x + Phaser.Math.Between(-70, 35),
+        y: y + Phaser.Math.Between(-45, 35),
+        alpha: 0,
+        duration: Phaser.Math.Between(300, 600),
+        onComplete: () => streak.destroy()
+      });
+    }
+  }
+
   activateSneakerBoost(x, y) {
     const until = this.time.now + SNEAKER_BOOST.durationMs;
     this.player.activateSneakerBoost(until);
@@ -1063,6 +1112,14 @@ export class PlayScene extends Phaser.Scene {
         SNEAKER_BOOST.respawnMinMs,
         SNEAKER_BOOST.respawnMaxMs
       );
+    }
+    if (
+      this.elapsed < FINALE_START_SECONDS - 12 &&
+      time > this.nextZoomiesAt &&
+      this.pickupGroup.countActive(true) === 0
+    ) {
+      this.spawnZoomiesPickup();
+      this.nextZoomiesAt = time + Phaser.Math.Between(ZOOMIES.respawnMinMs, ZOOMIES.respawnMaxMs);
     }
   }
 }
