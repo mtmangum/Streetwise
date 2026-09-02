@@ -18,8 +18,8 @@ Open the local URL Vite prints (usually `http://localhost:5173`).
 
 ## Controls
 
-- **Space / click / tap** — jump, or start/restart the game
-- **Press and hold** — fill the SUPER meter and boost a rising jump
+- **Space / click / tap** — jump immediately, or start/restart the game
+- **Hold for 2 seconds, then release** — launch a power jump
 - **P / Escape / Pause button** — pause or resume
 
 ## Project structure

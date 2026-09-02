@@ -92,6 +92,10 @@ export class ChiptuneAudio {
     this.tone(780, 0.08, 0.035, 'square', null, 0.08);
   }
 
+  powerReady() {
+    [72, 79, 84].forEach((note, i) => this.tone(midiToHz(note), 0.09, 0.04, 'square', null, i * 0.045));
+  }
+
   health() {
     [72, 76, 79].forEach((note, i) => this.tone(midiToHz(note), 0.1, 0.045, 'square', null, i * 0.055));
   }

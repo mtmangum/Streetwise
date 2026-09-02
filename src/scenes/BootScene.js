@@ -594,7 +594,7 @@ export class BootScene extends Phaser.Scene {
     const g = this.add.graphics();
     // Restrained, low-saturation curbside palette keeps these solid cars
     // visually behind the brighter interactive obstacle roster.
-    const colors = [0x615d5d, 0x565b5e, 0x595e59, 0x69645a, 0x5f5d5c, 0x716f6a, 0x5c585f];
+    const colors = [0x686767, 0x626769, 0x656965, 0x706d67, 0x696767, 0x74736f, 0x676369];
     let x = 18;
     let index = 0;
     while (x < tileWidth - 90) {
@@ -604,9 +604,11 @@ export class BootScene extends Phaser.Scene {
       const bottom = tileHeight - 5;
       const bodyY = bottom - bodyH;
       const color = colors[index % colors.length];
-      const dark = Phaser.Display.Color.IntegerToColor(color).darken(28).color;
-      const light = Phaser.Display.Color.IntegerToColor(color).lighten(24).color;
+      const dark = Phaser.Display.Color.IntegerToColor(color).darken(22).color;
+      const light = Phaser.Display.Color.IntegerToColor(color).lighten(13).color;
       const wagon = index % 4 === 1;
+      const van = index % 7 === 5;
+      const coupe = index % 5 === 2;
       const taxi = index % 6 === 3;
       // Tires sit behind the body.
       g.fillStyle(0x17191c, 1);
@@ -615,44 +617,81 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(0x858b8d, 1);
       g.fillCircle(x + bodyW * 0.22, bottom - 2, 3);
       g.fillCircle(x + bodyW * 0.78, bottom - 2, 3);
-      // Distinct hood/trunk proportions and stepped pixel-art body shell.
+      // Tapered nose and tail keep the lower shell from reading as a box.
       g.fillStyle(0x202328, 1);
-      g.fillRect(x + 2, bodyY - 1, bodyW - 4, bodyH + 2);
+      g.fillPoints([
+        { x, y: bodyY + 6 }, { x: x + 6, y: bodyY },
+        { x: x + bodyW - 10, y: bodyY }, { x: x + bodyW, y: bodyY + 5 },
+        { x: x + bodyW - 2, y: bottom }, { x: x + 2, y: bottom }
+      ], true);
       g.fillStyle(color, 1);
-      g.fillRect(x, bodyY + 4, bodyW, bodyH - 5);
-      g.fillRect(x + 4, bodyY, bodyW - 8, bodyH - 2);
+      g.fillPoints([
+        { x: x + 2, y: bodyY + 6 }, { x: x + 7, y: bodyY + 2 },
+        { x: x + bodyW - 11, y: bodyY + 2 }, { x: x + bodyW - 2, y: bodyY + 6 },
+        { x: x + bodyW - 4, y: bottom - 2 }, { x: x + 4, y: bottom - 2 }
+      ], true);
       g.fillStyle(light, 1);
-      g.fillRect(x + 6, bodyY + 1, bodyW - 12, 2);
+      g.fillRect(x + 8, bodyY + 2, bodyW - 20, 1);
       g.fillStyle(dark, 1);
       g.fillRect(x + 3, bottom - 8, bodyW - 6, 4);
-      // Cabin: long square wagon roof or sloped sedan roof.
-      const cabinX = x + bodyW * (wagon ? 0.22 : 0.28);
-      const cabinW = bodyW * (wagon ? 0.58 : 0.48);
+      // Recognizable cabin profiles: squared wagon/van or a sedan/coupe
+      // with visibly raked windshield and rear glass.
+      const cabinX = Math.round(x + bodyW * (van ? 0.18 : wagon ? 0.22 : coupe ? 0.34 : 0.28));
+      const cabinW = Math.round(bodyW * (van ? 0.64 : wagon ? 0.58 : coupe ? 0.42 : 0.5));
+      const roofY = bodyY - roofH;
       g.fillStyle(0x202328, 1);
-      g.fillRect(cabinX + 3, bodyY - roofH - 2, cabinW - 6, roofH + 3);
+      g.fillPoints([
+        { x: cabinX - 2, y: bodyY + 1 },
+        { x: cabinX + (van || wagon ? 1 : 6), y: roofY - 2 },
+        { x: cabinX + cabinW - (coupe ? 10 : 5), y: roofY - 2 },
+        { x: cabinX + cabinW + 3, y: bodyY + 1 }
+      ], true);
       g.fillStyle(color, 1);
       g.fillRect(cabinX, bodyY - 3, cabinW, 5);
-      g.fillRect(cabinX + 5, bodyY - roofH, cabinW - 10, roofH);
-      g.fillStyle(0x555d60, 1);
-      g.fillRect(cabinX + 7, bodyY - roofH + 2, cabinW * 0.38, roofH - 4);
-      g.fillRect(cabinX + cabinW * 0.52, bodyY - roofH + 2, cabinW * 0.31, roofH - 4);
-      g.fillStyle(0x737a7b, 1);
-      g.fillRect(cabinX + 8, bodyY - roofH + 2, cabinW * 0.32, 2);
+      g.fillPoints([
+        { x: cabinX, y: bodyY },
+        { x: cabinX + (van || wagon ? 3 : 8), y: roofY },
+        { x: cabinX + cabinW - (coupe ? 11 : 6), y: roofY },
+        { x: cabinX + cabinW, y: bodyY }
+      ], true);
+      const frontGlassX = cabinX + (van || wagon ? 5 : 9);
+      const rearGlassX = cabinX + cabinW - (coupe ? 12 : 9);
+      g.fillStyle(0x4b5154, 1);
+      g.fillPoints([
+        { x: frontGlassX, y: roofY + 2 },
+        { x: cabinX + Math.round(cabinW * 0.49), y: roofY + 2 },
+        { x: cabinX + Math.round(cabinW * 0.49), y: bodyY - 2 },
+        { x: cabinX + 3, y: bodyY - 2 }
+      ], true);
+      g.fillPoints([
+        { x: cabinX + Math.round(cabinW * 0.54), y: roofY + 2 },
+        { x: rearGlassX, y: roofY + 2 },
+        { x: cabinX + cabinW - 3, y: bodyY - 2 },
+        { x: cabinX + Math.round(cabinW * 0.54), y: bodyY - 2 }
+      ], true);
+      g.fillStyle(0x686f72, 1);
+      g.fillRect(frontGlassX + 1, roofY + 2, Math.max(5, cabinW * 0.28), 2);
+      // Door seams, sill, hood and trunk edges make the side elevation read.
+      g.fillStyle(dark, 1);
+      g.fillRect(cabinX + Math.round(cabinW * 0.51), bodyY + 2, 1, bodyH - 7);
+      g.fillRect(x + 7, bodyY + 3, Math.max(8, cabinX - x - 8), 1);
+      g.fillRect(cabinX + cabinW, bodyY + 3, Math.max(7, x + bodyW - cabinX - cabinW - 6), 1);
+      g.fillRect(x + 8, bottom - 5, bodyW - 16, 1);
       // Bumpers, lights, handles, and occasional taxi roof sign.
-      g.fillStyle(0xc7c7c2, 1);
+      g.fillStyle(0x929491, 1);
       g.fillRect(x, bottom - 7, 5, 3);
       g.fillRect(x + bodyW - 5, bottom - 7, 5, 3);
-      g.fillStyle(0x77725f, 1);
+      g.fillStyle(0x747166, 1);
       g.fillRect(x + bodyW - 3, bodyY + 4, 3, 4);
-      g.fillStyle(0x5d4847, 1);
+      g.fillStyle(0x685b5b, 1);
       g.fillRect(x, bodyY + 4, 3, 4);
-      g.fillStyle(0xd7d7d2, 1);
+      g.fillStyle(0x929592, 1);
       g.fillRect(x + bodyW * 0.54, bodyY + 4, 6, 1);
       if (taxi) {
         g.fillStyle(0x22252a, 1);
-        g.fillRect(cabinX + cabinW * 0.38, bodyY - roofH - 5, 12, 2);
+        g.fillRect(cabinX + cabinW * 0.38, roofY - 5, 12, 2);
         g.fillStyle(0x756b53, 1);
-        g.fillRect(cabinX + cabinW * 0.4, bodyY - roofH - 8, 9, 3);
+        g.fillRect(cabinX + cabinW * 0.4, roofY - 8, 9, 3);
       }
       // Cars bunch into curbside clusters, followed by believable stretches
       // of open curb rather than repeating at one mechanical interval.

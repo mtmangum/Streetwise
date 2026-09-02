@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG, PLAYER, STORM } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, BUILD_NUMBER, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG, PLAYER, STORM } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -46,7 +46,9 @@ export class PlayScene extends Phaser.Scene {
     this.overchargeActive = false;
     this.dayPhase = 0;
     this.jumpInputHeld = false;
+    this.superChargePending = false;
     this.superChargeActive = false;
+    this.superChargeReady = false;
     this.superChargeStartedAt = 0;
     this.audio = new ChiptuneAudio(this);
 
@@ -192,7 +194,7 @@ export class PlayScene extends Phaser.Scene {
       .setDepth(20);
 
     this.overlayText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 23, 'SPACE / TAP  —  JUMP\nPRESS + HOLD  —  CHARGE SUPER JUMP\nPIGEONS BOOST LIFE · RARE SEAGULLS FILL IT', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 23, 'PRESS  —  INSTANT JUMP\nKEEP HOLDING 2 SEC, THEN RELEASE  —  POWER JUMP\nPIGEONS BOOST LIFE · RARE SEAGULLS FILL IT', {
         fontFamily: 'sans-serif',
         fontSize: '15px',
         fontStyle: 'bold',
@@ -221,7 +223,7 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const hintControls = this.add
-      .text(0, 13, 'TAP TO JUMP  ·  HOLD TO CHARGE', {
+      .text(0, 13, 'JUMP IS INSTANT  ·  KEEP HOLDING TO CHARGE', {
         fontFamily: 'monospace',
         fontSize: '11px',
         fontStyle: 'bold',
@@ -283,6 +285,18 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(31);
+    this.add
+      .text(GAME_WIDTH - 8, GAME_HEIGHT - 7, `BUILD ${BUILD_NUMBER}`, {
+        fontFamily: 'monospace',
+        fontSize: '9px',
+        resolution: RENDER_SCALE,
+        color: '#b7bcc4',
+        stroke: '#090b10',
+        strokeThickness: 2
+      })
+      .setOrigin(1, 1)
+      .setAlpha(0.7)
+      .setDepth(30);
     this.pauseButton.on('pointerdown', (_pointer, _x, _y, event) => {
       event?.stopPropagation();
       this.togglePause();
@@ -307,10 +321,6 @@ export class PlayScene extends Phaser.Scene {
     this.jumpInputHeld = true;
     if (this.player.jump()) {
       this.audio.jump();
-      // The obstacle she just cleared reaches the dog's (screen-fixed)
-      // position trailDistance/scrollSpeed later - that travel time is the
-      // real delay, not a flat number, or the echo desyncs from the
-      // obstacle at any scroll speed but the one it was tuned for.
       this.scheduleDogJump();
       this.beginSuperCharge();
     }
@@ -318,23 +328,46 @@ export class PlayScene extends Phaser.Scene {
 
   handleInputUp() {
     this.jumpInputHeld = false;
-    if (this.superChargeActive) this.resetSuperCharge();
+    if (this.superChargePending) {
+      this.resetSuperCharge();
+      return;
+    }
+    if (!this.superChargeActive) return;
+    const charged = this.superChargeReady;
+    this.resetSuperCharge();
+    if (charged && this.player.chargedJump()) {
+      this.audio.superJump();
+      this.scheduleDogJump();
+      return;
+    }
   }
 
   beginSuperCharge() {
-    this.superChargeActive = true;
+    this.superChargePending = true;
+    this.superChargeActive = false;
+    this.superChargeReady = false;
     this.superChargeStartedAt = this.time.now;
     this.superMeterFill.setScale(0, 1).setFillStyle(0x58c8f2);
-    this.superMeterLabel.setColor('#f2c14e');
+    this.superMeterLabel.setText('SUPER').setColor('#8b825f');
   }
 
   resetSuperCharge() {
+    this.superChargePending = false;
     this.superChargeActive = false;
+    this.superChargeReady = false;
     this.superMeterFill.setScale(0, 1).setFillStyle(0x58c8f2);
-    this.superMeterLabel.setColor('#f2c14e');
+    this.superMeterLabel.setText('SUPER').setColor('#f2c14e');
   }
 
   updateSuperCharge() {
+    if (this.superChargePending) {
+      if (!this.jumpInputHeld) return this.resetSuperCharge();
+      if (this.time.now - this.superChargeStartedAt < PLAYER.superChargeStartDelayMs) return;
+      this.superChargePending = false;
+      this.superChargeActive = true;
+      this.superChargeStartedAt = this.time.now;
+      this.superMeterLabel.setText('CHARGE').setColor('#f2c14e');
+    }
     if (!this.superChargeActive) return;
     if (!this.jumpInputHeld) return this.resetSuperCharge();
     const charge = Phaser.Math.Clamp(
@@ -343,14 +376,12 @@ export class PlayScene extends Phaser.Scene {
       1
     );
     this.superMeterFill.setScale(charge, 1);
-    if (charge < 1) return;
+    if (charge < 1 || this.superChargeReady) return;
 
-    this.superChargeActive = false;
-    if (!this.player.powerJump()) return this.resetSuperCharge();
-    this.audio.superJump();
+    this.superChargeReady = true;
+    this.audio.powerReady();
     this.superMeterFill.setScale(1, 1).setFillStyle(0xf2c14e);
-    this.superMeterLabel.setColor('#b8ffbf');
-    this.time.delayedCall(280, () => this.resetSuperCharge());
+    this.superMeterLabel.setText('RELEASE!').setColor('#b8ffbf');
   }
 
   scheduleDogJump() {

@@ -1,6 +1,7 @@
 export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 360;
 export const RENDER_SCALE = 2;
+export const BUILD_NUMBER = '00.00';
 
 export const GROUND_HEIGHT = 60;
 export const GROUND_Y = GAME_HEIGHT - GROUND_HEIGHT;
@@ -10,7 +11,8 @@ export const PLAYER = {
   gravity: 1400,
   jumpVelocity: -560,
   powerJumpVelocity: -720,
-  superJumpChargeMs: 300,
+  superChargeStartDelayMs: 140,
+  superJumpChargeMs: 2000,
   jumpBufferMs: 120,
   coyoteTimeMs: 80,
   runSpeed: 0 // player stays put on screen; world scrolls under it
