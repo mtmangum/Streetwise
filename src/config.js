@@ -39,7 +39,12 @@ export const DOG = {
   // PLAYER.gravity/jumpVelocity) is ~112px. This needs real clearance
   // margin, not just a stylized hop - it was 46 and visibly clipped tall
   // obstacles.
-  jumpHeight: 100
+  jumpHeight: 100,
+  attackRunSpeed: 310,
+  attackDistance: 30,
+  attackDurationMs: 1250,
+  returnSpeed: 360,
+  hydrantPauseMs: 950
 };
 
 export const WORLD = {

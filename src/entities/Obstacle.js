@@ -100,14 +100,18 @@ export class Obstacle extends Entity {
 
     this.speedFactor = type.speedFactor ?? 1;
     this.family = obstacleFamily(type);
+    this.isTall = height >= 68;
+    this.hintNotified = false;
     this.currentSpeed = speed;
     this.chasesAfterAvoid = type.chasesAfterAvoid ?? false;
     this.behavior = type.behavior ?? null;
     this.enraged = false;
     this.chasing = false;
     this.retiring = false;
+    this.fleeing = false;
     this.rewarded = false;
     this.wasJumped = false;
+    this.dogVisited = false;
     this.sprite.setDisplaySize(width, height);
     this.sprite.setDepth(8);
     if (type.flipX) this.sprite.setFlipX(true);
@@ -118,12 +122,29 @@ export class Obstacle extends Entity {
 
   setSpeed(speed) {
     this.currentSpeed = speed;
-    if (this.chasing || this.retiring) return;
+    if (this.chasing || this.retiring || this.fleeing) return;
     const factor = this.enraged ? 1.55 : this.speedFactor;
     this.sprite.setVelocityX(-speed * factor);
   }
 
   onUpdate(time, delta) {
+    if (
+      !this.hintNotified &&
+      this.sprite.x <= PLAYER.startX + 360
+    ) {
+      this.hintNotified = true;
+      this.scene.onObstacleApproaching(this);
+    }
+
+    if (
+      this.family === 'hydrant' &&
+      !this.dogVisited &&
+      this.sprite.x <= this.scene.dog.restX + this.sprite.displayWidth / 2 + 16 &&
+      this.sprite.x > this.scene.dog.restX - 24
+    ) {
+      this.dogVisited = this.scene.dog.stopAtHydrant(this.currentSpeed);
+    }
+
     if (
       !this.rewarded &&
       this.scene.player.isAirborne &&
@@ -160,6 +181,7 @@ export class Obstacle extends Entity {
         this.sprite.y - this.sprite.displayHeight / 2,
         this.wasJumped
       );
+      this.scene.dog.attackCop(this);
     }
 
     if (this.chasing) {
@@ -181,6 +203,12 @@ export class Obstacle extends Entity {
       return;
     }
 
+    if (this.fleeing) {
+      this.sprite.x += this.currentSpeed * 1.65 * (delta / 1000);
+      if (this.sprite.x > GAME_WIDTH + 60) this.destroy();
+      return;
+    }
+
     if (
       !this.rewarded &&
       this.sprite.x + this.sprite.displayWidth / 2 < PLAYER.startX
@@ -198,6 +226,15 @@ export class Obstacle extends Entity {
     if (this.sprite.x < -60) {
       this.destroy();
     }
+  }
+
+  scareOff() {
+    if (!this.alive || !this.chasesAfterAvoid) return;
+    this.chasing = false;
+    this.retiring = false;
+    this.fleeing = true;
+    this.sprite.setFlipX(true).setDepth(10);
+    this.sprite.anims.timeScale = 1.8;
   }
 
   onCollide(player) {

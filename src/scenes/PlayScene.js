@@ -43,6 +43,8 @@ export class PlayScene extends Phaser.Scene {
     this.nextSeagullAt = Infinity;
     this.lastObstacleFamily = null;
     this.firstObstacleSpawned = false;
+    this.firstObstacleHintShown = false;
+    this.firstTallHintShown = false;
     this.clusterSpawnsRemaining = 0;
     this.scrollSpeed = WORLD.baseScrollSpeed;
     this.momentumFactor = 1;
@@ -198,7 +200,7 @@ export class PlayScene extends Phaser.Scene {
     const hintBack = this.add
       .rectangle(0, 0, 330, 58, 0x111722, 0.92)
       .setStrokeStyle(2, 0xf2c14e, 0.95);
-    const hintTitle = this.add
+    this.hintTitle = this.add
       .text(0, -12, 'NICOLE!  JUMP OR SUPER JUMP', {
         fontFamily: 'sans-serif',
         fontSize: '14px',
@@ -209,7 +211,7 @@ export class PlayScene extends Phaser.Scene {
         strokeThickness: 3
       })
       .setOrigin(0.5);
-    const hintControls = this.add
+    this.hintControls = this.add
       .text(0, 13, 'TAP TO JUMP  ·  DOUBLE-TAP TO JUMP HIGH', {
         fontFamily: 'monospace',
         fontSize: '11px',
@@ -219,7 +221,7 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     this.openingHint = this.add
-      .container(GAME_WIDTH / 2, 62, [hintBack, hintTitle, hintControls])
+      .container(GAME_WIDTH / 2, 150, [hintBack, this.hintTitle, this.hintControls])
       .setDepth(25)
       .setVisible(false);
 
@@ -361,24 +363,46 @@ export class PlayScene extends Phaser.Scene {
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
-    this.openingHint.setVisible(true).setAlpha(1).setScale(0.92);
+  }
+
+  showControlHint(title, controls) {
+    this.tweens.killTweensOf(this.openingHint);
+    this.hintHideEvent?.remove();
+    this.hintTitle.setText(title);
+    this.hintControls.setText(controls);
+    this.openingHint
+      .setPosition(GAME_WIDTH / 2, 150)
+      .setVisible(true)
+      .setAlpha(1)
+      .setScale(0.92);
     this.tweens.add({
       targets: this.openingHint,
       scale: 1,
       duration: 220,
-      ease: 'Back.easeOut',
-      onComplete: () => {
-        this.tweens.add({
-          targets: this.openingHint,
-          y: 52,
-          alpha: 0,
-          delay: 3000,
-          duration: 650,
-          ease: 'Quad.easeIn',
-          onComplete: () => this.openingHint.setVisible(false)
-        });
-      }
+      ease: 'Back.easeOut'
     });
+    this.hintHideEvent = this.time.delayedCall(2800, () => {
+      this.tweens.add({
+        targets: this.openingHint,
+        y: 140,
+        alpha: 0,
+        duration: 500,
+        ease: 'Quad.easeIn',
+        onComplete: () => this.openingHint.setVisible(false)
+      });
+    });
+  }
+
+  onObstacleApproaching(obstacle) {
+    if (!this.firstObstacleHintShown) {
+      this.firstObstacleHintShown = true;
+      this.showControlHint('NICOLE!  OBSTACLE AHEAD', 'TAP TO JUMP');
+      return;
+    }
+    if (obstacle.isTall && !this.firstTallHintShown) {
+      this.firstTallHintShown = true;
+      this.showControlHint('NICOLE!  TALL OBSTACLE AHEAD', 'DOUBLE-TAP TO SUPER JUMP');
+    }
   }
 
   restart() {

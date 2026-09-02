@@ -1,25 +1,25 @@
 import { Entity } from './Entity.js';
 import { GAME_WIDTH, PLAYER } from '../config.js';
 
-// Hostile city bird. Unlike the high bonus pigeon, it dives toward Nicole's
-// standing path and deals normal damage; jumping over the low pass avoids it.
+// Hostile city bird. Most cross at a low, jumpable height; occasionally one
+// approaches overhead, dive-bombs Nicole, and pulls up after passing her.
 export class Crow extends Entity {
   constructor(scene, speed) {
-    const startY = 80;
+    const diveBomb = Math.random() < 0.3;
+    const startY = diveBomb ? 72 : 242;
     const movingLeft = Math.random() < 0.5;
     const startX = movingLeft ? GAME_WIDTH + 30 : -140;
     const sprite = scene.physics.add.sprite(startX, startY, 'crow-fly0');
     super(scene, sprite);
 
     this.direction = movingLeft ? -1 : 1;
+    this.diveBomb = diveBomb;
+    this.flightPhase = diveBomb ? 'approach' : 'low-pass';
     this.sprite.setDisplaySize(46, 26).setDepth(9);
     this.sprite.setFlipX(!movingLeft);
     this.sprite.body.setAllowGravity(false);
     this.sprite.anims.play('crow-fly');
     this.setSpeed(speed);
-
-    const travelSeconds = Math.abs(startX - PLAYER.startX) / Math.abs(this.sprite.body.velocity.x);
-    this.sprite.setVelocityY((270 - startY) / travelSeconds);
   }
 
   setSpeed(speed) {
@@ -28,10 +28,32 @@ export class Crow extends Entity {
   }
 
   onUpdate() {
+    if (this.flightPhase === 'approach') {
+      const distanceAhead = (this.sprite.x - PLAYER.startX) * -this.direction;
+      if (distanceAhead < 290) {
+        this.flightPhase = 'diving';
+        const travelSeconds = Math.max(0.25, distanceAhead / Math.abs(this.sprite.body.velocity.x));
+        this.sprite.setVelocityY((272 - this.sprite.y) / travelSeconds);
+        this.scene.audio.crowDive();
+      }
+    } else if (this.flightPhase === 'diving') {
+      const passedNicole = this.direction < 0
+        ? this.sprite.x < PLAYER.startX - 34
+        : this.sprite.x > PLAYER.startX + 34;
+      if (passedNicole) {
+        this.flightPhase = 'pull-up';
+        this.sprite.setVelocityY(-275);
+      }
+    }
+
+    const diveAngle = Math.atan2(this.sprite.body.velocity.y, Math.abs(this.sprite.body.velocity.x)) * 180 / Math.PI;
+    this.sprite.setAngle(this.direction < 0 ? -diveAngle : diveAngle);
+
     if (
       (this.direction < 0 && this.sprite.x < -55) ||
       (this.direction > 0 && this.sprite.x > GAME_WIDTH + 55) ||
-      this.sprite.y > 330
+      this.sprite.y > 330 ||
+      this.sprite.y < -55
     ) this.destroy();
   }
 

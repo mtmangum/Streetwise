@@ -113,6 +113,15 @@ export class ChiptuneAudio {
     this.tone(170, 0.28, 0.1, 'sawtooth', 55);
   }
 
+  dogAttack() {
+    this.tone(185, 0.08, 0.075, 'square', 115);
+    this.tone(155, 0.1, 0.065, 'square', 95, 0.11);
+  }
+
+  crowDive() {
+    this.tone(720, 0.34, 0.045, 'sawtooth', 145);
+  }
+
   thunder() {
     this.tone(72, 0.7, 0.11, 'sawtooth', 34);
     this.tone(49, 0.9, 0.08, 'triangle', 29, 0.08);
