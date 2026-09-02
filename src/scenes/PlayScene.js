@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, PINK_STAR, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -11,6 +11,7 @@ import { Seagull } from '../entities/Seagull.js';
 import { Storm } from '../entities/Storm.js';
 import { SneakerBoost } from '../entities/SneakerBoost.js';
 import { ZoomiesPickup } from '../entities/ZoomiesPickup.js';
+import { PinkStarPickup } from '../entities/PinkStarPickup.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 import { ChiptuneAudio } from '../audio/ChiptuneAudio.js';
@@ -46,6 +47,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextSeagullAt = Infinity;
     this.nextSneakerAt = Infinity;
     this.nextZoomiesAt = Infinity;
+    this.nextPinkStarAt = Infinity;
     this.lastObstacleFamily = null;
     this.firstObstacleSpawned = false;
     this.firstObstacleHintShown = false;
@@ -63,6 +65,8 @@ export class PlayScene extends Phaser.Scene {
     this.healthColorBucket = -1;
     this.nextPaletteUpdateAt = 0;
     this.nextSneakerSparkAt = 0;
+    this.pinkStarUntil = 0;
+    this.nextPinkStarSparkAt = 0;
     this.audio = new ChiptuneAudio(this);
 
     this.parallax = new Parallax(this);
@@ -313,6 +317,10 @@ export class PlayScene extends Phaser.Scene {
         if (this.state === 'ready') this.startRun();
         if (this.state === 'running') this.activateZoomies(this.dog.sprite.x, this.dog.sprite.y - 25);
       });
+      this.input.keyboard.on('keydown-I', () => {
+        if (this.state === 'ready') this.startRun();
+        if (this.state === 'running') this.activatePinkStar(this.player.sprite.x, this.player.sprite.y - 45);
+      });
     }
     this.input.on('pointerdown', () => this.handleInputDown());
     this.input.on('pointerup', () => this.handleInputUp());
@@ -395,6 +403,10 @@ export class PlayScene extends Phaser.Scene {
     this.nextZoomiesAt = this.time.now + Phaser.Math.Between(
       ZOOMIES.firstSpawnMinMs,
       ZOOMIES.firstSpawnMaxMs
+    );
+    this.nextPinkStarAt = this.time.now + Phaser.Math.Between(
+      PINK_STAR.firstSpawnMinMs,
+      PINK_STAR.firstSpawnMaxMs
     );
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
@@ -621,6 +633,10 @@ export class PlayScene extends Phaser.Scene {
   // Called by Player.onCollide when an obstacle hits it.
   takeDamage(reaction = 'ground', damage = HEALTH.lossPerHit) {
     if (this.state !== 'running') return;
+    if (this.time.now < this.pinkStarUntil) {
+      this.showPinkStarDeflect();
+      return;
+    }
     if (this.time.now < this.damageInvulnerableUntil) return;
     this.damageInvulnerableUntil = this.time.now + HEALTH.invulnerabilityMs;
     this.health = Phaser.Math.Clamp(this.health - damage, 0, HEALTH.overchargeMax);
@@ -821,6 +837,67 @@ export class PlayScene extends Phaser.Scene {
 
   spawnZoomiesPickup() {
     this.registerEntity(new ZoomiesPickup(this, this.scrollSpeed), this.pickupGroup);
+  }
+
+  spawnPinkStarPickup() {
+    this.registerEntity(new PinkStarPickup(this, this.scrollSpeed), this.pickupGroup);
+  }
+
+  activatePinkStar(x, y) {
+    this.pinkStarUntil = Math.max(this.pinkStarUntil, this.time.now + PINK_STAR.durationMs);
+    this.audio.pinkStar();
+    this.showControlHint('PINK STAR POWER!', 'INVULNERABLE  ·  SPARKLING SUPER JUMPS');
+    this.emitPinkStarBurst(x, y, 14);
+  }
+
+  showPinkStarDeflect() {
+    this.audio.starDeflect();
+    this.emitPinkStarBurst(
+      this.player.sprite.x + this.player.sprite.displayWidth / 2,
+      this.player.sprite.y - this.player.sprite.displayHeight / 2,
+      7
+    );
+  }
+
+  emitPinkStarBurst(x, y, count) {
+    for (let i = 0; i < count; i++) {
+      const spark = this.add.star(x, y, 4, 2, 5, i % 3 ? 0xff55a0 : 0xffe66b, 1).setDepth(26);
+      this.tweens.add({
+        targets: spark,
+        x: x + Phaser.Math.Between(-58, 58),
+        y: y + Phaser.Math.Between(-55, 55),
+        angle: Phaser.Math.Between(-160, 160),
+        alpha: 0,
+        scale: { from: 0.4, to: 1.15 },
+        duration: Phaser.Math.Between(380, 720),
+        onComplete: () => spark.destroy()
+      });
+    }
+  }
+
+  updatePinkStar(time) {
+    if (time >= this.pinkStarUntil) {
+      if (!this.player.hasSneakerBoost) this.player.sprite.clearTint();
+      return;
+    }
+    this.player.sprite.setTint(Math.sin(time * 0.025) > 0 ? 0xff72b2 : 0xffe2f0);
+    if (!this.player.powerJumpUsed || !this.player.isAirborne || time < this.nextPinkStarSparkAt) return;
+    this.nextPinkStarSparkAt = time + 65;
+    const spark = this.add.star(
+      this.player.sprite.x + Phaser.Math.Between(3, 38),
+      this.player.sprite.y - Phaser.Math.Between(4, 58),
+      4, 1, 3,
+      Math.random() < 0.75 ? 0xff55a0 : 0xffe66b,
+      1
+    ).setDepth(17);
+    this.tweens.add({
+      targets: spark,
+      y: spark.y + 24,
+      angle: 120,
+      alpha: 0,
+      duration: 430,
+      onComplete: () => spark.destroy()
+    });
   }
 
   activateZoomies(x, y) {
@@ -1072,6 +1149,7 @@ export class PlayScene extends Phaser.Scene {
     this.parallax.scroll(this.scrollSpeed, delta);
     this.player.update(time, delta);
     this.updateSneakerBoost(time);
+    this.updatePinkStar(time);
     this.dog.update(delta);
 
     // Same call, different behavior per entity type — no type-checking here.
@@ -1120,6 +1198,14 @@ export class PlayScene extends Phaser.Scene {
     ) {
       this.spawnZoomiesPickup();
       this.nextZoomiesAt = time + Phaser.Math.Between(ZOOMIES.respawnMinMs, ZOOMIES.respawnMaxMs);
+    }
+    if (
+      this.elapsed < FINALE_START_SECONDS - 12 &&
+      time > this.nextPinkStarAt &&
+      this.pickupGroup.countActive(true) === 0
+    ) {
+      this.spawnPinkStarPickup();
+      this.nextPinkStarAt = time + Phaser.Math.Between(PINK_STAR.respawnMinMs, PINK_STAR.respawnMaxMs);
     }
   }
 }

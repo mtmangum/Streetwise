@@ -121,6 +121,17 @@ export class ChiptuneAudio {
     );
   }
 
+  pinkStar() {
+    [72, 79, 84, 91, 96].forEach((note, i) =>
+      this.tone(midiToHz(note), 0.16, 0.055, 'square', null, i * 0.05)
+    );
+  }
+
+  starDeflect() {
+    this.tone(980, 0.1, 0.045, 'triangle', 1450);
+    this.tone(620, 0.08, 0.035, 'square', null, 0.04);
+  }
+
   hit() {
     this.tone(170, 0.28, 0.1, 'sawtooth', 55);
   }
