@@ -1,5 +1,7 @@
 # Streetwise: Nicole & Stella
 
+![Painted late-1980s-style cover art for Streetwise: Nicole & Stella](docs/streetwise-cover.png)
+
 A 16-bit-style side-scroller game built with [Phaser 4](https://phaser.io/) and [Vite](https://vitejs.dev/).
 
 ## Stack
