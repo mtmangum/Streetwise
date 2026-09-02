@@ -51,7 +51,7 @@ export class BootScene extends Phaser.Scene {
     this.drawTrashBinObstacle('obstacle-trashbin0');
     this.drawTrashBinObstacle('obstacle-trashbin1', false);
     this.drawTrashBinObstacle('obstacle-trashbin2', true);
-    this.drawCrateObstacle('obstacle-crate');
+    this.drawSignboardObstacle('obstacle-signboard');
     this.drawHydrantObstacle('obstacle-hydrant0', false);
     this.drawHydrantObstacle('obstacle-hydrant1', true);
     this.drawHydrantObstacle('obstacle-hydrant-long0', false, true);
@@ -60,8 +60,12 @@ export class BootScene extends Phaser.Scene {
     this.drawShoppingCartObstacle('obstacle-shoppingcart1', true);
     this.drawHotDogCartObstacle('obstacle-hotdogcart');
     this.drawParkingMeterObstacle('obstacle-parkingmeter');
-    this.drawCatObstacle('obstacle-cat0', false);
-    this.drawCatObstacle('obstacle-cat1', true);
+    this.drawCatRunObstacle('obstacle-cat0', 0);
+    this.drawCatRunObstacle('obstacle-cat1', 1);
+    this.drawCatRunObstacle('obstacle-cat2', 2);
+    this.drawCatRunObstacle('obstacle-cat3', 3);
+    this.drawCatObstacle('obstacle-cat-hiss0', false);
+    this.drawCatObstacle('obstacle-cat-hiss1', true);
     this.drawTrashFireObstacle('obstacle-trashfire0', false);
     this.drawTrashFireObstacle('obstacle-trashfire1', true);
     this.drawSleepingObstacle('obstacle-sleeping0', false);
@@ -118,14 +122,15 @@ export class BootScene extends Phaser.Scene {
       // Recessed collection opening and projecting pull-down lip.
       [4,7,14,7,O],[5,8,12,4,0x0a111d],[6,8,10,1,0x26384e],
       [4,12,14,4,D],[5,12,12,2,L],[6,14,10,1,O],[8,13,6,1,HI],
-      // Lower cabinet seam, notices, scratched-in marks and handle dots.
-      [2,17,18,2,D],[3,17,16,1,L],[5,20,5,6,S],[6,21,3,1,0x334c67],
-      [6,23,2,1,0x334c67],[8,24,1,1,0x334c67],[13,20,1,1,HI],
-      [12,22,4,1,HI],[13,24,3,1,HI],[11,25,1,1,HI],[16,18,1,1,O],
-      // Four narrow legs and blocky sidewalk feet.
-      [2,25,4,8,O],[3,25,2,7,D],[16,25,4,8,O],[17,25,2,7,D],
-      [4,26,2,6,M],[16,26,2,6,M],[1,32,6,2,O],[15,32,6,2,O],
-      [2,32,4,1,P],[16,32,4,1,P]
+      // Lower cabinet seam and a taped-up service notice with corner tabs.
+      [2,17,18,2,D],[3,17,16,1,L],
+      [4,19,8,8,O],[5,20,6,6,S],[5,20,6,1,0xf2f4f5],[6,23,4,1,0x334c67],[6,25,3,1,0x334c67],[7,21,3,1,0x99a7b8],
+      [4,19,2,1,0x9fb0c4],[10,19,2,1,0x9fb0c4],[4,26,2,1,0x9fb0c4],[10,26,2,1,0x9fb0c4],
+      [13,20,1,1,HI],[12,22,4,1,HI],[13,24,3,1,HI],[11,25,1,1,HI],[16,18,1,1,O],
+      // Two sturdy legs, blocky sidewalk feet and a thin ground shadow.
+      [2,25,5,8,O],[3,25,3,7,D],[15,25,5,8,O],[16,25,3,7,D],
+      [4,26,2,6,M],[16,26,2,6,M],[1,32,7,2,O],[14,32,7,2,O],
+      [2,32,5,1,P],[15,32,5,1,P],[1,33,20,1,0x0c1220]
     ]);
   }
 
@@ -149,31 +154,62 @@ export class BootScene extends Phaser.Scene {
     ]);
   }
 
-  // Child sitting and playing on the sidewalk. Deliberately abstract - a
-  // flat two-block silhouette with no facial/clothing detail, same register
-  // as a pedestrian road-sign icon rather than a caricature.
-  drawChildObstacle(key, airborne) {
-    const O=0x29243a,SK=0xc77d68,S=0xf0ad8e,HD=0x523029,H=0x7b4932,SH=0xe0c9a9,B=COLORS.childBody,BD=0x365f99,ROPE=0xf0c84b;
-    const bodyY=airborne?7:6;
-    const feetY=airborne?22:24;
-    const rope=airborne
-      ? [[2,10,1,10,ROPE],[27,10,1,10,ROPE],[3,19,3,1,ROPE],[24,19,3,1,ROPE],[6,20,18,1,ROPE]]
-      : [[2,8,1,12,ROPE],[27,8,1,12,ROPE],[3,6,1,3,ROPE],[26,6,1,3,ROPE],[4,4,22,1,ROPE],[5,3,20,1,ROPE]];
-    this.drawObstacleTexture(key,30,28,[
-      ...rope,
-      // Hair, face and animated ponytail.
-      [10,bodyY-5,10,2,O],[8,bodyY-3,13,8,O],[9,bodyY-4,10,4,H],[8,bodyY-2,3,6,HD],[18,bodyY-3,3,7,HD],
-      [11,bodyY,8,5,S],[12,bodyY,5,2,0xf7c5a8],[17,bodyY+2,1,1,O],[18,bodyY+4,2,1,SK],
-      ...(airborne?[[6,bodyY-3,4,2,O],[4,bodyY-4,3,2,H]]:[[6,bodyY-2,4,2,O],[4,bodyY-1,3,2,H]]),
-      // Shirt, shorts and hands holding the rope wide.
-      [9,bodyY+5,11,9,O],[10,bodyY+5,9,8,B],[11,bodyY+6,3,6,0x79aee0],
-      [5,bodyY+6,5,3,O],[4,bodyY+7,3,3,S],[20,bodyY+6,5,3,O],[23,bodyY+7,3,3,S],
-      [9,bodyY+12,11,3,O],[10,bodyY+12,9,2,BD],
-      // Feet separate on landing and tuck together in the airborne frame.
-      ...(airborne
-        ? [[11,bodyY+14,3,4,O],[16,bodyY+14,3,4,O],[10,feetY,5,2,O],[16,feetY,5,2,O],[11,feetY,4,1,SH],[17,feetY,3,1,SH]]
-        : [[10,bodyY+14,3,5,O],[17,bodyY+14,3,5,O],[8,feetY,6,2,O],[16,feetY,6,2,O],[9,feetY,4,1,SH],[17,feetY,4,1,SH]])
-    ]);
+  // Kid skipping rope on the sidewalk. Two-frame cycle: frame 0 grounded
+  // with the rope whipped high over the head, frame 1 hopped up with knees
+  // tucked and the rope sweeping under the feet. The cord is a 2px amber
+  // stroke that stays connected hand-to-hand, with red handle nubs and a
+  // pale motion trail so a single frame still reads as a spinning rope.
+  drawChildObstacle(key, air) {
+    const O=0x2a2333,SK=0xe0a074,SKH=0xf0c3a0,SKS=0xc07f57,HR=0x6b3f2a,HRD=0x4a2a1c,
+      SHIRT=COLORS.childBody,SHIRTH=0x82b0e0,SHIRTS=0x3f6aa0,SHORTS=0x334a86,SHORTSH=0x4f66ad,
+      SHOE=0xe86a4b,SOLE=0xf3efe4,MOUTH=0x8a3f3a,
+      ROPE=0xf2b33a,ROPES=0xcf8f22,GRIP=0xd94f3d,GRIPD=0x9c3427,TRAIL=0xf7d98a;
+
+    const ropeBack=air
+      ? [ // low arc sweeping under the tucked feet, risers up to the hands
+          [3,16,2,4,ROPE],[2,20,2,3,ROPE],[3,23,3,2,ROPE],
+          [25,16,2,4,ROPE],[26,20,2,3,ROPE],[24,23,3,2,ROPE],
+          [7,25,5,2,ROPE],[12,26,6,2,ROPE],[18,25,5,2,ROPE],
+          [7,26,4,1,ROPES],[12,27,6,1,ROPES],[19,26,4,1,ROPES],
+          [10,24,4,1,TRAIL],[8,25,2,1,TRAIL],[20,25,2,1,TRAIL] ]
+      : [ // tall arc whipped up and over the head, sides down to the hands
+          [10,0,10,2,ROPE],[8,1,3,2,ROPE],[19,1,3,2,ROPE],
+          [5,3,2,4,ROPE],[23,3,2,4,ROPE],[4,7,2,5,ROPE],[24,7,2,5,ROPE],
+          [3,12,3,3,ROPE],[24,12,3,3,ROPE],[3,14,3,2,ROPE],[24,14,3,2,ROPE],
+          [10,0,10,1,ROPES],[5,4,1,3,ROPES],[24,4,1,3,ROPES],
+          [12,2,4,1,TRAIL],[9,3,2,1,TRAIL],[19,3,2,1,TRAIL] ];
+
+    const kid=air
+      ? [ // hair flying up, chin tucked, knees drawn up mid-hop
+          [10,1,10,2,HRD],[9,3,12,3,HR],[7,1,2,3,HR],[22,1,2,3,HR],[8,4,2,2,HR],[21,4,2,2,HR],
+          [9,3,12,8,O],[10,4,10,6,SK],[11,4,6,3,SKH],
+          [12,7,2,2,O],[17,7,2,2,O],[13,9,4,2,O],[14,9,3,1,MOUTH],
+          [13,11,4,1,O],
+          [9,12,12,7,O],[10,13,10,5,SHIRT],[11,13,4,3,SHIRTH],[10,17,10,1,SHIRTS],
+          [8,12,3,4,O],[9,13,2,3,SHIRT],[5,13,4,3,O],[6,13,3,2,SHIRT],[3,14,3,3,O],[4,15,2,2,SK],
+          [19,12,3,4,O],[19,13,2,3,SHIRT],[21,13,4,3,O],[21,13,3,2,SHIRT],[24,14,3,3,O],[24,15,2,2,SK],
+          [9,18,12,4,O],[10,19,10,3,SHORTS],[10,19,4,1,SHORTSH],[15,19,1,3,O],
+          [8,21,4,3,O],[9,21,3,2,SHORTS],[18,21,4,3,O],[19,21,3,2,SHORTS],
+          [7,22,2,2,O],[23,22,2,2,O],
+          [9,23,3,2,O],[10,23,2,1,SK],[18,23,3,2,O],[19,23,2,1,SK],
+          [11,23,4,2,O],[15,23,4,2,O],[12,23,3,1,SHOE],[16,23,3,1,SHOE],[12,24,3,1,SOLE],[16,24,3,1,SOLE] ]
+      : [ // standing on the sidewalk, arms down, feet together
+          [10,1,10,2,HRD],[9,3,12,3,HR],[9,4,2,4,HR],[21,4,2,4,HR],[8,6,2,3,HR],[22,6,2,3,HR],
+          [9,4,12,8,O],[10,5,10,6,SK],[11,5,6,3,SKH],
+          [12,8,2,2,O],[17,8,2,2,O],[13,10,4,2,O],[14,11,2,1,MOUTH],[11,9,1,1,SKS],[19,9,1,1,SKS],
+          [13,12,4,2,O],[14,12,2,1,SKS],
+          [9,13,12,7,O],[10,14,10,5,SHIRT],[11,14,4,3,SHIRTH],[10,18,10,1,SHIRTS],
+          [8,13,3,4,O],[9,14,2,3,SHIRT],[5,15,4,3,O],[6,15,3,2,SHIRT],[4,16,3,3,O],[4,17,2,2,SK],
+          [19,13,3,4,O],[19,14,2,3,SHIRT],[21,15,4,3,O],[21,15,3,2,SHIRT],[23,16,3,3,O],[24,17,2,2,SK],
+          [9,19,12,4,O],[10,20,10,3,SHORTS],[10,20,4,1,SHORTSH],[15,20,1,3,O],
+          [10,22,4,3,O],[16,22,4,3,O],[11,22,2,3,SK],[17,22,2,3,SK],
+          [9,24,6,3,O],[15,24,6,3,O],[10,24,5,2,SHOE],[16,24,5,2,SHOE],[10,26,5,1,SOLE],[16,26,5,1,SOLE] ];
+
+    const grips=air
+      ? [[3,13,3,3,GRIP],[3,13,3,1,GRIPD],[24,13,3,3,GRIP],[24,13,3,1,GRIPD]]
+      : [[3,15,3,3,GRIP],[3,15,3,1,GRIPD],[24,15,3,3,GRIP],[24,15,3,1,GRIPD]];
+
+    this.drawObstacleTexture(key,30,28,[...ropeBack, ...kid, ...grips]);
   }
 
   // Open municipal wire basket. Transparent gaps between its narrow ribs
@@ -181,22 +217,30 @@ export class BootScene extends Phaser.Scene {
   drawTrashBinObstacle(key, flyFrame = null) {
     const O=0x101216,D=0x292c31,M=0x44484e,L=0x747980,HI=0xb7bbc0;
     const FLY=0x111014,WING=0x77777c;
+    const CAN=0x9298a0,CANHI=0xb7bbc0,CANDK=0x5c5f64,PAPER=0xd0cdc4,PAPERHI=0xeceae2,BOTL=0x3a4a3f;
+    // Flies buzz as a loose asymmetric cluster over the open mouth and jump
+    // position between the two frames - not a fixed dot on each side, which
+    // read as indicator lights.
     const flies=flyFrame === null
-      ? []
+      ? [[9,4,1,1,FLY],[13,6,1,1,FLY],[17,3,1,1,FLY]]
       : flyFrame
-        ? [[1,14,2,1,FLY],[0,13,1,1,WING],[2,15,1,1,WING],[26,11,2,1,FLY],[27,10,1,1,WING],[28,12,1,1,WING]]
-        : [[1,10,2,1,FLY],[0,11,1,1,WING],[2,9,1,1,WING],[27,14,2,1,FLY],[26,13,1,1,WING],[29,15,1,1,WING]];
+        ? [[8,3,1,1,FLY],[7,2,1,1,WING],[13,6,1,1,FLY],[14,7,1,1,WING],[18,2,1,1,FLY],[17,3,1,1,WING],[11,8,1,1,FLY],[22,5,1,1,FLY]]
+        : [[11,5,1,1,FLY],[12,4,1,1,WING],[16,2,1,1,FLY],[15,1,1,1,WING],[20,6,1,1,FLY],[21,7,1,1,WING],[9,7,1,1,FLY],[19,9,1,1,FLY]];
     this.drawObstacleTexture(key,30,36,[
       ...flies,
-      // Thin rolled oval rim surrounding a genuinely open center.
+      // Rubbish packed into the basket so the wire body reads as full, not
+      // as a see-through hoop.
+      [7,12,16,17,0x191b21],[9,14,13,12,0x232530],
+      [10,13,6,3,0x2e3038],[16,15,6,3,0x2b2d35],[12,20,9,3,0x1f2128],[8,17,4,4,0x26282f],
+      [13,16,3,2,CANDK],[18,18,2,6,BOTL],
+      // Thin rolled oval rim surrounding the center.
       [7,1,16,1,D],[4,2,22,1,M],[2,3,4,1,O],[24,3,4,1,O],
       [1,4,3,3,O],[27,4,2,3,O],[2,7,26,2,O],[3,7,24,1,HI],
       [5,4,20,1,L],[7,5,16,1,D],[9,6,12,1,M],
       // Outer frame tapers inward toward the base.
       [3,9,2,20,O],[4,10,1,18,L],[25,9,2,20,O],[25,10,1,18,M],
       [5,28,2,3,O],[23,28,2,3,O],
-      // Narrow, separated vertical ribs. The untouched pixels between them
-      // are transparent, like the open steel basket in the reference.
+      // Narrow, separated vertical ribs; the trash mass now shows between them.
       [6,9,2,21,O],[7,10,1,19,M],
       [10,9,2,23,O],[11,10,1,21,L],
       [14,8,2,24,O],[15,9,1,22,M],
@@ -205,25 +249,89 @@ export class BootScene extends Phaser.Scene {
       // Slim hoops stabilize the basket without filling its open body.
       [3,11,24,2,O],[4,11,22,1,HI],
       [4,21,22,2,O],[5,21,20,1,M],
-      // Light rolled base ring.
-      [5,30,20,3,O],[7,33,16,1,O],[6,30,18,1,HI],[7,31,16,1,M]
+      // A crushed can and a paper wad crest the rim.
+      [4,2,8,4,O],[5,3,6,2,CAN],[5,2,6,1,CANHI],[6,4,1,1,CANDK],
+      [15,1,7,5,O],[16,2,5,3,PAPER],[17,2,2,1,PAPERHI],[19,4,2,1,PAPER],
+      // Rolled base ring, extended to the bottom edge so the bin sits flush.
+      [5,30,20,3,O],[6,33,18,3,O],[6,30,18,1,HI],[7,31,16,1,M],[7,34,16,1,M],
+      // A faded paper cup on its side against the foot of the bin: sealed base
+      // at the left, domed grey lid with a dark drink hole at the right, a
+      // striped straw poking out. Anchored to the bin so it can't be mistaken
+      // for a pickup.
+      [6,31,17,5,0x1e1a1a],[7,32,15,3,0xb35b52],[7,32,15,1,0xcf837a],[7,34,15,1,0x8a4038],
+      [6,32,2,3,0x1e1a1a],[6,33,1,1,0xdedad0],
+      [22,30,4,6,0x1e1a1a],[23,31,2,4,0xc9cdd0],[23,31,2,1,0xeef0f2],[23,33,1,2,0x9297a0],[24,33,1,1,0x1e1a1a],
+      [25,31,2,5,0x1e1a1a],[26,32,1,3,0xc9cdd0],
+      [24,29,3,1,0xb35b52],[26,28,3,1,0xe4dfd6],[28,27,2,1,0xb35b52]
     ]);
   }
 
-  drawCrateObstacle(key) {
-    const O=0x3b261b,D=COLORS.obstacleCrateDark,M=COLORS.obstacleCrate,L=COLORS.obstacleCrateLight,HI=0xc78a4d;
-    this.drawObstacleTexture(key,26,26,[
-      [1,1,24,24,O],[3,3,20,20,M],[4,4,18,3,L],[4,19,18,3,D],
-      [3,3,4,20,D],[19,3,4,20,L],[6,7,4,3,HI],[15,16,4,3,D],
-      [6,7,3,3,O],[17,7,3,3,O],[10,10,6,6,O],[11,11,4,4,0xc99852],
-      [7,8,13,3,D],[9,10,3,8,D],[16,8,3,12,L],[7,17,12,3,D],
-      [0,23,26,3,O],[2,23,22,1,L],[5,24,4,1,0x211713],[18,24,3,1,0x211713]
+
+  // Café A-frame sandwich board: a framed chalkboard panel with a steaming
+  // coffee mug and a short chalked menu, on two splayed legs with a hinged
+  // peak and a chain slung between the feet; the far board recedes behind on
+  // the right. A clean "sign on the sidewalk" silhouette - replaces the crate.
+  drawSignboardObstacle(key) {
+    const O=0x241c14,WD=0x7a5636,WDL=0x9c7548,WDD=0x4e3722,
+      BG=0x1e332a,BGL=0x2a4638,CH=0xf0ece0,CHD=0xc3bfae,ACC=0xe0b45a,STEAM=0xa7b8ae,CHAIN=0x4a443c;
+    this.drawObstacleTexture(key,44,40,[
+      // Sidewalk shadow.
+      [8,38,30,1,0x160f0a],
+      // Far board: its top edge and leg recede behind on the right.
+      [28,5,10,3,O],[29,5,8,2,WDD],
+      [34,7,5,22,O],[35,8,3,19,WDD],
+      [33,28,6,9,O],[34,29,4,7,WDD],
+      // Hinged apex cap.
+      [14,2,16,4,O],[15,3,14,2,WD],[15,3,14,1,WDL],[16,2,8,1,WDD],
+      // Near board: framed panel with a big chalkboard face.
+      [8,5,28,27,O],[9,6,26,25,WD],[9,6,26,1,WDL],[9,30,26,1,WDD],
+      [11,9,22,19,BG],[11,9,22,1,BGL],[11,9,1,19,BGL],
+      // Chalk: a steaming coffee mug and a short hand-lettered menu.
+      [13,16,8,8,CH],[13,24,10,1,CH],[21,18,3,4,CH],[22,19,1,2,BG],
+      [14,13,1,3,STEAM],[16,12,1,4,STEAM],[18,13,1,3,STEAM],
+      [24,12,7,2,CH],[24,16,7,1,CH],[24,19,6,1,CHD],[24,22,5,1,ACC],[24,24,7,1,ACC],
+      // Near board's two splayed feet.
+      [7,31,6,7,O],[8,32,4,5,WDD],[6,36,7,2,O],
+      [30,31,6,7,O],[31,32,4,5,WDD],[29,36,7,2,O],
+      // Chain slung between the legs.
+      [12,33,4,1,CHAIN],[16,34,5,1,CHAIN],[21,35,4,1,CHAIN],[25,34,5,1,CHAIN],[30,33,3,1,CHAIN],
+      [18,34,1,1,0x6b6459],[27,34,1,1,0x6b6459]
     ]);
   }
 
-  // Angry cat: arched back, tail straight up, slanted brows over narrow
-  // glowing eyes, bared fangs. Sized up from the original startled-cat
-  // design - see minHeight/maxHeight for 'obstacle-cat' in Obstacle.js.
+  // Four-frame low gallop - gather, airborne reach with the legs splayed
+  // fore/aft, front contact, back push-off - so the cat visibly runs rather
+  // than sliding on a single pose. Frames feed obstacle-cat-run; the enraged
+  // charge swaps to the obstacle-cat-hiss pair drawn below.
+  drawCatRunObstacle(key, f) {
+    const O=0x1d1b25,D=0x34323e,M=COLORS.catBody,L=0x716d7b,E=COLORS.catEye,W=0xf1e7d8;
+    const by=[0,-1,1,-1][f];
+    const ext=[[7,21],[5,24],[6,22],[6,23]][f], x0=ext[0], x1=ext[1];
+    const core=[
+      [8,4+by,13,9,O],[9,2+by,4,3,O],[16,2+by,4,3,O],
+      [9,6+by,11,6,M],[10,6+by,3,2,L],
+      [11,8+by,2,2,O],[16,8+by,2,2,O],[12,8+by,2,1,E],[16,8+by,2,1,E],
+      [9,10+by,3,1,W],[10,12+by,4,1,W],
+      [x0,10+by,x1-x0,9,O],[x0+1,11+by,x1-x0-2,7,M],[x0+1,11+by,8,2,L],[x0+2,16+by,x1-x0-6,2,D]
+    ];
+    const tail=[
+      [[22,2,5,3,O],[24,3,3,9,O],[25,4,2,7,M]],
+      [[23,12,6,2,O],[27,11,3,2,O],[28,10,2,2,O],[24,13,4,1,M]],
+      [[23,7,4,7,O],[24,8,3,6,M],[25,4,3,4,O]],
+      [[22,3,5,3,O],[23,4,3,10,O],[24,5,2,8,M]]
+    ][f];
+    const legs=[
+      [[8,17,3,7,O],[9,18,2,5,M],[8,23,3,2,O],[15,17,4,7,O],[16,18,3,5,M],[16,23,3,2,O]],
+      [[7,14,3,4,O],[2,15,6,3,O],[0,16,4,2,M],[0,17,2,2,L],[16,14,3,4,O],[19,15,6,3,O],[24,16,4,2,M],[26,17,2,2,L]],
+      [[5,16,3,9,O],[6,17,2,7,M],[4,24,4,2,O],[17,17,3,3,O],[13,18,4,5,O],[14,19,3,4,M],[15,22,3,2,O]],
+      [[16,16,4,9,O],[17,17,3,7,M],[18,24,4,2,O],[8,15,3,4,O],[9,16,2,3,M],[10,17,2,2,O]]
+    ][f];
+    this.drawObstacleTexture(key,30,27,[...tail, ...core, ...legs]);
+  }
+
+  // Arched back, tail straight up, slanted brows over narrow glowing eyes,
+  // bared fangs, motion lines. Two frames (obstacle-cat-hiss) played fast
+  // when a cat notices Nicole and charges - see Obstacle.js behavior 'cat'.
   drawCatObstacle(key, hiss) {
     const O=0x1d1b25,D=0x34323e,M=COLORS.catBody,L=0x716d7b,E=COLORS.catEye,W=0xf1e7d8;
     const tail=hiss?[[25,2,3,12,O],[24,3,2,10,M],[22,1,4,3,O]]:[[25,5,3,13,O],[24,6,2,11,M],[22,3,4,4,O]];
@@ -259,27 +367,61 @@ export class BootScene extends Phaser.Scene {
     ]);
   }
 
-  // Prone figure on the ground - the "urban derelict" night hazard. Drawn
-  // as a flat, low solid-color mound (no facial detail, no explicit death
-  // iconography - no blood, no X-eyes) rather than anything graphic; reads
-  // as "a collapsed/sleeping shape," same register as a pedestrian
-  // road-sign icon, not a caricature.
+  // Passed-out drunk sprawled across the sidewalk - a night hazard. Read
+  // cues, in order of legibility: one knee drawn up into a clear bump to
+  // hurdle, a paper-bag bottle resting on his chest, a coat/cap silhouette,
+  // an open hand and an empty bottle rolled off past his head. Deliberately
+  // non-graphic - slumped posture and bottles only, no vomit, no gore, no
+  // face detail beyond a slack mouth. The alternate frame just breathes
+  // (belly +1px) and moves the flies.
   drawSleepingObstacle(key, flip) {
-    const O=0x171822,D=COLORS.sleepingBody,M=0x464858,L=0x686b7d,SK=0xa86f61,S=0xd99a82,SH=0x3c3445;
-    const GLASS=0x4d765a,GLINT=0x94b58c,LABEL=0xd7c59a,FLY=0x111014,WING=0xaaa6ad;
+    const O=0x141019,COAT_D=COLORS.sleepingBody,COAT_M=0x50505e,COAT_L=0x6b6b78,COLLAR=0x83838f,
+      PANTS=0x2f3350,PANTS_L=0x45496a,SKIN=0xb07a63,SKIN_L=0xc98f76,SKIN_SH=0x8a5c4c,
+      HAIR=0x2a2530,CAP_D=0x1e1a24,BOOT=0x4a3a2e,BOOT_L=0x6b5442,
+      BAG=0xb2895a,BAG_D=0x8a6a45,BAG_L=0xcfa878,GLASS=0x6f4a25,GLASS_L=0xb98a52,
+      CAP_G=0xcaa85a,CAP_GL=0xe6cf8f,GRND=0x101019,FLY=0x111014,WING=0xaaa6ad;
+    const breath=flip?1:0;
     const flies=flip
-      ? [[5,2,2,1,FLY],[4,1,1,1,WING],[7,5,2,1,FLY],[9,4,1,1,WING],[13,2,2,1,FLY],[15,3,1,1,WING]]
-      : [[3,4,2,1,FLY],[3,3,1,1,WING],[8,1,2,1,FLY],[10,2,1,1,WING],[12,5,2,1,FLY],[11,4,1,1,WING]];
-    this.drawObstacleTexture(key,48,20,[
+      ? [[10,5,2,1,FLY],[12,4,1,1,WING],[16,2,2,1,FLY],[15,3,1,1,WING],[32,4,2,1,FLY],[34,3,1,1,WING]]
+      : [[8,3,2,1,FLY],[8,2,1,1,WING],[18,4,2,1,FLY],[20,3,1,1,WING],[30,2,2,1,FLY],[29,3,1,1,WING]];
+    this.drawObstacleTexture(key,48,28,[
       ...flies,
-      // Resting figure.
-      [1,12,10,7,O],[3,10,7,3,O],[4,11,6,5,S],[3,13,3,4,SK],[7,12,2,1,SH],
-      [9,13,23,6,O],[10,12,18,6,M],[11,12,8,2,L],[25,14,10,5,D],[30,15,10,4,O],
-      [33,14,8,3,SH],[31,17,11,3,O],[32,17,9,1,0x6c5d62],[8,17,24,3,O],[12,17,13,1,D],
-      // Green glass bottle on its side, with a neck, label and tiny glint.
-      [39,15,7,4,O],[40,15,5,3,GLASS],[37,16,4,2,O],[37,16,3,1,GLINT],
-      [42,15,2,3,LABEL],[45,16,2,2,O],[40,15,1,1,GLINT],
-      [0,19,48,1,0x12131a]
+      // Sidewalk contact shadow and an empty bottle rolled off past his head.
+      [2,25,44,2,GRND],[0,27,48,1,0x0d0d14],
+      [0,25,6,2,O],[1,25,4,1,GLASS],[1,25,3,1,GLASS_L],
+      // Far leg lying flat along the ground.
+      [25,21,15,5,O],[26,22,13,3,PANTS],[27,22,10,1,PANTS_L],
+      [38,20,8,6,O],[39,21,5,3,BOOT],[39,24,7,1,O],[39,21,3,1,BOOT_L],
+      // Far arm on the ground, palm up, hand open.
+      [12,22,12,3,O],[13,22,10,2,COAT_M],
+      [22,21,4,4,O],[23,22,3,2,SKIN],[23,21,2,1,SKIN_L],
+      // Rumpled coat over the torso.
+      [10,13,22,13,O],[11,14,20,11,COAT_M],
+      [13,17,17,1,COAT_D],[15,20,13,1,COAT_D],[12,23,18,1,COAT_D],
+      [11,14,4,4,COAT_L],[12,15,2,2,COLLAR],
+      [19,13+breath,9,3,COAT_M],[20,12+breath,7,1,COAT_L],
+      [12,24,17,2,O],[13,25,15,1,COAT_D],
+      // Head lolled back, wool cap slipping over the brow.
+      [3,12,9,4,HAIR],[3,11,8,3,CAP_D],[4,15,7,1,CAP_D],
+      [4,16,7,7,SKIN],[5,16,4,2,SKIN_L],[4,22,5,2,SKIN_SH],
+      [9,18,2,2,SKIN_L],[5,17,3,1,CAP_D],[5,18,3,1,O],
+      [6,21,3,2,0x2a1a1f],[5,20,4,1,SKIN_SH],[4,19,1,2,SKIN_SH],
+      [10,18,3,5,O],[10,19,2,3,SKIN_SH],
+      // Near arm draped across the chest, hand loosely on the bottle.
+      [15,15,7,3,O],[16,16,6,2,COAT_D],
+      [20,13,6,4,O],[21,14,5,2,COAT_D],
+      [24,13,4,4,O],[25,14,3,2,SKIN],[25,13,2,1,SKIN_L],
+      // Bottle in a crumpled paper bag, neck angled up off his chest.
+      [22,8,8,8,O],[23,9,6,6,BAG],[23,10,6,1,BAG_D],[24,12,5,1,BAG_D],
+      [25,8,4,2,BAG_D],[23,9,1,4,BAG_L],[24,10,1,2,BAG_L],
+      [26,4,3,5,O],[27,5,1,4,GLASS],[25,7,4,2,O],[26,7,2,1,GLASS_L],
+      [27,3,2,2,CAP_G],[27,3,2,1,CAP_GL],
+      // Bent near leg - the raised knee is the bump to clear.
+      [24,18,6,7,O],[25,19,4,6,PANTS],
+      [26,11,6,9,O],[27,12,4,8,PANTS],[28,13,2,5,PANTS_L],
+      [27,7,7,6,O],[28,8,5,4,PANTS],[29,9,3,2,PANTS_L],[30,8,2,1,0x555a80],
+      [31,10,6,10,O],[32,11,4,9,PANTS],[33,12,2,6,PANTS_L],
+      [32,20,8,6,O],[33,21,6,4,BOOT],[33,24,7,1,O],[34,21,3,1,BOOT_L]
     ]);
   }
 
@@ -316,51 +458,83 @@ export class BootScene extends Phaser.Scene {
     ]);
   }
 
-  // NYC-style street steam chimney: a tall orange-and-white striped tube on
-  // a traffic-cone base. Two offset cloud silhouettes send the steam sideways
-  // as if caught between buildings, matching the supplied photo reference.
+  // NYC Con Ed street steam stack: a tall, slender orange-and-white striped
+  // tube - much taller than wide - with a ribbed collar joint near the mouth,
+  // a yellow hazard placard, a compact traffic-cone base, and a two-frame
+  // vertical steam plume off the top.
   drawSteamStackObstacle(key, flip) {
     const O=0x4a2822,D=0xa43f27,M=COLORS.coneOrange,L=0xf08a45,W=0xe7ddd1,WS=0xbebbc0,WH=0xf7f5ef,SOOT=0x3b3736;
+    const COL=0x8f8a82,COLH=0xb7b2a8,COLD=0x5f5a52,SIGN=0xe8c53a;
     const steam=flip
-      ? [[2,2,12,3,WS],[0,5,18,5,WS],[5,1,8,8,WH],[9,7,12,4,WH],[2,10,15,3,WS],[14,5,8,5,WH]]
-      : [[0,4,11,4,WS],[3,1,12,7,WH],[7,7,14,5,WS],[1,9,11,4,WH],[12,3,9,6,WH],[16,9,6,3,WS]];
-    this.drawObstacleTexture(key,34,42,[
+      ? [ [15,1,12,5,WH],[12,4,17,6,WS],[14,9,13,4,WH],[6,3,7,4,WS],[3,7,6,3,WH],[19,0,5,3,WS] ]
+      : [ [17,0,10,5,WH],[15,4,13,6,WS],[17,9,11,4,WH],[11,5,6,4,WS],[9,9,5,3,WH] ];
+    this.drawObstacleTexture(key,34,52,[
       ...steam,
-      // Soot-darkened open pipe mouth and tall striped chimney.
-      [20,8,9,3,O],[21,8,7,2,SOOT],[19,10,11,23,O],[20,10,9,22,M],
-      [21,10,7,5,D],[20,15,9,4,W],[21,15,7,1,WH],
-      [20,19,9,5,M],[21,19,2,5,L],[20,24,9,4,W],[21,24,7,1,WH],
-      [20,28,9,5,M],[21,28,2,5,L],[26,29,2,3,D],
-      // Wide safety-cone collar and weighted street base.
-      [17,32,15,7,O],[18,32,13,7,M],[20,32,9,2,L],[19,35,11,4,M],
-      [15,38,19,3,O],[16,38,17,2,L],[13,40,21,2,O],[16,40,16,1,M],
-      // Scuffs and reflective wear.
-      [22,17,3,1,0xc7beb2],[25,25,2,1,0xb5ada4],[19,36,2,1,D]
+      // Soot-rimmed mouth, ribbed collar joint, then a tall slender tube.
+      [20,11,10,3,O],[21,11,8,2,SOOT],
+      [19,14,12,3,O],[19,14,12,1,COLH],[20,15,10,1,COL],[20,16,10,1,COLD],
+      [21,17,8,27,O],
+      [22,17,6,3,D],
+      [22,20,6,4,M],[22,20,2,4,L],
+      [22,24,6,3,W],[22,24,6,1,WH],
+      [22,27,6,4,M],[22,27,2,4,L],
+      [22,31,6,3,W],[22,31,6,1,WH],
+      [22,34,6,4,M],[22,34,2,4,L],
+      [22,38,6,3,W],[22,38,6,1,WH],
+      [22,41,6,3,M],[22,41,2,3,L],
+      // Yellow hazard diamond bolted to the tube.
+      [24,25,4,4,O],[25,25,2,3,SIGN],[24,26,4,2,SIGN],[25,24,1,1,SIGN],
+      // Compact safety-cone base.
+      [18,43,14,5,O],[19,43,12,5,M],[21,44,7,2,L],[20,47,10,3,M],
+      [15,48,19,3,O],[16,48,17,2,L],[14,50,20,2,O],[16,50,16,1,M],
+      // Reflective scuffs.
+      [23,35,2,1,0xc7beb2],[20,49,2,1,D]
     ]);
   }
 
   drawHydrantObstacle(key, flip, extended = false) {
     const O=0x51251f,D=0xa63b2c,M=0xd95237,L=0xf27a54,STEEL=0xb8c2c7,W=0xc9edf2,HI=0xf2ffff;
+    // Short jet arcs up and comes back down steeply near mid-texture, leaving
+    // room for a real splash on the pavement rather than clipping off the edge.
     const shortSpray=flip
-      ? [[17,13,6,3,HI],[21,11,6,4,W],[25,9,6,4,HI],[29,10,5,4,W],[32,12,5,5,HI],[35,15,3,6,W],[36,21,2,3,HI]]
-      : [[17,14,6,3,W],[21,12,6,4,HI],[25,10,6,4,W],[29,10,5,4,HI],[32,12,5,5,W],[35,16,3,6,HI],[36,22,2,3,W]];
+      ? [[16,14,6,3,HI],[19,11,6,4,W],[23,9,6,4,HI],[27,10,5,4,W],[30,13,4,5,HI],[31,17,3,5,W],[31,21,3,3,HI]]
+      : [[16,14,6,3,W],[19,11,6,4,HI],[23,9,6,4,W],[27,10,5,4,HI],[30,13,4,5,W],[31,17,3,5,HI],[31,21,3,3,W]];
+    // Long jet tapers: a solid sheet at the nozzle, thick dashes through the
+    // middle, then scattered droplets fading and arcing down - so it reads as
+    // water thrown from the hydrant, not a bar across the whole lane.
     const longSpray=flip
-      ? [[17,13,8,3,HI],[23,10,10,4,W],[31,7,11,4,HI],[40,5,12,4,W],[50,5,12,4,HI],
-         [60,7,10,4,W],[68,9,9,5,HI],[75,12,8,5,W],[81,15,7,6,HI],[86,20,4,6,W],
-         [77,19,3,2,W],[69,22,3,2,HI],[84,25,3,2,HI]]
-      : [[17,14,8,3,W],[23,11,10,4,HI],[31,8,11,4,W],[40,6,12,4,HI],[50,5,12,4,W],
-         [60,6,10,4,HI],[68,8,9,5,W],[75,11,8,5,HI],[81,15,7,6,W],[86,21,4,6,HI],
-         [78,20,3,2,HI],[70,23,3,2,W],[83,25,3,2,W]];
+      ? [[17,13,7,5,HI],[19,12,7,3,W],[22,11,7,3,HI],[26,11,6,3,W],[30,12,5,3,HI],
+         [35,12,4,2,W],[41,11,4,2,HI],[47,11,4,2,W],[52,12,3,2,HI],
+         [58,12,2,2,W],[63,13,2,2,HI],[68,14,2,2,W],[72,16,2,2,HI],[76,18,1,2,W],[80,21,1,2,HI],[83,24,1,2,W],
+         [46,9,1,1,W],[56,10,1,1,HI],[67,12,1,1,W]]
+      : [[17,13,7,5,W],[19,12,7,3,HI],[22,11,7,3,W],[26,11,6,3,HI],[30,12,5,3,W],
+         [35,12,4,2,HI],[41,11,4,2,W],[47,11,4,2,HI],[52,12,3,2,W],
+         [58,12,2,2,HI],[63,13,2,2,W],[68,14,2,2,HI],[72,16,2,2,W],[76,18,1,2,HI],[80,21,1,2,W],[83,24,1,2,HI],
+         [45,9,1,1,HI],[55,10,1,1,W],[66,11,1,1,HI]];
     const spray=extended?longSpray:shortSpray;
-    this.drawObstacleTexture(key,extended?90:38,28,[...spray,
+    // Where the arc comes down: a kicked-up splash crown and a wet puddle
+    // spreading on the pavement. W/HI swap with the spray shimmer.
+    const splash=extended
+      ? (flip
+        ? [[77,23,12,2,HI],[78,22,7,1,W],[75,21,2,2,HI],[86,21,2,2,W],[82,20,1,2,HI],
+           [74,25,15,1,0x9adfe6],[78,24,10,1,0xc6eef2]]
+        : [[77,23,12,2,W],[78,22,7,1,HI],[75,21,2,2,W],[86,21,2,2,HI],[82,20,1,2,W],
+           [74,25,15,1,0x9adfe6],[78,24,10,1,0xc6eef2]])
+      : (flip
+        ? [[28,22,10,2,HI],[29,21,6,1,W],[26,20,2,2,HI],[34,19,2,3,W],[31,18,1,2,HI],[37,21,1,3,W],
+           [23,25,15,1,0x8fd6de],[27,24,10,1,0xc6eef2],[23,26,15,1,0x63aeb7],[24,23,1,1,W],[36,23,1,1,HI]]
+        : [[28,22,10,2,W],[29,21,6,1,HI],[26,20,2,2,W],[34,19,2,3,HI],[31,18,1,2,W],[37,21,1,3,HI],
+           [23,25,15,1,0x8fd6de],[27,24,10,1,0xc6eef2],[23,26,15,1,0x63aeb7],[24,23,1,1,HI],[36,23,1,1,W]]);
+    this.drawObstacleTexture(key,extended?90:38,28,[...spray, ...splash,
       [7,5,10,3,O],[9,3,6,3,O],[10,3,4,2,STEEL],[5,7,14,3,O],[6,7,12,2,L],
-      [7,9,10,15,O],[8,9,8,14,M],[9,10,2,12,L],[5,12,4,7,O],[3,13,4,5,O],[4,14,3,3,M],
+      [7,9,10,15,O],[8,9,8,14,M],[9,10,2,12,L],[13,10,3,13,0xb8432c],[5,12,4,7,O],[3,13,4,5,O],[4,14,3,3,M],
       [16,11,4,8,O],[17,12,2,6,STEEL],[6,19,12,5,O],[7,19,10,3,D],[3,23,19,4,O],[5,23,15,2,L]
     ]);
   }
 
   drawShoppingCartObstacle(key, roll) {
-    const O=0x22252a,D=0x50575d,M=0x818a8f,L=0xcbd0d1,R=0xa84b42,B=0x435d78,T=0x786044,Y=0xb99a4d,G=0x607054;
+    const O=0x22252a,D=0x50575d,M=0x818a8f,L=0xcbd0d1,R=0xa84b42,B=0x435d78;
+    const BAG=0x9a7c50,BAGHI=0xb89463,BAGDK=0x836542,BOTL=0x6f8a5f,BOTLHI=0x8fb07d;
     const wheels=roll
       ? [[10,34,10,8,O],[13,36,4,2,L],[39,34,10,8,O],[42,36,4,2,L],
          [14,35,2,6,M],[11,38,8,2,M],[43,35,2,6,M],[40,38,8,2,M]]
@@ -369,16 +543,17 @@ export class BootScene extends Phaser.Scene {
     this.drawObstacleTexture(key,56,42,[
       // Tall rear push frame and broad colored handle grip.
       [2,4,15,4,O],[2,2,12,3,R],[14,5,4,28,O],[15,6,2,26,L],
-      // Junk remains visible behind the open cage instead of becoming a
-      // single dark basket mass.
-      [19,13,10,15,B],[21,11,6,4,L],[29,16,10,12,T],[32,13,6,5,Y],
-      [39,14,8,14,R],[45,17,6,10,G],[25,19,7,9,0x9a7650],
+      // One paper grocery bag rides above the cage rim; a bottle leans out.
+      [22,3,13,5,O],[23,1,10,3,O],[24,4,11,16,O],[25,4,9,15,BAG],[25,4,9,2,BAGHI],[25,10,9,1,BAGDK],[26,2,6,2,BAG],
+      [38,2,4,11,O],[39,2,2,10,BOTL],[39,1,2,2,O],[39,3,1,4,BOTLHI],
       // Sloped cage perimeter: wide mouth, narrower floor, stepped front.
       [15,9,38,3,O],[16,10,36,1,L],[16,11,3,19,O],[18,28,31,3,O],
       [50,11,4,5,O],[49,15,4,6,O],[48,20,4,6,O],[47,25,4,5,O],
       // Bright wire grid with transparent cells between each bar.
       [19,11,2,18,M],[26,11,2,18,L],[33,11,2,18,M],[40,11,2,18,L],[47,11,2,16,M],
       [17,14,35,2,M],[17,20,34,2,L],[18,26,31,2,M],
+      // Diagonal cross-members read the frame as a cart cage, not a box.
+      [19,27,2,2,L],[24,24,2,2,L],[29,21,2,2,L],[34,18,2,2,L],[39,15,2,2,L],[44,13,2,2,L],
       // Fold-down child seat is attached to the rear cage wall.
       [18,11,11,10,O],[19,12,9,8,B],[21,13,5,2,L],[22,16,3,3,O],
       // Chassis, open lower rack, and clearly separated caster forks.
@@ -418,11 +593,11 @@ export class BootScene extends Phaser.Scene {
   drawParkingMeterObstacle(key) {
     const O=0x1b2023,DEEP=0x111517,D=0x3e494d,M=0x68767a,L=0xaab5b6,HI=0xd8dedc,GLASS=0x92afb0,BLUE=0x35577b,R=0xc85045,G=0x75a36a;
     this.drawObstacleTexture(key,18,60,[
-      // Compact rounded single-space meter head.
-      [6,1,6,1,O],[3,2,12,2,O],[1,4,16,6,O],[0,8,18,10,O],
-      [6,2,6,1,HI],[4,3,10,2,L],[2,5,14,5,M],[1,9,16,8,D],
+      // Beefier rounded single-space meter head so it still dominates the pole.
+      [5,1,8,1,O],[2,2,14,2,O],[0,4,18,6,O],[0,8,18,10,O],
+      [6,2,6,1,HI],[3,3,12,2,L],[1,5,16,5,M],[1,9,16,8,D],
       // Arched glass timer window and small mechanical dial.
-      [4,5,10,8,O],[5,5,8,7,GLASS],[6,6,6,2,HI],[7,9,4,2,D],[9,6,1,5,M],
+      [3,5,12,8,O],[4,5,10,7,GLASS],[5,6,7,2,HI],[7,9,4,2,D],[9,6,1,5,M],
       // Simple coin slot and traditional lower round mechanism.
       [1,14,16,4,O],[2,14,14,2,L],[3,17,12,8,O],[4,17,10,7,BLUE],
       [5,18,6,2,HI],[11,18,2,3,R],[5,21,2,2,G],[9,21,3,2,DEEP],
@@ -434,29 +609,34 @@ export class BootScene extends Phaser.Scene {
   }
 
   drawScurryingRatsObstacle(key, stride) {
-    const O=0x171414,D=0x4b3731,M=0x765548,L=0xa77b68,TAIL=0xc49a89,EYE=0xe7cf58;
+    const O=0x171414,D=0x4b3731,M=0x765548,L=0xa77b68,TAIL=0xc49a89,TAILD=0x9c7666,EYE=0xe7cf58,SCUFF=0x2c2722;
+    const b = stride ? 1 : 0;
     const legs = stride
-      ? [[9,14,5,2,O],[22,14,5,2,O],[26,8,4,2,O],[36,8,4,2,O]]
-      : [[6,14,5,2,O],[19,14,5,2,O],[23,8,4,2,O],[33,8,4,2,O]];
-    const tails = stride
-      ? [[27,12,7,2,TAIL],[33,10,6,2,TAIL],[38,7,5,2,TAIL],[42,5,2,3,TAIL]]
-      : [[27,12,7,2,TAIL],[33,13,6,2,TAIL],[38,11,5,2,TAIL],[42,9,2,3,TAIL]];
-    this.drawObstacleTexture(key,44,18,[
-      // Smaller rear rat creates a readable little curbside pack.
-      [23,5,3,5,O],[26,3,11,7,O],[36,5,5,5,O],[25,4,11,5,D],[28,3,7,4,M],
-      [21,6,6,4,O],[22,6,4,3,M],[21,5,2,2,L],[22,7,1,1,EYE],[20,8,3,1,L],
-      [37,6,5,2,TAIL],[41,4,3,2,TAIL],
-      // Larger lead rat: pointed nose, round ears, long body, feet and eye.
-      [7,9,4,6,O],[11,7,17,8,O],[26,10,5,5,O],[10,8,17,6,D],[13,7,12,5,M],[15,8,8,2,L],
-      [2,10,8,5,O],[3,9,5,2,M],[5,8,3,3,L],[4,11,1,1,EYE],[0,13,4,1,L],
-      ...tails,
+      ? [[9,18,3,3,O],[14,19,3,3,O],[19,18,3,3,O],[24,17,3,3,O],[33,19,2,2,O],[38,19,2,2,O]]
+      : [[10,18,3,3,O],[15,19,3,3,O],[21,18,3,3,O],[24,17,3,3,O],[32,19,2,2,O],[37,19,2,2,O]];
+    const leadTail = stride
+      ? [[26,13,3,3,TAIL],[28,10,3,3,TAIL],[30,7,2,3,TAIL],[30,4,3,3,TAIL],[29,2,3,2,TAILD]]
+      : [[26,14,3,3,TAIL],[28,12,3,3,TAIL],[31,10,2,3,TAIL],[32,7,3,3,TAIL],[32,4,3,2,TAILD]];
+    this.drawObstacleTexture(key,44,22,[
+      // Lead rat: humped back, pointed nose, round ear, curled tail standing up.
+      [8,10-b,20,9,O],[10,7-b,15,4,O],[13,5-b,8,3,O],
+      [10,9-b,15,7,D],[13,6-b,8,3,M],[12,10-b,12,3,M],[13,8-b,7,2,L],
+      [2,12,8,7,O],[3,13,5,4,M],[4,12,3,3,L],[1,15,2,2,O],[5,14,1,1,EYE],
+      [4,9,4,4,O],[5,10,2,2,M],
+      ...leadTail,
+      // Trailing rat, smaller and lower, so it reads as a little pack.
+      [30,14,10,6,O],[31,15,8,4,D],[38,14,3,3,O],[39,13,2,2,M],[40,15,1,1,EYE],
+      [39,16,5,2,TAIL],[42,14,2,3,TAIL],
       ...legs,
-      [4,16,24,2,O],[23,10,13,1,L]
+      // Scurry scuffs and the curb line.
+      [6,20,4,1,SCUFF],[16,20,5,1,SCUFF],[26,20,3,1,SCUFF],
+      [1,21,40,1,0x1a1614]
     ]);
   }
 
   drawCopObstacle(key, phase) {
     const O=0x151923,N=0x263a5a,B=0x355783,L=0x6686aa,SK=0xc98b75,S=0xe6ad92,G=0xd2b750,SHOE=0x11141b,CLUB=0x4d3528,CLUBL=0x805c43;
+    const BAND=0xc8cdd6,YOKE=0x4f7bb0,BADGE=0xe8c86a,BADGEH=0xfff2c0;
     const bob=phase%2;
     const arms=[
       [[2,14,5,5,O],[1,17,4,8,B],[1,23,4,3,S]],
@@ -471,23 +651,24 @@ export class BootScene extends Phaser.Scene {
       [[7,26,5,10,O],[8,27,3,8,N],[5,35,8,3,SHOE],[13,26,5,10,O],[14,27,3,8,N],[13,35,8,3,SHOE]]
     ][phase];
     const raisedArm=[
-      [[20,21,5,7,O],[21,16,4,7,B],[21,13,4,4,S]],
+      [[19,20,5,7,O],[20,15,4,7,B],[20,12,4,4,S]],
       [[20,21,5,7,O],[19,16,5,7,B],[18,12,4,5,S]],
       [[20,21,5,7,O],[17,17,6,6,B],[15,13,5,5,S]],
       [[20,21,5,7,O],[19,16,5,7,B],[18,12,4,5,S]]
     ][phase];
     const club=[
-      [[22,1,4,13,CLUB],[23,2,2,11,CLUBL]],
+      [[24,1,4,5,CLUB],[22,5,4,5,CLUB],[20,9,4,5,CLUB],[24,1,2,4,CLUBL]],
       [[19,10,4,5,CLUB],[21,6,4,5,CLUB],[23,2,4,5,CLUB],[24,2,2,4,CLUBL]],
       [[16,11,4,5,CLUB],[13,8,4,5,CLUB],[10,5,4,5,CLUB],[7,2,4,5,CLUB],[8,2,2,4,CLUBL]],
       [[19,10,4,5,CLUB],[18,6,4,5,CLUB],[17,2,4,5,CLUB],[18,2,2,4,CLUBL]]
     ][phase];
     const body=[
-      // Hat, face, and torso bob on the passing frames.
-      [7,1+bob,10,3,O],[5,4+bob,14,3,O],[7,3+bob,10,2,N],
+      // Hat with a silver band, face, torso with a light shoulder yoke and a
+      // gold badge glint - all readable against dark asphalt at night.
+      [7,1+bob,10,3,O],[5,4+bob,14,3,O],[7,3+bob,10,2,N],[7,3+bob,10,1,BAND],
       [8,6+bob,8,7,O],[9,6+bob,6,6,S],[10,7+bob,2,1,SK],[14,8+bob,1,1,O],
-      [6,12+bob,12,15,O],[7,12+bob,10,14,N],[8,13+bob,4,3,B],[13,13+bob,3,3,L],
-      [11,14+bob,2,3,G],[7,18+bob,10,2,O],
+      [6,12+bob,12,15,O],[7,12+bob,10,14,N],[7,12+bob,10,2,YOKE],[8,13+bob,4,3,B],[13,13+bob,3,3,L],
+      [11,14+bob,2,3,G],[9,16+bob,2,2,BADGE],[9,16+bob,1,1,BADGEH],[7,18+bob,10,2,O],
       ...arms,...legs
     ].map(([x,y,w,h,color])=>[x+3,y+10,w,h,color]);
     this.drawObstacleTexture(key,30,48,[...club,...raisedArm,...body]);
@@ -1066,19 +1247,20 @@ export class BootScene extends Phaser.Scene {
       repeat: -1
     });
     this.anims.create({
-      key: 'obstacle-cat-walk',
+      key: 'obstacle-cat-run',
       frames: [
         { key: 'obstacle-cat0' },
-        { key: 'obstacle-cat0' },
-        { key: 'obstacle-cat1' }
+        { key: 'obstacle-cat1' },
+        { key: 'obstacle-cat2' },
+        { key: 'obstacle-cat3' }
       ],
-      frameRate: 2,
+      frameRate: 10,
       repeat: -1
     });
     this.anims.create({
       key: 'obstacle-cat-hiss',
-      frames: [{ key: 'obstacle-cat0' }, { key: 'obstacle-cat1' }],
-      frameRate: 4,
+      frames: [{ key: 'obstacle-cat-hiss0' }, { key: 'obstacle-cat-hiss1' }],
+      frameRate: 6,
       repeat: -1
     });
     this.anims.create({

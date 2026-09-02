@@ -25,7 +25,10 @@ export class Crow extends Entity {
   }
 
   setSpeed(speed) {
-    const magnitude = this.direction < 0 ? speed * 0.8 + 70 : speed * 0.5 + 55;
+    // Stay well clear of the world scroll speed so the crow always visibly
+    // sweeps past obstacles instead of hanging beside one (at a low coefficient
+    // it matched obstacle speed at the top scroll rate and looked stuck to it).
+    const magnitude = this.direction < 0 ? speed * 1.1 + 130 : speed * 0.5 + 55;
     this.sprite.setVelocityX(this.direction * magnitude);
   }
 
