@@ -19,7 +19,7 @@ Open the local URL Vite prints (usually `http://localhost:5173`).
 ## Controls
 
 - **Space / click / tap** — jump immediately, or start/restart the game
-- **Hold for 2 seconds, then release** — launch a power jump
+- **Double-tap** — power jump when the power meter is ready
 - **P / Escape / Pause button** — pause or resume
 
 ## Project structure

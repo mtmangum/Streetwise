@@ -11,8 +11,8 @@ export const PLAYER = {
   gravity: 1400,
   jumpVelocity: -560,
   powerJumpVelocity: -720,
-  superChargeStartDelayMs: 140,
-  superJumpChargeMs: 2000,
+  doubleTapWindowMs: 320,
+  powerJumpRecoveryMs: 3500,
   jumpBufferMs: 120,
   coyoteTimeMs: 80,
   runSpeed: 0 // player stays put on screen; world scrolls under it

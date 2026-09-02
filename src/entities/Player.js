@@ -75,23 +75,8 @@ export class Player extends Entity {
     this.powerJumpUsed = false;
   }
 
-  canChargeJump() {
-    return !this.recovering && this._isOnGround;
-  }
-
-  chargedJump() {
-    if (!this.canChargeJump()) return false;
-    this.jumpBufferUntil = 0;
-    this.sprite.body.setVelocityY(PLAYER.powerJumpVelocity);
-    this.powerJumpUsed = true;
-    return true;
-  }
-
-  // Retained for the player entity's one-boost-per-arc rule. The current
-  // controls launch charged jumps from the ground via chargedJump().
   powerJump() {
     if (this.recovering || this._isOnGround || this.powerJumpUsed) return false;
-    if (this.sprite.body.velocity.y >= 0) return false;
     this.powerJumpUsed = true;
     this.sprite.body.setVelocityY(PLAYER.powerJumpVelocity);
     return true;
