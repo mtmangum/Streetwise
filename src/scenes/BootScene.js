@@ -48,8 +48,9 @@ export class BootScene extends Phaser.Scene {
     this.drawConeObstacle('obstacle-cone');
     this.drawChildObstacle('obstacle-child0', false);
     this.drawChildObstacle('obstacle-child1', true);
-    this.drawTrashBinObstacle('obstacle-trashbin0', false);
-    this.drawTrashBinObstacle('obstacle-trashbin1', true);
+    this.drawTrashBinObstacle('obstacle-trashbin0');
+    this.drawTrashBinObstacle('obstacle-trashbin1', false);
+    this.drawTrashBinObstacle('obstacle-trashbin2', true);
     this.drawCrateObstacle('obstacle-crate');
     this.drawHydrantObstacle('obstacle-hydrant0', false);
     this.drawHydrantObstacle('obstacle-hydrant1', true);
@@ -172,41 +173,37 @@ export class BootScene extends Phaser.Scene {
     ]);
   }
 
-  // Ordinary (unlit) trash bin - the daytime counterpart to
-  // obstacle-trashfire, same rounded-can shape in a cleaner color.
-  drawTrashBinObstacle(key, flip) {
-    // Municipal sidewalk basket: wide rolled rim, circular deposit opening,
-    // black inner liner and repeating powder-coated steel slats.
-    const O=0x101216,DEEP=0x06070a,D=0x22252a,M=0x3c4045,L=0x656a70,HI=0xa4a9ae,EDGE=0xd0d3d5;
-    const FLY=0x111014,WING=0xc2c0c5;
-    const flies=flip
-      ? [[1,2,2,1,FLY],[0,1,1,1,WING],[27,4,2,1,FLY],[29,3,1,1,WING],[2,10,2,1,FLY],[4,9,1,1,WING]]
-      : [[2,5,2,1,FLY],[1,4,1,1,WING],[27,1,2,1,FLY],[26,2,1,1,WING],[26,10,2,1,FLY],[28,11,1,1,WING]];
+  // Open municipal wire basket. Transparent gaps between its narrow ribs
+  // keep it from reading as a solid barrel at gameplay scale.
+  drawTrashBinObstacle(key, flyFrame = null) {
+    const O=0x101216,D=0x292c31,M=0x44484e,L=0x747980,HI=0xb7bbc0;
+    const FLY=0x111014,WING=0x77777c;
+    const flies=flyFrame === null
+      ? []
+      : flyFrame
+        ? [[1,14,2,1,FLY],[0,13,1,1,WING],[2,15,1,1,WING],[26,11,2,1,FLY],[27,10,1,1,WING],[28,12,1,1,WING]]
+        : [[1,10,2,1,FLY],[0,11,1,1,WING],[2,9,1,1,WING],[27,14,2,1,FLY],[26,13,1,1,WING],[29,15,1,1,WING]];
     this.drawObstacleTexture(key,30,36,[
       ...flies,
-      // Back half of the rolled elliptical rim and rear slats visible through it.
-      [6,1,18,1,O],[3,2,24,1,O],[1,3,28,4,O],[3,2,24,1,HI],
-      [3,3,24,2,L],[5,4,20,2,M],[6,5,3,5,D],[12,4,3,6,D],[18,4,3,6,D],[24,5,2,5,D],
-      // Thick top plate and stepped oval deposit opening.
-      [1,6,28,5,O],[2,6,26,2,HI],[3,8,24,3,M],
-      [7,6,16,1,O],[5,7,20,2,O],[7,9,16,2,DEEP],[9,8,12,2,DEEP],
-      [6,9,18,1,L],[8,10,14,1,D],
-      // Cylindrical dark liner tapers subtly toward the base.
-      [3,11,24,21,O],[4,11,22,20,DEEP],[5,12,20,19,D],
-      // Six dimensional steel slats. Outer strips shorten to imply curvature.
-      [3,11,3,19,O],[4,12,2,17,M],[5,12,1,16,L],
-      [7,10,4,22,O],[8,11,3,20,M],[10,11,1,19,HI],
-      [12,10,4,23,O],[13,11,3,21,M],[15,11,1,20,L],
-      [17,10,4,23,O],[18,11,3,21,M],[20,11,1,20,L],
-      [22,10,4,22,O],[23,11,3,20,M],[25,12,1,18,HI],
-      [27,12,2,18,O],[27,13,1,16,M],
-      // Retaining belt wraps across the slats with bright left-edge wear.
-      [2,11,26,4,O],[3,11,24,1,EDGE],[3,12,24,2,M],[4,12,1,2,HI],
-      // Heavy rolled base, stepped to keep the can visibly cylindrical.
-      [2,30,26,4,O],[3,30,24,1,HI],[4,31,22,2,M],[5,33,20,2,D],
-      [7,35,16,1,O],[4,34,22,1,L],
-      // Small municipal inventory plate.
-      [13,16,4,4,O],[14,16,3,3,HI],[14,17,2,2,D]
+      // Thin rolled oval rim surrounding a genuinely open center.
+      [7,1,16,1,D],[4,2,22,1,M],[2,3,4,1,O],[24,3,4,1,O],
+      [1,4,3,3,O],[27,4,2,3,O],[2,7,26,2,O],[3,7,24,1,HI],
+      [5,4,20,1,L],[7,5,16,1,D],[9,6,12,1,M],
+      // Outer frame tapers inward toward the base.
+      [3,9,2,20,O],[4,10,1,18,L],[25,9,2,20,O],[25,10,1,18,M],
+      [5,28,2,3,O],[23,28,2,3,O],
+      // Narrow, separated vertical ribs. The untouched pixels between them
+      // are transparent, like the open steel basket in the reference.
+      [6,9,2,21,O],[7,10,1,19,M],
+      [10,9,2,23,O],[11,10,1,21,L],
+      [14,8,2,24,O],[15,9,1,22,M],
+      [18,9,2,23,O],[19,10,1,21,L],
+      [22,9,2,21,O],[23,10,1,19,M],
+      // Slim hoops stabilize the basket without filling its open body.
+      [3,11,24,2,O],[4,11,22,1,HI],
+      [4,21,22,2,O],[5,21,20,1,M],
+      // Light rolled base ring.
+      [5,30,20,3,O],[7,33,16,1,O],[6,30,18,1,HI],[7,31,16,1,M]
     ]);
   }
 
@@ -1041,7 +1038,7 @@ export class BootScene extends Phaser.Scene {
     });
     this.anims.create({
       key: 'obstacle-trashbin-flies',
-      frames: [{ key: 'obstacle-trashbin0' }, { key: 'obstacle-trashbin1' }],
+      frames: [{ key: 'obstacle-trashbin1' }, { key: 'obstacle-trashbin2' }],
       frameRate: 5,
       repeat: -1
     });
@@ -1220,6 +1217,12 @@ export class BootScene extends Phaser.Scene {
       key: 'dog-jump',
       frames: [{ key: 'dog-leap' }],
       frameRate: 1
+    });
+    this.anims.create({
+      key: 'dog-attack',
+      frames: [{ key: 'dog-attack0' }, { key: 'dog-attack1' }],
+      frameRate: 10,
+      repeat: -1
     });
 
     this.scene.start('Play');

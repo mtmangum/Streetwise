@@ -1,8 +1,6 @@
 export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 360;
 export const RENDER_SCALE = 2;
-export const BUILD_NUMBER = '00.03';
-
 export const GROUND_HEIGHT = 60;
 export const GROUND_Y = GAME_HEIGHT - GROUND_HEIGHT;
 
@@ -43,6 +41,8 @@ export const DOG = {
   attackRunSpeed: 310,
   attackDistance: 30,
   attackDurationMs: 1250,
+  chaseSpeed: 680,
+  chaseDistance: 26,
   returnSpeed: 360,
   hydrantPauseMs: 950
 };
@@ -162,5 +162,6 @@ export const HEALTH = {
   drainPerSecond: 1,
   lossPerHit: 30,
   crowLossPerHit: 70,
-  invulnerabilityMs: 900
+  invulnerabilityMs: 900,
+  dangerThreshold: 30
 };

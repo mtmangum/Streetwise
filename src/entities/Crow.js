@@ -5,9 +5,11 @@ import { GAME_WIDTH, PLAYER } from '../config.js';
 // approaches overhead, dive-bombs Nicole, and pulls up after passing her.
 export class Crow extends Entity {
   constructor(scene, speed) {
+    // Every crow enters from ahead of Nicole on the right. A subset begins
+    // overhead and dive-bombs; the rest make a low leftward pass.
+    const movingLeft = true;
     const diveBomb = Math.random() < 0.3;
     const startY = diveBomb ? 72 : 242;
-    const movingLeft = Math.random() < 0.5;
     const startX = movingLeft ? GAME_WIDTH + 30 : -140;
     const sprite = scene.physics.add.sprite(startX, startY, 'crow-fly0');
     super(scene, sprite);

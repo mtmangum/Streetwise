@@ -33,7 +33,11 @@ const POSES={
  ],
  gathered0:dog({headX:21,headY:3,bodyY:5,tailY:6,legs:[[11,10,5,3],[16,9,5,3]]}),gathered1:dog({headX:22,headY:4,bodyY:6,tailY:7,legs:[[9,10,6,3],[17,10,5,3]]}),
  extended0:dog({headX:22,headY:5,bodyY:7,tailY:7,legs:[[4,11,8,2],[19,11,8,2]]}),extended1:dog({headX:21,headY:4,bodyY:6,tailY:6,legs:[[3,10,8,2],[20,10,7,2]]}),
- leap:dog({headX:22,headY:4,bodyY:6,tailY:6,legs:[[4,10,8,2],[20,10,8,2]]})
+ leap:dog({headX:22,headY:4,bodyY:6,tailY:6,legs:[[4,10,8,2],[20,10,8,2]]}),
+ // Alternating high/low head positions and exposed teeth create a readable
+ // snapping lunge instead of reusing the ordinary running silhouette.
+ attack0:[...dog({headX:20,headY:2,bodyY:6,tailY:7,legs:[[8,11,5,3],[18,10,5,3]]}),r(27,6,3,1,0xf2eee4),r(28,7,2,1,C.outline)],
+ attack1:[...dog({headX:20,headY:5,bodyY:7,tailY:6,legs:[[5,11,7,2],[19,11,7,2]]}),r(27,9,3,1,0xf2eee4),r(28,8,2,1,C.outline)]
 };
 export const DOG_POSES=Object.keys(POSES);
 export function dogFrameParts(pose){return POSES[pose];}

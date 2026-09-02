@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, BUILD_NUMBER, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -44,6 +44,7 @@ export class PlayScene extends Phaser.Scene {
     this.lastObstacleFamily = null;
     this.firstObstacleSpawned = false;
     this.firstObstacleHintShown = false;
+    this.firstObstacleFeedbackShown = false;
     this.firstTallHintShown = false;
     this.clusterSpawnsRemaining = 0;
     this.scrollSpeed = WORLD.baseScrollSpeed;
@@ -140,6 +141,12 @@ export class PlayScene extends Phaser.Scene {
       .setScale(0, 1)
       .setDepth(21);
     this.healthBarTexture = this.add.graphics().setDepth(22);
+    this.healthDangerFlash = this.add
+      .rectangle(HEALTH_BAR.x, HEALTH_BAR.y, trackWidth, HEALTH_BAR.height, 0xff253f, 0.18)
+      .setOrigin(0, 0)
+      .setStrokeStyle(3, 0xff253f, 1)
+      .setDepth(24)
+      .setVisible(false);
     this.sparkStars = [0.28, 0.55, 0.82].map((t) =>
       this.add
         .star(
@@ -274,18 +281,6 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(31);
-    this.add
-      .text(GAME_WIDTH - 8, GAME_HEIGHT - 7, `BUILD ${BUILD_NUMBER}`, {
-        fontFamily: 'monospace',
-        fontSize: '9px',
-        resolution: RENDER_SCALE,
-        color: '#b7bcc4',
-        stroke: '#090b10',
-        strokeThickness: 2
-      })
-      .setOrigin(1, 1)
-      .setAlpha(0.7)
-      .setDepth(30);
     this.pauseButton.on('pointerdown', (_pointer, _x, _y, event) => {
       event?.stopPropagation();
       this.togglePause();
@@ -413,7 +408,18 @@ export class PlayScene extends Phaser.Scene {
   // what that means for itself (polymorphism), PlayScene doesn't referee.
   handleCollision(obstacleSprite) {
     const obstacle = obstacleSprite.getData('entity');
-    if (obstacle) obstacle.onCollide(this.player);
+    if (!obstacle) return;
+
+    if (obstacle.isFirst && !this.firstObstacleFeedbackShown) {
+      this.firstObstacleFeedbackShown = true;
+      const jumpedTooSoon = this.player.isAirborne && this.player.sprite.body.velocity.y >= 0;
+      this.showControlHint(
+        jumpedTooSoon ? 'YOU JUMPED TOO SOON!' : 'JUMP A LITTLE EARLIER!',
+        jumpedTooSoon ? 'WAIT UNTIL IT GETS CLOSER' : 'TAP BEFORE YOU REACH IT'
+      );
+    }
+
+    obstacle.onCollide(this.player);
   }
 
   updateHealthBar() {
@@ -446,6 +452,18 @@ export class PlayScene extends Phaser.Scene {
       const starThreshold = [0.28, 0.55, 0.82][index];
       star.setVisible(overchargeFraction >= starThreshold);
     });
+
+    const danger = this.state === 'running' && this.health > 0 && this.health <= HEALTH.dangerThreshold;
+    this.healthDangerFlash.setVisible(danger);
+    if (danger) {
+      const flash = (Math.sin(this.time.now * 0.014) + 1) / 2;
+      this.healthDangerFlash.setAlpha(0.2 + flash * 0.8);
+      this.healthBarFill.setAlpha(0.4 + flash * 0.6);
+      this.healthBarTexture.setAlpha(0.4 + flash * 0.6);
+    } else {
+      this.healthBarFill.setAlpha(1);
+      this.healthBarTexture.setAlpha(1);
+    }
   }
 
   updateHealthBarTexture(normalWidth, overchargeWidth) {
@@ -602,14 +620,16 @@ export class PlayScene extends Phaser.Scene {
 
   spawnObstacle() {
     const easyStart = this.elapsed < SPAWN_RHYTHM.easyStartSeconds;
+    const isFirst = !this.firstObstacleSpawned;
     const obstacle = new Obstacle(
       this,
       this.scrollSpeed,
       this.dayPhase,
       this.lastObstacleFamily,
       easyStart,
-      !this.firstObstacleSpawned
+      isFirst
     );
+    obstacle.isFirst = isFirst;
     this.firstObstacleSpawned = true;
     this.lastObstacleFamily = obstacle.family;
     this.registerEntity(obstacle, this.obstacleGroup);

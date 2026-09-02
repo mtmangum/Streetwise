@@ -40,7 +40,7 @@ const TYPES = [
   { key: 'obstacle-mailbox', aspect: 22 / 34, height: 56, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-cone', aspect: 58 / 32, height: 48, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-child0', animation: 'obstacle-child-jumprope', aspect: 30 / 28, height: 42, groundOffset: 3, weight: daylightOnlyWeight },
-  { key: 'obstacle-trashbin0', animation: 'obstacle-trashbin-flies', aspect: 30 / 36, height: 54, safeFirst: true, weight: dayWeight },
+  { key: 'obstacle-trashbin0', animation: 'obstacle-trashbin-flies', animationChance: 0.45, aspect: 30 / 36, height: 54, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-crate', aspect: 1, height: 50, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-hydrant0', family: 'hydrant', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
   { key: 'obstacle-hydrant-long0', family: 'hydrant', animation: 'obstacle-hydrant-long-spray', aspect: 90 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
@@ -115,7 +115,9 @@ export class Obstacle extends Entity {
     this.sprite.setDisplaySize(width, height);
     this.sprite.setDepth(8);
     if (type.flipX) this.sprite.setFlipX(true);
-    if (type.animation) this.sprite.anims.play(type.animation);
+    if (type.animation && (type.animationChance === undefined || Math.random() < type.animationChance)) {
+      this.sprite.anims.play(type.animation);
+    }
     this.sprite.body.setAllowGravity(false);
     this.sprite.setVelocityX(-speed * this.speedFactor);
   }

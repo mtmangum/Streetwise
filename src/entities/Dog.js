@@ -1,10 +1,9 @@
 import Phaser from 'phaser';
 import { GROUND_Y, PLAYER, DOG } from '../config.js';
 
-// Purely cosmetic companion - no physics body, no collision, so (like
-// Ground/Parallax) this isn't an Entity subclass. Trailing "behind" the
-// player is just a fixed x offset (see DOG.trailDistance in config.js);
-// only the hand-authored jump arc actually moves it.
+// Companion character with scripted jumps and street interactions. She has
+// no physics body, so these authored sequences can stay expressive without
+// interfering with Nicole's obstacle collisions.
 export class Dog {
   constructor(scene) {
     this.scene = scene;
@@ -24,6 +23,7 @@ export class Dog {
     this.jumpStartX = this.restX;
     this.attackTarget = null;
     this.attackElapsed = 0;
+    this.chasingCop = false;
     this.markingHydrant = false;
     this.markingElapsed = 0;
     this.returning = false;
@@ -39,6 +39,7 @@ export class Dog {
   rest() {
     this.jumping = false;
     this.attackTarget = null;
+    this.chasingCop = false;
     this.markingHydrant = false;
     this.returning = false;
     this.jumpT = 0;
@@ -57,6 +58,7 @@ export class Dog {
     this.markingDrops.forEach((drop) => drop.setVisible(false));
     this.attackTarget = cop;
     this.attackElapsed = 0;
+    this.chasingCop = false;
     this.sprite.y = GROUND_Y;
     this.sprite.setAngle(0).setFlipX(false).setDepth(11);
     this.sprite.anims.play('dog-run', true);
@@ -99,7 +101,18 @@ export class Dog {
     const cop = this.attackTarget;
     if (!cop?.alive) {
       this.attackTarget = null;
+      this.chasingCop = false;
       this.returning = true;
+      return;
+    }
+
+    if (this.chasingCop) {
+      const targetX = cop.sprite.x - DOG.chaseDistance;
+      const chaseStep = DOG.chaseSpeed * (delta / 1000);
+      this.sprite.x += Math.sign(targetX - this.sprite.x) * Math.min(chaseStep, Math.abs(targetX - this.sprite.x));
+      this.sprite.y = GROUND_Y;
+      this.sprite.setAngle(0).setFlipX(false);
+      this.sprite.anims.play('dog-run', true);
       return;
     }
 
@@ -113,19 +126,18 @@ export class Dog {
     }
 
     this.attackElapsed += delta;
-    // A quick repeated lunge makes the existing gallop frames read as Stella
-    // snapping at the cop's heels without introducing a mismatched art style.
+    // Repeat the two dedicated snapping poses while Stella lunges at his
+    // heels, then transition directly into the off-screen chase.
     const lunge = Math.sin(this.attackElapsed * 0.035);
     this.sprite.x = targetX + Math.max(0, lunge) * 8;
     this.sprite.y = GROUND_Y - Math.max(0, lunge) * 5;
     this.sprite.setAngle(-Math.max(0, lunge) * 8);
-    this.sprite.anims.play('dog-run', true);
+    this.sprite.anims.play('dog-attack', true);
 
     if (this.attackElapsed >= DOG.attackDurationMs) {
       cop.scareOff();
       this.scene.audio.dogAttack();
-      this.attackTarget = null;
-      this.returning = true;
+      this.chasingCop = true;
       this.sprite.setAngle(0);
     }
   }
