@@ -18,6 +18,7 @@ import { JumpController } from '../systems/JumpController.js';
 // max..overchargeMax stretch, rendered as a distinct sparking color rather
 // than continuing the normal color ramp (which already tops out at green).
 const HEALTH_BAR = { x: 16, y: 14, width: 360, overchargeWidth: 160, height: 16, padding: 2 };
+const FINALE_START_SECONDS = DAWN.startSeconds + DAWN.durationSeconds;
 
 export class PlayScene extends Phaser.Scene {
   constructor() {
@@ -35,7 +36,7 @@ export class PlayScene extends Phaser.Scene {
     loadingScreen?.classList.add('is-hidden');
     this.time.delayedCall(260, () => loadingScreen?.remove());
 
-    this.state = 'ready'; // ready | running | paused | gameover
+    this.state = 'ready'; // ready | running | paused | ending | complete | gameover
     this.elapsed = 0;
     this.nextSpawnAt = 0;
     this.nextPigeonAt = Infinity;
@@ -299,8 +300,8 @@ export class PlayScene extends Phaser.Scene {
 
   handleInputDown() {
     if (this.state === 'ready') return this.startRun();
-    if (this.state === 'gameover') return this.restart();
-    if (this.state === 'paused') return;
+    if (this.state === 'gameover' || this.state === 'complete') return this.restart();
+    if (this.state === 'paused' || this.state === 'ending') return;
     this.jumpController.press();
   }
 
@@ -618,6 +619,104 @@ export class PlayScene extends Phaser.Scene {
     this.overlayText.setVisible(true);
   }
 
+  beginFinale() {
+    if (this.state !== 'running') return;
+    this.state = 'ending';
+    this.jumpController.resetInput();
+    this.audio.setScene('day');
+    this.physics.pause();
+    this.entities.forEach((entity) => entity.destroy());
+    this.entities.length = 0;
+    this.player.sprite.body.setVelocity(0, 0);
+    this.player.sprite.anims.stop();
+    this.player.sprite.setTexture('player-idle0').setAngle(0);
+    this.dog.rest();
+    this.pauseButton.setVisible(false);
+    this.pauseButtonText.setVisible(false);
+    this.openingHint.setVisible(false);
+
+    const matt = this.add.sprite(GAME_WIDTH + 55, GROUND_Y, 'matt-standing')
+      .setOrigin(0, 1)
+      .setDepth(11);
+    this.matt = matt;
+
+    // Matt arrives as Stella trots ahead to greet him.
+    this.tweens.add({
+      targets: matt,
+      x: 410,
+      duration: 1800,
+      ease: 'Sine.easeOut'
+    });
+    this.tweens.add({
+      targets: this.dog.sprite,
+      x: 450,
+      duration: 1500,
+      ease: 'Sine.easeInOut',
+      onStart: () => this.dog.sprite.anims.play('dog-run', true),
+      onComplete: () => {
+        this.dog.sprite.setTexture('dog-idle').setFlipX(true);
+        matt.setTexture('matt-pat');
+      }
+    });
+
+    // After the head pat, Stella settles to one side and Nicole steps into
+    // Matt's hug. Hearts rise around them to finish the run warmly.
+    this.time.delayedCall(2850, () => {
+      matt.setTexture('matt-standing');
+      this.tweens.add({
+        targets: this.dog.sprite,
+        x: 500,
+        duration: 450,
+        ease: 'Sine.easeOut',
+        onComplete: () => this.dog.sprite.setTexture('dog-idle').setFlipX(true)
+      });
+      this.tweens.add({
+        targets: this.player.sprite,
+        x: 370,
+        duration: 850,
+        ease: 'Sine.easeInOut',
+        onComplete: () => {
+          matt.setTexture('matt-hug');
+          this.player.sprite.setTexture('player-idle0').setFlipX(false);
+          this.showFinaleHearts(400, GROUND_Y - 72);
+        }
+      });
+    });
+
+    this.time.delayedCall(5400, () => {
+      this.state = 'complete';
+      this.audio.stop();
+      this.overlayTitle.setText('HOME AT LAST');
+      this.overlayText.setText(`MATT, NICOLE & STELLA\nDODGED ${this.avoidedCount}\nSPACE / TAP  —  RUN AGAIN`);
+      this.overlayPanel.setVisible(true).setDepth(40);
+      this.overlayTitle.setVisible(true).setDepth(41);
+      this.overlayText.setVisible(true).setDepth(41);
+    });
+  }
+
+  showFinaleHearts(x, y) {
+    [-38, -15, 12, 36, 0].forEach((offset, index) => {
+      const heart = this.add.text(x + offset, y + (index % 2) * 13, '♥', {
+        fontFamily: 'sans-serif',
+        fontSize: index === 4 ? '24px' : '17px',
+        resolution: RENDER_SCALE,
+        color: index % 2 ? '#ff7897' : '#ef315d',
+        stroke: '#7a1834',
+        strokeThickness: 2
+      }).setOrigin(0.5).setDepth(30).setScale(0);
+      this.tweens.add({
+        targets: heart,
+        y: heart.y - 55 - index * 7,
+        alpha: { from: 1, to: 0 },
+        scale: { from: 0.4, to: 1.25 },
+        delay: index * 130,
+        duration: 1500,
+        ease: 'Sine.easeOut',
+        onComplete: () => heart.destroy()
+      });
+    });
+  }
+
   spawnObstacle() {
     const easyStart = this.elapsed < SPAWN_RHYTHM.easyStartSeconds;
     const isFirst = !this.firstObstacleSpawned;
@@ -808,6 +907,14 @@ export class PlayScene extends Phaser.Scene {
           1
         )
       : Phaser.Math.Clamp(this.elapsed / DAY_CYCLE.durationSeconds, 0, 1);
+    if (this.elapsed >= FINALE_START_SECONDS) {
+      this.dayPhase = 0;
+      const palette = dayNightPalette(0);
+      this.parallax.applyPalette(palette);
+      this.ground.setTint(palette.ground);
+      this.beginFinale();
+      return;
+    }
     if (time >= this.nextPaletteUpdateAt) {
       this.nextPaletteUpdateAt = time + 50;
       const palette = dayNightPalette(this.dayPhase);
@@ -843,7 +950,7 @@ export class PlayScene extends Phaser.Scene {
     }
     this.entities.length = activeEntityCount;
 
-    if (time > this.nextSpawnAt && this.birdGroup.countActive(true) === 0) {
+    if (this.elapsed < FINALE_START_SECONDS - 6 && time > this.nextSpawnAt && this.birdGroup.countActive(true) === 0) {
       this.spawnObstacle();
       this.scheduleNextObstacleSpawn(time, ramp);
     }

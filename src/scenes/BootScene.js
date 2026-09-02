@@ -78,6 +78,9 @@ export class BootScene extends Phaser.Scene {
     this.drawCopObstacle('obstacle-cop3', 3);
     this.drawStreetwalkerObstacle('obstacle-streetwalker0', false);
     this.drawStreetwalkerObstacle('obstacle-streetwalker1', true);
+    this.drawMattTexture('matt-standing', 'standing');
+    this.drawMattTexture('matt-pat', 'pat');
+    this.drawMattTexture('matt-hug', 'hug');
     this.drawPigeonFrame('pigeon-fly0', 0);
     this.drawPigeonFrame('pigeon-fly1', 1);
     this.drawPigeonFrame('pigeon-fly2', 2);
@@ -488,6 +491,26 @@ export class BootScene extends Phaser.Scene {
       ...arms,...legs
     ].map(([x,y,w,h,color])=>[x+3,y+10,w,h,color]);
     this.drawObstacleTexture(key,30,48,[...club,...raisedArm,...body]);
+  }
+
+  drawMattTexture(key, pose) {
+    const O=0x171923,HAIR=0x2b211f,SK=0xc88f75,SKL=0xe1aa8e,SHIRT=0x42648a,LITE=0x6689ad,PANTS=0x303743,SHOE=0x17191e;
+    const leftArm = pose === 'hug'
+        ? [[2,16,10,4,O],[3,17,9,2,SHIRT],[1,18,4,3,SK]]
+        : [[4,15,4,14,O],[5,16,2,12,SHIRT],[4,28,4,3,SK]];
+    const rightArm = pose === 'pat'
+      ? [[17,15,4,8,O],[18,16,2,7,SHIRT],[20,21,4,3,SK]]
+      : [[17,15,4,14,O],[18,16,2,12,SHIRT],[18,28,4,3,SK]];
+    this.drawObstacleTexture(key,24,40,[
+      // Matt is deliberately a head taller than Nicole, with a dark-hair
+      // silhouette that remains distinct against the bright dawn sky.
+      [8,1,10,4,O],[7,3,12,6,O],[8,2,10,5,HAIR],
+      [9,6,9,8,O],[10,6,7,7,SK],[11,7,3,2,SKL],[16,8,1,1,O],
+      [8,13,11,16,O],[9,14,9,14,SHIRT],[10,15,3,9,LITE],
+      ...leftArm,...rightArm,
+      [8,28,6,10,O],[9,29,4,8,PANTS],[15,28,6,10,O],[16,29,4,8,PANTS],
+      [7,37,8,3,SHOE],[15,37,8,3,SHOE]
+    ]);
   }
 
   drawStreetwalkerObstacle(key, flip) {
