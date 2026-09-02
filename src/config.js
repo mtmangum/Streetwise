@@ -1,7 +1,7 @@
 export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 360;
 export const RENDER_SCALE = 2;
-export const BUILD_NUMBER = '00.02';
+export const BUILD_NUMBER = '00.03';
 
 export const GROUND_HEIGHT = 60;
 export const GROUND_Y = GAME_HEIGHT - GROUND_HEIGHT;

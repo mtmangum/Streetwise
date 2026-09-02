@@ -53,7 +53,7 @@ const TYPES = [
   { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-flies', aspect: 48 / 20, height: 28, weight: nightWeight },
   { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, safeFirst: true, weight: allDayWeight },
   { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 104, weight: nightWeight },
-  { key: 'obstacle-rats0', animation: 'obstacle-rats-scurry', aspect: 44 / 18, height: 30, speedFactor: 1.3, weight: nightWeight },
+  { key: 'obstacle-rats0', animation: 'obstacle-rats-scurry', aspect: 44 / 18, height: 20, speedFactor: 1.3, weight: nightWeight },
   { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 30 / 48, height: 70, chasesAfterAvoid: true, weight: nightWeight },
   { key: 'obstacle-streetwalker0', animation: 'obstacle-streetwalker-idle', aspect: 24 / 38, height: 57, weight: nightWeight }
 ];
