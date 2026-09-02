@@ -1,0 +1,1284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Obstacle Read-Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Hanken+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#f4f2ee; --surface:#ffffff; --card:#faf8f3; --ink:#1b1d23; --muted:#666b76;
+    --rule:#e4ded4; --accent:#9c6410; --cone:#b5541c;
+    --ok:#4c7a43; --warn:#a9551d; --flag:#a7382e;
+    --ok-bg:#e8efe2; --warn-bg:#f5e8db; --flag-bg:#f5e1de;
+    --stage-bg:#161922; --stage-floor:#262b36; --stage-line:#333b49; --stage-ink:#c6cad2;
+    --shadow:0 1px 2px rgba(20,18,12,.05),0 8px 24px rgba(20,18,12,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#12141a; --surface:#191d25; --card:#1e222c; --ink:#e9e7e1; --muted:#939aa5;
+      --rule:#2e3441; --accent:#f2c14e; --cone:#e0752f;
+      --ok:#88b077; --warn:#e2894a; --flag:#dd6157;
+      --ok-bg:#1d291d; --warn-bg:#2b1f15; --flag-bg:#2c1a18;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12141a; --surface:#191d25; --card:#1e222c; --ink:#e9e7e1; --muted:#939aa5;
+    --rule:#2e3441; --accent:#f2c14e; --cone:#e0752f;
+    --ok:#88b077; --warn:#e2894a; --flag:#dd6157;
+    --ok-bg:#1d291d; --warn-bg:#2b1f15; --flag-bg:#2c1a18;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px; margin:0 auto; padding:40px 24px 88px}
+
+  header.masthead{
+    border:1px solid var(--rule); background:var(--surface);
+    border-radius:4px; padding:28px 30px; box-shadow:var(--shadow);
+  }
+  .eyebrow{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--cone); margin:0 0 12px;
+  }
+  h1{
+    font-family:"DotGothic16","Hanken Grotesk",sans-serif;
+    font-weight:400; font-size:clamp(30px,5.5vw,46px); line-height:1.05;
+    margin:0 0 14px; text-wrap:balance; letter-spacing:.01em;
+  }
+  .standfirst{margin:0; max-width:66ch; color:var(--muted); font-size:15.5px}
+  .standfirst b{color:var(--ink); font-weight:600}
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap:10px 20px; margin-top:22px;
+    padding-top:20px; border-top:1px solid var(--rule);
+  }
+  .legend .k{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted)}
+  .pill{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-size:10.5px; font-weight:500; letter-spacing:.08em; text-transform:uppercase;
+    padding:3px 8px; border-radius:3px; white-space:nowrap;
+  }
+  .pill.ok{color:var(--ok); background:var(--ok-bg)}
+  .pill.warn{color:var(--warn); background:var(--warn-bg)}
+  .pill.flag{color:var(--flag); background:var(--flag-bg)}
+  .was{
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-size:10.5px;
+    color:var(--muted); letter-spacing:.04em;
+  }
+  .tag-tall{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); border:1px solid var(--accent); border-radius:3px;
+    padding:2px 6px;
+  }
+  .status{
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-size:10px; font-weight:500; letter-spacing:.12em; text-transform:uppercase;
+    padding:2px 7px; border-radius:3px; border:1px solid currentColor;
+  }
+  .status.shipped{color:var(--ok)}
+  .status.kept{color:var(--muted)}
+  .status.review{color:var(--cone)}
+
+  h2.section{
+    font-family:"DotGothic16","Hanken Grotesk",sans-serif; font-weight:400;
+    font-size:22px; margin:56px 0 4px; letter-spacing:.02em;
+    display:flex; align-items:baseline; gap:14px;
+  }
+  h2.section::after{content:""; flex:1; height:1px; background:var(--rule); transform:translateY(-6px)}
+  .section-note{
+    margin:0 0 22px; color:var(--muted); font-size:13.5px;
+    font-family:"JetBrains Mono",ui-monospace,monospace; letter-spacing:.02em;
+  }
+
+  .grid{display:grid; gap:20px; grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+  .card{
+    background:var(--card); border:1px solid var(--rule); border-radius:5px;
+    overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow);
+  }
+
+  .stages{display:flex; border-bottom:1px solid var(--rule)}
+  .stage{
+    position:relative; flex:1; min-width:0;
+    background:radial-gradient(120% 90% at 50% 0%, #1c2029 0%, var(--stage-bg) 70%);
+    height:210px; display:flex; align-items:flex-end; justify-content:center;
+  }
+  .stage + .stage{border-left:1px solid var(--rule)}
+  .stage canvas{display:block; image-rendering:pixelated}
+  .stage .floor{
+    position:absolute; left:0; right:0; bottom:0; height:30px;
+    background:linear-gradient(var(--stage-floor),#20242d);
+    border-top:2px solid var(--stage-line);
+  }
+  .stage .lbl{
+    position:absolute; top:8px; left:9px;
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-size:9px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--stage-ink); opacity:.62;
+  }
+  .stage .dims{
+    position:absolute; top:8px; right:9px;
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-size:9px;
+    color:var(--stage-ink); opacity:.62; letter-spacing:.03em;
+  }
+  .stage.proposed .lbl{color:var(--cone); opacity:.95}
+
+  .body{padding:15px 16px 17px; display:flex; flex-direction:column; gap:10px; flex:1}
+  .name-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .name{font-size:17px; font-weight:700; letter-spacing:-.01em}
+  .meta{
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-size:11px;
+    color:var(--muted); letter-spacing:.02em; margin-top:-4px;
+  }
+
+  /* Vertical gauge: fill rises from the ground line to show how tall this
+     obstacle stands in-game against the tallest one (the steam stack). */
+  .prop{display:flex; align-items:flex-end; gap:10px}
+  .prop .track{
+    position:relative; width:9px; height:32px; flex:none;
+    background:var(--rule); border-radius:2px; overflow:hidden;
+  }
+  .prop .track::before{
+    content:""; position:absolute; left:0; right:0; top:0; height:1px;
+    background:var(--muted); opacity:.5;
+  }
+  .prop .fill{position:absolute; left:0; right:0; bottom:0; background:var(--cone); opacity:.8}
+  .prop .lbl{
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-size:10px;
+    color:var(--muted); white-space:nowrap; padding-bottom:1px;
+  }
+
+  .verdict{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  ul.notes{margin:2px 0 0; padding-left:16px; display:flex; flex-direction:column; gap:6px}
+  ul.notes li{font-size:13px; color:var(--ink)}
+  ul.notes li::marker{color:var(--cone)}
+
+  footer{
+    margin-top:60px; padding-top:22px; border-top:1px solid var(--rule);
+    color:var(--muted); font-size:12.5px;
+    font-family:"JetBrains Mono",ui-monospace,monospace; letter-spacing:.02em;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Streetwise: Nicole &amp; Stella — art review</p>
+    <h1>Obstacle Read-Check</h1>
+    <p class="standfirst">
+      Every hazard in the spawn roster, drawn from its <b>exact</b> pixel data and blown up on an
+      asphalt stage. Each card carries its status, and the art shown is what's live in the game —
+      except the one still-open call, which keeps a <b>Now / Proposed</b> comparison. Figures under
+      each canvas are the drawn texture size, then the in-game height it scales to. Obstacles
+      aren't tinted by the day/night cycle, so these colours are what you see in play. Many cards
+      <b>play the real animation</b>.
+    </p>
+    <div class="legend">
+      <span class="k"><span class="status shipped">Shipped</span> redrawn and in the game</span>
+      <span class="k"><span class="status kept">Kept as-is</span> a redraw was tried and rejected</span>
+      <span class="k"><span class="status kept">No change</span> already read fine</span>
+      <span class="k"><span class="status review">In review</span> undecided — two panels</span>
+      <span class="k"><span class="tag-tall">Super-jump</span> needs the power jump</span>
+    </div>
+    <p class="standfirst" style="margin-top:18px">
+      <b>Decisions.</b> Shipped: mailbox, kid, trash basket (+ an upright soda cup beside it),
+      shopping cart, both hydrants + a ground splash, parking meter, running-cat gallop, drunk
+      (cut down twice), rats, cop, steam stack (slimmed), the hostile <b>crow</b> (mean angular
+      silhouette + earlier speed fix), and the redrawn <b>sneaker-boost pickup</b>.
+      <b>Kept as-is:</b> streetwalker and hot-dog cart (both redraws rejected).
+      <b>Pulled for now:</b> the wooden crate is gone and the café A-frame sign that replaced it
+      has been taken back out — that day-roster slot is empty pending a new idea.
+      <b>Still open:</b> traffic cones.
+    </p>
+  </header>
+
+  <h2 class="section">Daytime roster</h2>
+  <p class="section-note">Sunny-neighbourhood set — full weight until dusk (dayPhase 0.67).</p>
+  <div class="grid" id="grid-day"></div>
+
+  <h2 class="section">Nighttime roster</h2>
+  <p class="section-note">Derelict-city set — hands off from dusk, all-night by dayPhase 1.</p>
+  <div class="grid" id="grid-night"></div>
+
+  <h2 class="section">Airborne</h2>
+  <p class="section-note">Not grounded. Pigeon &amp; seagull reward a power-jump strike, the crow is hostile, and the sneaker pickup grants a timed jump boost.</p>
+  <div class="grid" id="grid-air"></div>
+
+  <h2 class="section">Cast</h2>
+  <p class="section-note">The characters — every animation state, from playerFrames.js / dogFrames.js / drawMattTexture, playing.</p>
+  <div class="grid" id="grid-cast"></div>
+
+  <footer id="tally"></footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var MAXH = 104;
+
+  // ---- Shared frame generators, ported 1:1 from BootScene.js so the cards
+  // can play the real in-game animation instead of a single still. ----
+  var A = {
+    pigeon:function(w){
+      var O="#252832",D="#555b66",M="#858b94",L="#bcc0c5",NECK="#5f7473",EYE="#e4bb4f";
+      var wings = w===0 ? [[8,1,5,7,O],[9,2,4,6,L],[12,4,6,5,O],[13,5,5,3,M]]
+        : w===1 ? [[8,6,10,5,O],[9,7,8,3,L],[13,9,7,3,O],[14,9,6,2,M]]
+        : [[9,5,8,5,O],[10,6,7,3,L],[12,9,5,4,O],[13,9,4,3,M]];
+      return wings.concat([[6,6,12,6,O],[7,6,10,5,M],[8,7,6,2,L],[3,5,6,6,O],[4,6,5,4,NECK],
+        [1,7,4,2,O],[0,8,4,1,"#d2a34b"],[5,6,1,1,EYE],
+        [17,7,6,3,O],[18,7,5,2,D],[20,6,4,2,O],
+        [9,11,2,3,O],[10,11,1,2,"#b06d55"],[14,11,2,3,O],[15,11,1,2,"#b06d55"]]);
+    },
+    seagull:function(w){
+      var O="#313844",D="#7d8791",W="#f4f1e6",L="#d7dce0",BEAK="#e8a333",EYE="#111820";
+      var wings = w===0 ? [[9,0,6,9,O],[10,1,5,7,W],[14,4,8,5,O],[15,5,6,3,L]]
+        : w===1 ? [[8,6,14,5,O],[9,7,12,3,W],[16,9,8,3,O],[17,9,6,2,L]]
+        : [[10,4,10,6,O],[11,5,8,3,W],[15,8,7,5,O],[16,9,5,3,L]];
+      return wings.concat([[7,6,15,6,O],[8,6,13,5,W],[10,7,8,3,L],[3,5,7,6,O],[4,6,6,4,W],
+        [0,7,5,2,BEAK],[5,6,1,1,EYE],[21,7,9,3,O],[22,7,7,2,W],[25,6,5,2,O]]);
+    },
+    crow:function(w){
+      var O="#090b10",D="#181c25",M="#303743",L="#596270",EYE="#e64c45";
+      var wings = w===0 ? [[8,0,5,8,O],[9,1,4,6,L],[12,4,7,5,O],[13,5,5,3,M]]
+        : w===1 ? [[8,6,11,6,O],[9,7,9,3,L],[13,10,8,3,O],[14,10,6,2,M]]
+        : [[9,4,9,6,O],[10,5,7,3,L],[13,8,6,5,O],[14,9,4,3,M]];
+      return wings.concat([[6,6,13,6,O],[7,6,11,5,D],[8,7,7,2,M],[2,5,6,6,O],[3,6,5,4,D],
+        [0,7,4,2,O],[0,8,3,1,L],[4,6,1,1,EYE],[18,7,7,3,O],[19,7,5,2,D],[21,6,4,2,O]]);
+    },
+    kid:function(air){
+      var O="#2a2333",SK="#e0a074",SKH="#f0c3a0",SKS="#c07f57",HR="#6b3f2a",HRD="#4a2a1c",
+        SHIRT="#5a8fc9",SHIRTH="#82b0e0",SHIRTS="#3f6aa0",SHORTS="#334a86",SHORTSH="#4f66ad",
+        SHOE="#e86a4b",SOLE="#f3efe4",MOUTH="#8a3f3a",ROPE="#f2b33a",ROPES="#cf8f22",GRIP="#d94f3d",GRIPD="#9c3427",TRAIL="#f7d98a";
+      var ropeBack = air
+        ? [[3,16,2,4,ROPE],[2,20,2,3,ROPE],[3,23,3,2,ROPE],[25,16,2,4,ROPE],[26,20,2,3,ROPE],[24,23,3,2,ROPE],
+           [7,25,5,2,ROPE],[12,26,6,2,ROPE],[18,25,5,2,ROPE],[7,26,4,1,ROPES],[12,27,6,1,ROPES],[19,26,4,1,ROPES],
+           [10,24,4,1,TRAIL],[8,25,2,1,TRAIL],[20,25,2,1,TRAIL]]
+        : [[10,0,10,2,ROPE],[8,1,3,2,ROPE],[19,1,3,2,ROPE],[5,3,2,4,ROPE],[23,3,2,4,ROPE],[4,7,2,5,ROPE],[24,7,2,5,ROPE],
+           [3,12,3,3,ROPE],[24,12,3,3,ROPE],[3,14,3,2,ROPE],[24,14,3,2,ROPE],
+           [10,0,10,1,ROPES],[5,4,1,3,ROPES],[24,4,1,3,ROPES],[12,2,4,1,TRAIL],[9,3,2,1,TRAIL],[19,3,2,1,TRAIL]];
+      var kid = air
+        ? [[10,1,10,2,HRD],[9,3,12,3,HR],[7,1,2,3,HR],[22,1,2,3,HR],[8,4,2,2,HR],[21,4,2,2,HR],
+           [9,3,12,8,O],[10,4,10,6,SK],[11,4,6,3,SKH],[12,7,2,2,O],[17,7,2,2,O],[13,9,4,2,O],[14,9,3,1,MOUTH],[13,11,4,1,O],
+           [9,12,12,7,O],[10,13,10,5,SHIRT],[11,13,4,3,SHIRTH],[10,17,10,1,SHIRTS],
+           [8,12,3,4,O],[9,13,2,3,SHIRT],[5,13,4,3,O],[6,13,3,2,SHIRT],[3,14,3,3,O],[4,15,2,2,SK],
+           [19,12,3,4,O],[19,13,2,3,SHIRT],[21,13,4,3,O],[21,13,3,2,SHIRT],[24,14,3,3,O],[24,15,2,2,SK],
+           [9,18,12,4,O],[10,19,10,3,SHORTS],[10,19,4,1,SHORTSH],[15,19,1,3,O],
+           [8,21,4,3,O],[9,21,3,2,SHORTS],[18,21,4,3,O],[19,21,3,2,SHORTS],[7,22,2,2,O],[23,22,2,2,O],
+           [9,23,3,2,O],[10,23,2,1,SK],[18,23,3,2,O],[19,23,2,1,SK],
+           [11,23,4,2,O],[15,23,4,2,O],[12,23,3,1,SHOE],[16,23,3,1,SHOE],[12,24,3,1,SOLE],[16,24,3,1,SOLE]]
+        : [[10,1,10,2,HRD],[9,3,12,3,HR],[9,4,2,4,HR],[21,4,2,4,HR],[8,6,2,3,HR],[22,6,2,3,HR],
+           [9,4,12,8,O],[10,5,10,6,SK],[11,5,6,3,SKH],[12,8,2,2,O],[17,8,2,2,O],[13,10,4,2,O],[14,11,2,1,MOUTH],[11,9,1,1,SKS],[19,9,1,1,SKS],
+           [13,12,4,2,O],[14,12,2,1,SKS],
+           [9,13,12,7,O],[10,14,10,5,SHIRT],[11,14,4,3,SHIRTH],[10,18,10,1,SHIRTS],
+           [8,13,3,4,O],[9,14,2,3,SHIRT],[5,15,4,3,O],[6,15,3,2,SHIRT],[4,16,3,3,O],[4,17,2,2,SK],
+           [19,13,3,4,O],[19,14,2,3,SHIRT],[21,15,4,3,O],[21,15,3,2,SHIRT],[23,16,3,3,O],[24,17,2,2,SK],
+           [9,19,12,4,O],[10,20,10,3,SHORTS],[10,20,4,1,SHORTSH],[15,20,1,3,O],
+           [10,22,4,3,O],[16,22,4,3,O],[11,22,2,3,SK],[17,22,2,3,SK],
+           [9,24,6,3,O],[15,24,6,3,O],[10,24,5,2,SHOE],[16,24,5,2,SHOE],[10,26,5,1,SOLE],[16,26,5,1,SOLE]];
+      var grips = air ? [[3,13,3,3,GRIP],[3,13,3,1,GRIPD],[24,13,3,3,GRIP],[24,13,3,1,GRIPD]]
+        : [[3,15,3,3,GRIP],[3,15,3,1,GRIPD],[24,15,3,3,GRIP],[24,15,3,1,GRIPD]];
+      return ropeBack.concat(kid, grips);
+    },
+    rats:function(stride){
+      var O="#171414",D="#4b3731",M="#765548",L="#a77b68",TAIL="#c49a89",TAILD="#9c7666",EYE="#e7cf58",SCUFF="#2c2722";
+      var b = stride ? 1 : 0;
+      var legs = stride
+        ? [[9,18,3,3,O],[14,19,3,3,O],[19,18,3,3,O],[24,17,3,3,O],[33,19,2,2,O],[38,19,2,2,O]]
+        : [[10,18,3,3,O],[15,19,3,3,O],[21,18,3,3,O],[24,17,3,3,O],[32,19,2,2,O],[37,19,2,2,O]];
+      var leadTail = stride
+        ? [[26,13,3,3,TAIL],[28,10,3,3,TAIL],[30,7,2,3,TAIL],[30,4,3,3,TAIL],[29,2,3,2,TAILD]]
+        : [[26,14,3,3,TAIL],[28,12,3,3,TAIL],[31,10,2,3,TAIL],[32,7,3,3,TAIL],[32,4,3,2,TAILD]];
+      return [[8,10-b,20,9,O],[10,7-b,15,4,O],[13,5-b,8,3,O],
+        [10,9-b,15,7,D],[13,6-b,8,3,M],[12,10-b,12,3,M],[13,8-b,7,2,L],
+        [2,12,8,7,O],[3,13,5,4,M],[4,12,3,3,L],[1,15,2,2,O],[5,14,1,1,EYE],[4,9,4,4,O],[5,10,2,2,M]]
+        .concat(leadTail,
+          [[30,14,10,6,O],[31,15,8,4,D],[38,14,3,3,O],[39,13,2,2,M],[40,15,1,1,EYE],[39,16,5,2,TAIL],[42,14,2,3,TAIL]],
+          legs,
+          [[6,20,4,1,SCUFF],[16,20,5,1,SCUFF],[26,20,3,1,SCUFF],[1,21,40,1,"#1a1614"]]);
+    },
+    boombox:function(boom){
+      var O="#111216",DEEP="#07080a",D="#1e1e24",M="#777b7d",L="#b9bdbe",HI="#e4e6e4",R="#df5548",BLUE="#7194a4",TAPE="#292b2c";
+      var y = boom?2:1;
+      var cone = boom
+        ? [[3,y+14,14,11,O],[4,y+15,12,9,HI],[5,y+15,10,9,DEEP],[7,y+17,6,5,D],[9,y+18,2,3,"#414448"],
+           [27,y+14,14,11,O],[28,y+15,12,9,HI],[29,y+15,10,9,DEEP],[31,y+17,6,5,D],[33,y+18,2,3,"#414448"]]
+        : [[4,y+15,12,10,O],[5,y+15,10,9,L],[6,y+16,8,7,DEEP],[8,y+18,4,3,D],[9,y+19,2,2,"#414448"],
+           [28,y+15,12,10,O],[29,y+15,10,9,L],[30,y+16,8,7,DEEP],[32,y+18,4,3,D],[33,y+19,2,2,"#414448"]];
+      var waves = boom?[[0,10,1,4,BLUE],[43,10,1,4,BLUE],[1,8,1,2,BLUE],[42,8,1,2,BLUE]]:[];
+      return waves.concat([[7,y,30,2,O],[6,y+1,2,6,O],[36,y+1,2,6,O],[8,y+1,28,1,HI],
+        [10,y+4,3,2,O],[15,y+3,3,3,O],[20,y+3,8,3,O],[31,y+3,2,3,O],
+        [1,y+6,42,20,O],[2,y+7,40,18,M],[3,y+7,38,5,L],
+        [3,y+8,5,4,O],[4,y+9,3,2,DEEP],[36,y+8,5,4,O],[37,y+9,3,2,DEEP],
+        [9,y+8,26,4,O],[10,y+8,24,3,TAPE],[11,y+9,14,1,BLUE],[27,y+9,6,1,R],[12,y+11,20,1,D]], cone,
+        [[17,y+13,10,9,O],[18,y+14,8,6,TAPE],[19,y+15,6,1,L],[19,y+17,2,2,D],[23,y+17,2,2,D],
+        [20,y+17,1,1,R],[24,y+17,1,1,R],[18,y+21,8,2,L],[19,y+21,6,1,D],
+        [17,y+23,10,2,M],[19,y+23,2,1,DEEP],[22,y+23,3,1,DEEP],
+        [2,y+25,40,2,O],[4,y+25,8,1,HI],[32,y+25,8,1,HI]]);
+    },
+    fire:function(flip){
+      var O="#17161a",DEEP="#09090b",D="#413d36",M="#5c574d",L="#89847b",HI="#b0aaa0",R="#75442f",F="#e0752f",Y="#f2c14e",H="#fff0a1";
+      var flame = flip
+        ? [[7,3,5,10,F],[11,6,7,10,F],[17,1,4,12,F],[8,10,12,8,F],[11,8,7,10,Y],[14,10,3,7,H]]
+        : [[6,6,6,10,F],[10,1,5,15,F],[15,5,6,12,F],[8,11,13,7,F],[10,8,8,10,Y],[13,10,3,7,H]];
+      return flame.concat([[3,15,22,4,O],[5,14,18,2,L],[4,16,20,3,DEEP],[7,17,14,2,"#302820"],[3,18,22,2,HI],
+        [4,19,20,14,O],[5,19,18,14,M],[5,20,3,12,L],[8,20,2,12,HI],[20,20,3,12,D],
+        [4,21,20,3,O],[5,21,18,1,HI],[5,23,18,1,D],[4,28,20,3,O],[5,28,18,1,L],[5,30,18,1,D],
+        [16,24,5,2,R],[18,26,3,1,"#9a5b36"],[7,25,2,2,D],[11,19,7,2,"#3b3734"],
+        [3,32,22,3,O],[5,32,18,1,HI],[6,34,16,2,D],[8,35,12,1,O]]);
+    },
+    crowMean:function(w){
+      var O="#090b10",D="#181c25",M="#303743",L="#596270",EYE="#e64c45",EYEK="#ff7a68";
+      var wings = w===0 ? [[7,1,6,3,O],[10,3,7,2,O],[14,4,7,2,O],[16,4,3,1,O],[8,2,4,2,L],[11,3,5,1,M]]
+        : w===1 ? [[7,5,8,3,O],[13,6,8,2,O],[19,6,6,2,O],[24,6,2,1,O],[8,5,6,2,L],[14,6,6,1,M]]
+        : [[7,7,7,3,O],[12,9,7,2,O],[17,10,6,2,O],[22,11,2,1,O],[8,7,5,2,L],[13,9,5,1,M]];
+      return wings.concat([[5,5,13,6,O],[6,6,11,4,D],[7,7,7,2,M],
+        [19,7,6,3,O],[22,6,3,2,O],[23,8,3,2,O],[21,7,4,1,M],
+        [2,6,6,5,O],[3,7,4,3,D],[3,6,3,1,O],
+        [0,8,3,1,O],[0,9,2,1,O],[2,10,2,1,O],
+        [3,7,2,2,EYE],[3,7,1,1,EYEK],[9,10,2,2,O],[13,10,2,2,O]]);
+    }
+  };
+
+  // ---- The cast, ported 1:1 from playerFrames.js / dogFrames.js and
+  // BootScene.drawMattTexture so every animation state plays here. ----
+  var CHAR = (function(){
+    function hx(n){return "#"+("000000"+n.toString(16)).slice(-6);}
+
+    // Nicole - 21x30 grid.
+    var C={outline:0x241b2b,hairDark:0x3f261e,hair:0x71412b,hairLight:0xa5653c,skinDark:0xc47b67,skin:0xf0b59a,skinLight:0xffd2b4,dressDark:0x9e294f,dress:0xe34b75,dressLight:0xff7892,stocking:0xf2d5c8,shoe:0x27273d,shoeLight:0x51516d,eye:0x282038,eyeLight:0x8ee17f};
+    function r(x,y,w,h,c){return [x,y,w,h,hx(c)];}
+    var BASE=[
+      r(4,1,13,1,C.outline),r(2,3,17,9,C.outline),r(3,2,14,10,C.hairDark),r(4,2,11,1,C.hairLight),
+      r(5,3,11,8,C.hair),r(3,5,3,8,C.hairDark),r(15,4,3,9,C.hairDark),r(8,5,8,6,C.skinDark),
+      r(8,4,7,6,C.skin),r(9,5,5,2,C.skinLight),r(14,7,1,2,C.eye),r(14,7,1,1,C.eyeLight),
+      r(14,10,2,1,C.skinDark),r(8,12,4,2,C.outline),r(9,11,3,3,C.skin),r(5,14,11,8,C.outline),
+      r(6,14,9,7,C.dress),r(7,14,3,6,C.dressLight),r(13,16,2,5,C.dressDark),r(3,21,15,5,C.outline),
+      r(4,21,13,4,C.dress),r(5,21,4,3,C.dressLight),r(12,22,5,3,C.dressDark)
+    ];
+    function arm(x,y,flip){return [r(x,y,3,6,C.outline),r(x+1,y,2,4,C.dress),r(x+(flip?0:1),y+4,2,3,C.skinDark),r(x+(flip?0:1),y+4,1,2,C.skin)];}
+    function leg(x,y,dx){dx=dx||0;return [r(x,y,3,4,C.outline),r(x+1,y,2,3,C.stocking),r(x+dx,y+3,5,2,C.outline),r(x+dx+1,y+3,4,1,C.shoeLight),r(x+dx,y+4,5,1,C.shoe)];}
+    var POSES={
+      idle0:[].concat(arm(15,15),leg(6,25),leg(12,25,-1)),
+      idle1:[].concat(arm(15,14),leg(6,25),leg(12,25,-1),[r(4,20,2,1,C.dressLight)]),
+      walk0:[].concat(arm(15,13),leg(4,24,-2),leg(13,25),[r(3,22,2,2,C.dressDark)]),
+      walk1:[].concat(arm(16,14),leg(6,25,-1),leg(11,24)),
+      walk2:[].concat(arm(15,16),leg(7,25,-1),leg(12,25,-1),[r(16,21,2,2,C.dressDark)]),
+      walk3:[].concat(arm(14,16),leg(12,24),leg(4,25,-2),[r(16,22,2,2,C.dressDark)]),
+      walk4:[].concat(arm(15,15),leg(11,25,-1),leg(6,24,-1)),
+      walk5:[].concat(arm(16,14),leg(7,25,-1),leg(12,25,-1)),
+      jumpRise:[].concat(arm(15,11),leg(6,23,-1),leg(12,23,-1),[r(3,22,2,2,C.dressDark)]),
+      jumpFall:[].concat(arm(14,13),leg(5,24,-2),leg(12,23),[r(16,21,2,3,C.dressDark)]),
+      stumble:[].concat(arm(1,12,true),arm(16,17),leg(2,24,-2),leg(14,25),[r(2,10,3,2,C.skin),r(18,15,2,2,C.skinLight)])
+    };
+    var SPECIAL={
+      fallForward:[r(10,13,10,2,C.outline),r(8,15,12,8,C.outline),r(9,14,10,8,C.hairDark),
+        r(10,15,8,5,C.hair),r(11,15,5,1,C.hairLight),r(16,19,3,3,C.skin),r(18,21,2,1,C.skinDark),
+        r(5,11,8,9,C.outline),r(6,12,7,7,C.dress),r(6,12,3,5,C.dressLight),
+        r(2,9,6,8,C.outline),r(3,10,5,6,C.dressDark),r(1,7,4,4,C.outline),r(2,8,3,3,C.stocking),
+        r(13,20,7,3,C.outline),r(14,20,6,2,C.skin),r(17,22,4,2,C.outline),r(18,22,3,1,C.skinLight),
+        r(3,16,4,5,C.outline),r(4,17,3,4,C.stocking),r(2,20,6,2,C.outline),r(3,20,5,1,C.shoeLight)],
+      prone:[r(1,22,8,6,C.outline),r(2,21,7,6,C.hairDark),r(3,21,5,3,C.hair),r(7,24,3,2,C.skinDark),
+        r(8,20,9,7,C.outline),r(9,21,8,5,C.dress),r(10,21,3,2,C.dressLight),
+        r(15,22,5,5,C.outline),r(16,23,4,3,C.dressDark),
+        r(4,26,11,3,C.outline),r(5,26,9,2,C.skin),r(17,25,4,3,C.outline),r(17,26,4,2,C.stocking),
+        r(18,27,3,2,C.shoe),r(0,28,21,1,C.outline)],
+      kneel:[r(9,10,10,2,C.outline),r(8,12,11,8,C.outline),r(9,11,9,8,C.hairDark),r(10,12,7,5,C.hair),
+        r(15,16,3,3,C.skin),r(6,18,11,7,C.outline),r(7,18,9,6,C.dress),r(8,18,3,3,C.dressLight),
+        r(15,23,5,3,C.outline),r(16,23,4,2,C.skin),r(3,22,6,5,C.outline),r(4,22,5,4,C.dressDark),
+        r(2,26,7,3,C.outline),r(3,26,6,2,C.stocking),r(13,26,6,3,C.outline),r(14,26,5,2,C.shoeLight)]
+    };
+    function nicole(pose){ return SPECIAL[pose] ? SPECIAL[pose].slice() : BASE.concat(POSES[pose]); }
+
+    // Stella - 30x15 grid.
+    var DC={outline:0x252633,dark:0x555b68,body:0x9299a5,light:0xc7cbd1,eye:0x17131b,collar:0xd84a62};
+    function d(o){var hX=o.headX,hY=o.headY,bY=o.bodyY,tY=o.tailY,legs=o.legs;
+      var out=[r(3,tY,7,2,DC.outline),r(2,tY,7,1,DC.dark),r(8,bY,12,6,DC.outline),r(9,bY,11,4,DC.body),r(10,bY,7,1,DC.light),r(7,bY+2,5,3,DC.dark),
+        r(18,bY-2,5,6,DC.outline),r(19,bY-2,4,5,DC.body),r(20,bY-1,2,1,DC.light),r(21,bY-1,1,4,DC.collar),
+        r(hX,hY,6,5,DC.outline),r(hX+1,hY+1,5,3,DC.body),r(hX+1,hY-2,3,3,DC.outline),r(hX+2,hY-1,2,2,DC.dark),
+        r(hX+5,hY+2,5,2,DC.outline),r(hX+5,hY+1,4,2,DC.body),r(hX+8,hY+1,1,1,DC.light),r(hX+4,hY+1,1,1,DC.eye)];
+      legs.forEach(function(g){out.push(r(g[0],g[1],g[2],g[3],DC.outline),r(g[0]+1,g[1],Math.max(1,g[2]-1),Math.max(1,g[3]-1),DC.dark));});
+      return out;
+    }
+    var dIdle=[r(20,1,6,5,DC.outline),r(21,2,5,3,DC.body),r(21,0,3,3,DC.outline),r(22,1,2,2,DC.dark),
+      r(25,3,4,2,DC.outline),r(25,2,3,2,DC.body),r(28,2,1,1,DC.light),r(24,2,1,1,DC.eye),
+      r(18,5,6,7,DC.outline),r(19,5,4,6,DC.body),r(20,5,2,2,DC.light),r(19,5,1,4,DC.collar),
+      r(11,8,9,6,DC.outline),r(12,8,7,5,DC.body),r(12,9,3,3,DC.light),r(9,11,6,4,DC.outline),r(10,11,5,3,DC.dark),
+      r(18,10,3,5,DC.outline),r(19,10,2,5,DC.dark),r(22,10,3,5,DC.outline),r(23,10,2,5,DC.body),
+      r(5,12,7,2,DC.outline),r(4,13,7,1,DC.dark)];
+    var dMark=[r(20,1,6,5,DC.outline),r(21,2,5,3,DC.body),r(21,0,3,3,DC.outline),r(22,1,2,2,DC.dark),
+      r(25,3,4,2,DC.outline),r(25,2,3,2,DC.body),r(28,2,1,1,DC.light),r(24,2,1,1,DC.eye),
+      r(18,5,6,7,DC.outline),r(19,5,4,6,DC.body),r(20,5,2,2,DC.light),r(19,5,1,4,DC.collar),
+      r(11,8,9,6,DC.outline),r(12,8,7,5,DC.body),r(12,9,3,3,DC.light),r(9,11,6,4,DC.outline),r(10,11,5,3,DC.dark),
+      r(20,10,3,5,DC.outline),r(21,10,2,5,DC.dark),
+      r(9,9,5,2,DC.outline),r(8,8,2,4,DC.outline),r(9,9,4,1,DC.dark),
+      r(5,12,7,2,DC.outline),r(4,13,7,1,DC.dark)];
+    var DOG={
+      idle:dIdle, marking:dMark,
+      lick:dIdle.concat([r(28,5,2,1,0xf06d91),r(29,6,1,1,0xffa0b8)]),
+      gathered0:d({headX:21,headY:3,bodyY:5,tailY:6,legs:[[11,10,5,3],[16,9,5,3]]}),
+      gathered1:d({headX:22,headY:4,bodyY:6,tailY:7,legs:[[9,10,6,3],[17,10,5,3]]}),
+      extended0:d({headX:22,headY:5,bodyY:7,tailY:7,legs:[[4,11,8,2],[19,11,8,2]]}),
+      extended1:d({headX:21,headY:4,bodyY:6,tailY:6,legs:[[3,10,8,2],[20,10,7,2]]}),
+      leap:d({headX:22,headY:4,bodyY:6,tailY:6,legs:[[4,10,8,2],[20,10,8,2]]}),
+      attack0:d({headX:20,headY:2,bodyY:6,tailY:7,legs:[[8,11,5,3],[18,10,5,3]]}).concat([r(27,6,3,1,0xf2eee4),r(28,7,2,1,DC.outline)]),
+      attack1:d({headX:20,headY:5,bodyY:7,tailY:6,legs:[[5,11,7,2],[19,11,7,2]]}).concat([r(27,9,3,1,0xf2eee4),r(28,8,2,1,DC.outline)])
+    };
+
+    // Matt - 24x40, drawObstacleTexture rects.
+    function matt(pose){
+      var O=0x171923,HAIR=0x2b211f,SK=0xc88f75,SKL=0xe1aa8e,SHIRT=0x42648a,LITE=0x6689ad,PANTS=0x303743,SHOE=0x17191e;
+      var la = pose==="hug" ? [[2,16,10,4,O],[3,17,9,2,SHIRT],[1,18,4,3,SK]] : [[4,15,4,14,O],[5,16,2,12,SHIRT],[4,28,4,3,SK]];
+      var ra = pose==="pat" ? [[17,15,4,8,O],[18,16,2,7,SHIRT],[20,21,4,3,SK]] : [[17,15,4,14,O],[18,16,2,12,SHIRT],[18,28,4,3,SK]];
+      return [[8,1,10,4,O],[7,3,12,6,O],[8,2,10,5,HAIR],
+        [9,6,9,8,O],[10,6,7,7,SK],[11,7,3,2,SKL],[16,8,1,1,O],
+        [8,13,11,16,O],[9,14,9,14,SHIRT],[10,15,3,9,LITE]]
+        .concat(la,ra,[[8,28,6,10,O],[9,29,4,8,PANTS],[15,28,6,10,O],[16,29,4,8,PANTS],[7,37,8,3,SHOE],[15,37,8,3,SHOE]])
+        .map(function(p){return [p[0],p[1],p[2],p[3],hx(p[4])];});
+    }
+
+    return { nicole:nicole, DOG:DOG, matt:matt };
+  })();
+
+  var DATA = [
+    // ======================= DAY =======================
+    { g:"day", name:"Mailbox", key:"obstacle-mailbox", tw:22, th:34, ingame:56, family:"mailbox", verdict:"ok", was:"Notice + legs tidied",
+      notes:[
+        "The floating white patch is now a taped-up service notice with light corner tabs and a couple of scribbled lines.",
+        "Two sturdier legs (5px) plus a thin ground-shadow row instead of the four thin ones that smeared together at size."
+      ],
+      draw:function(){var O="#111a2a",D="#17365f",M="#24558a",L="#4f7ead",HI="#79a2c7",S="#d8dde0",P="#728294";
+        return [[4,1,14,2,O],[2,3,18,4,O],[1,6,20,20,O],[4,2,14,2,M],[3,4,16,3,M],[2,7,18,18,M],
+          [3,6,2,18,L],[17,5,2,20,D],[5,3,10,1,L],[6,2,8,1,HI],
+          [4,7,14,7,O],[5,8,12,4,"#0a111d"],[6,8,10,1,"#26384e"],
+          [4,12,14,4,D],[5,12,12,2,L],[6,14,10,1,O],[8,13,6,1,HI],
+          [2,17,18,2,D],[3,17,16,1,L],
+          [4,19,8,8,O],[5,20,6,6,S],[5,20,6,1,"#f2f4f5"],[6,23,4,1,"#334c67"],[6,25,3,1,"#334c67"],[7,21,3,1,"#99a7b8"],
+          [4,19,2,1,"#9fb0c4"],[10,19,2,1,"#9fb0c4"],[4,26,2,1,"#9fb0c4"],[10,26,2,1,"#9fb0c4"],
+          [13,20,1,1,HI],[12,22,4,1,HI],[13,24,3,1,HI],[11,25,1,1,HI],[16,18,1,1,O],
+          [2,25,5,8,O],[3,25,3,7,D],[15,25,5,8,O],[16,25,3,7,D],
+          [4,26,2,6,M],[16,26,2,6,M],[1,32,7,2,O],[14,32,7,2,O],[2,32,5,1,P],[15,32,5,1,P],[1,33,20,1,"#0c1220"]];}
+    },
+
+    { g:"day", name:"Traffic cones", key:"obstacle-cone", tw:58, th:32, ingame:48, family:"cone", verdict:"warn", was:"Reads murky",
+      notes:[
+        "OPEN. ‘Now’ is the shipped art — two cones plus a striped plank, which splits the read between ‘pair of cones’ and ‘sawhorse’.",
+        "‘Proposed’ drops the plank for a clean pair with the reflective collar carrying it. Same texture size. Not decided — say ship, iterate, or leave it."
+      ],
+      draw:function(){var O="#392626",D="#b94d24",M="#e0752f",L="#f19a4b",W="#f1e8d7";
+        function cone(o){return [[o+8,4,3,2,O],[o+7,6,5,5,O],[o+6,11,7,6,O],[o+5,17,9,7,O],[o+4,24,11,4,O],
+          [o+8,6,2,5,L],[o+8,7,3,4,M],[o+7,11,5,6,M],[o+6,17,7,7,M],[o+5,24,9,3,D],
+          [o+7,14,5,3,W],[o+7,17,6,1,"#d1c6b6"],[o+2,27,15,3,O],[o+3,27,13,2,"#3a3a3a"],[o+1,30,17,2,O]];}
+        return [[7,6,44,11,O],[5,8,48,7,O],[8,8,42,7,W],
+          [8,8,7,7,M],[22,8,7,7,M],[36,8,7,7,M],[50,9,2,5,M],
+          [14,8,4,7,L],[28,8,4,7,L],[42,8,4,7,L],
+          [9,6,5,2,"#69625b"],[44,6,5,2,"#69625b"]].concat(cone(0),cone(40));}
+      ,
+      v2:{ tw:58, th:32, ingame:48, verdict:"ok",
+        draw:function(){var O="#392626",D="#b94d24",M="#e0752f",L="#f19a4b",W="#f1e8d7";
+          function cone(o){return [[o+8,4,3,2,O],[o+7,6,5,5,O],[o+6,11,7,6,O],[o+5,17,9,7,O],[o+4,24,11,4,O],
+            [o+8,6,2,5,L],[o+8,7,3,4,M],[o+7,11,5,6,M],[o+6,17,7,7,M],[o+5,24,9,3,D],
+            [o+7,14,5,3,W],[o+7,17,6,1,"#d1c6b6"],[o+2,27,15,3,O],[o+3,27,13,2,"#3a3a3a"],[o+1,30,17,2,O]];}
+          return [[8,29,42,1,"#20202a"]].concat(cone(3),cone(36));}
+      }
+    },
+
+    { g:"day", name:"Kid skipping rope", key:"obstacle-child0", tw:30, th:28, ingame:42, family:"child", verdict:"ok", was:"Needs rework",
+      notes:[
+        "Shipped: a real 2-frame skip cycle — grounded with the rope whipped over the head, then hopped with knees tucked and the rope sweeping under the feet (animating here).",
+        "Cord is now a 2px amber stroke that stays connected hand-to-hand, with red handle nubs and a pale motion trail so a single frame still reads as a spinning rope.",
+        "groundOffset 3 → 1 so the under-foot rope shows. Texture size unchanged."
+      ],
+      draw:function(){var O="#29243a",SK="#c77d68",S="#f0ad8e",HD="#523029",H="#7b4932",SH="#e0c9a9",B="#5a8fc9",BD="#365f99",ROPE="#f0c84b";
+        return [[2,8,1,12,ROPE],[27,8,1,12,ROPE],[3,6,1,3,ROPE],[26,6,1,3,ROPE],[4,4,22,1,ROPE],[5,3,20,1,ROPE],
+          [10,1,10,2,O],[8,3,13,8,O],[9,2,10,4,H],[8,4,3,6,HD],[18,3,3,7,HD],
+          [11,6,8,5,S],[12,6,5,2,"#f7c5a8"],[17,8,1,1,O],[18,10,2,1,SK],
+          [6,4,4,2,O],[4,5,3,2,H],
+          [9,11,11,9,O],[10,11,9,8,B],[11,12,3,6,"#79aee0"],
+          [5,12,5,3,O],[4,13,3,3,S],[20,12,5,3,O],[23,13,3,3,S],
+          [9,18,11,3,O],[10,18,9,2,BD],
+          [10,20,3,5,O],[17,20,3,5,O],[8,24,6,2,O],[16,24,6,2,O],[9,24,4,1,SH],[17,24,4,1,SH]];}
+      ,
+      v2:{ tw:30, th:28, ingame:42, verdict:"ok", fps:5,
+        frames:[function(){return A.kid(false);},function(){return A.kid(true);}],
+        draw:function(){var O="#2a2333",SK="#e0a074",SKH="#f0c3a0",SKS="#c07f57",HR="#6b3f2a",HRD="#4a2a1c",
+            SHIRT="#5a8fc9",SHIRTH="#82b0e0",SHIRTS="#3f6aa0",SHORTS="#334a86",SHORTSH="#4f66ad",
+            SHOE="#e86a4b",SOLE="#f3efe4",MOUTH="#8a3f3a",ROPE="#f2b33a",ROPES="#cf8f22",GRIP="#d94f3d",GRIPD="#9c3427",TRAIL="#f7d98a";
+          return [
+            [10,0,10,2,ROPE],[8,1,3,2,ROPE],[19,1,3,2,ROPE],
+            [5,3,2,4,ROPE],[23,3,2,4,ROPE],[4,7,2,5,ROPE],[24,7,2,5,ROPE],
+            [3,12,3,3,ROPE],[24,12,3,3,ROPE],[3,14,3,2,ROPE],[24,14,3,2,ROPE],
+            [10,0,10,1,ROPES],[5,4,1,3,ROPES],[24,4,1,3,ROPES],
+            [12,2,4,1,TRAIL],[9,3,2,1,TRAIL],[19,3,2,1,TRAIL],
+            [10,1,10,2,HRD],[9,3,12,3,HR],[9,4,2,4,HR],[21,4,2,4,HR],[8,6,2,3,HR],[22,6,2,3,HR],
+            [9,4,12,8,O],[10,5,10,6,SK],[11,5,6,3,SKH],
+            [12,8,2,2,O],[17,8,2,2,O],[13,10,4,2,O],[14,11,2,1,MOUTH],[11,9,1,1,SKS],[19,9,1,1,SKS],
+            [13,12,4,2,O],[14,12,2,1,SKS],
+            [9,13,12,7,O],[10,14,10,5,SHIRT],[11,14,4,3,SHIRTH],[10,18,10,1,SHIRTS],
+            [8,13,3,4,O],[9,14,2,3,SHIRT],[5,15,4,3,O],[6,15,3,2,SHIRT],[4,16,3,3,O],[4,17,2,2,SK],
+            [19,13,3,4,O],[19,14,2,3,SHIRT],[21,15,4,3,O],[21,15,3,2,SHIRT],[23,16,3,3,O],[24,17,2,2,SK],
+            [9,19,12,4,O],[10,20,10,3,SHORTS],[10,20,4,1,SHORTSH],[15,20,1,3,O],
+            [10,22,4,3,O],[16,22,4,3,O],[11,22,2,3,SK],[17,22,2,3,SK],
+            [9,24,6,3,O],[15,24,6,3,O],[10,24,5,2,SHOE],[16,24,5,2,SHOE],[10,26,5,1,SOLE],[16,26,5,1,SOLE],
+            [3,15,3,3,GRIP],[3,15,3,1,GRIPD],[24,15,3,3,GRIP],[24,15,3,1,GRIPD]
+          ];}
+      }
+    },
+
+    { g:"day", name:"Wire trash basket", key:"obstacle-trashbin0", tw:30, th:36, ingame:54, family:"trashbin", verdict:"ok", was:"Reads murky",
+      notes:[
+        "Trash breaches the rim (dented can, bottle neck, paper wad) so it reads ‘full basket’, not an empty hoop; a dim back-band closes the see-through centre.",
+        "Flies now buzz as a loose off-centre cluster over the mouth (not a fixed dot on each side, which read as lights).",
+        "A faded takeout cup with a cream wrap band lies on its side on the pavement right beside the bin (a standalone version was scrapped — a lone cup read as a pickup)."
+      ],
+      draw:function(){var O="#101216",D="#292c31",M="#44484e",L="#747980",HI="#b7bbc0";
+        return [[7,1,16,1,D],[4,2,22,1,M],[2,3,4,1,O],[24,3,4,1,O],
+          [1,4,3,3,O],[27,4,2,3,O],[2,7,26,2,O],[3,7,24,1,HI],
+          [5,4,20,1,L],[7,5,16,1,D],[9,6,12,1,M],
+          [3,9,2,20,O],[4,10,1,18,L],[25,9,2,20,O],[25,10,1,18,M],
+          [5,28,2,3,O],[23,28,2,3,O],
+          [6,9,2,21,O],[7,10,1,19,M],[10,9,2,23,O],[11,10,1,21,L],[14,8,2,24,O],[15,9,1,22,M],
+          [18,9,2,23,O],[19,10,1,21,L],[22,9,2,21,O],[23,10,1,19,M],
+          [3,11,24,2,O],[4,11,22,1,HI],[4,21,22,2,O],[5,21,20,1,M],
+          [5,30,20,3,O],[7,33,16,1,O],[6,30,18,1,HI],[7,31,16,1,M]];}
+      ,
+      v2:{ tw:30, th:36, ingame:54, verdict:"ok",
+        draw:function(){var O="#101216",D="#292c31",M="#44484e",L="#747980",HI="#b7bbc0",
+            CAN="#9298a0",CANHI="#b7bbc0",CANDK="#5c5f64",PAPER="#d0cdc4",PAPERHI="#eceae2",FLY="#111014";
+          return [
+            [11,5,1,1,FLY],[16,2,1,1,FLY],[20,6,1,1,FLY],[9,7,1,1,FLY],
+            [7,12,16,17,"#191b21"],[9,14,13,12,"#232530"],
+            [10,13,6,3,"#2e3038"],[16,15,6,3,"#2b2d35"],[12,20,9,3,"#1f2128"],[8,17,4,4,"#26282f"],
+            [13,16,3,2,CANDK],[18,18,2,6,"#3a4a3f"],
+            [7,1,16,1,D],[4,2,22,1,M],[2,3,4,1,O],[24,3,4,1,O],
+            [1,4,3,3,O],[27,4,2,3,O],[2,7,26,2,O],[3,7,24,1,HI],
+            [5,4,20,1,L],[7,5,16,1,D],[9,6,12,1,M],
+            [3,9,2,20,O],[4,10,1,18,L],[25,9,2,20,O],[25,10,1,18,M],
+            [5,28,2,3,O],[23,28,2,3,O],
+            [6,9,2,21,O],[7,10,1,19,M],[10,9,2,23,O],[11,10,1,21,L],[14,8,2,24,O],[15,9,1,22,M],
+            [18,9,2,23,O],[19,10,1,21,L],[22,9,2,21,O],[23,10,1,19,M],
+            [3,11,24,2,O],[4,11,22,1,HI],[4,21,22,2,O],[5,21,20,1,M],
+            [4,2,8,4,O],[5,3,6,2,CAN],[5,2,6,1,CANHI],[6,4,1,1,CANDK],
+            [15,1,7,5,O],[16,2,5,3,PAPER],[17,2,2,1,PAPERHI],[19,4,2,1,PAPER],
+            [5,30,20,3,O],[6,33,18,3,O],[6,30,18,1,HI],[7,31,16,1,M],[7,34,16,1,M],
+            [16,31,11,5,"#1e1a1a"],
+            [17,32,9,3,"#b35b52"],[17,32,9,1,"#cf837a"],[17,34,9,1,"#8a4038"],
+            [16,32,2,3,"#1e1a1a"],[16,33,1,1,"#dedad0"],
+            [21,32,2,3,"#e8e2d4"],[21,32,2,1,"#f4efe3"],[21,34,2,1,"#c9c3b3"],
+            [27,30,3,6,"#1e1a1a"],[28,31,2,4,"#c9cdd0"],[28,31,2,1,"#eef0f2"],[28,33,1,2,"#9297a0"],
+            [29,32,1,2,"#1e1a1a"],[29,32,1,1,"#36393f"],
+            [28,29,1,2,"#b35b52"],[29,27,1,3,"#e4dfd6"],[28,26,2,1,"#b35b52"]];}
+      }
+    },
+
+    { g:"day", name:"Fire hydrant", key:"obstacle-hydrant0", tw:38, th:28, ingame:42, family:"hydrant", verdict:"ok", was:"Spray lands + body step",
+      notes:[
+        "Side spray arc is a great tell, and it cues Stella's stop-and-mark gag.",
+        "Short jet now arcs up and comes down steeply near mid-texture (instead of clipping off the edge), so there's room for a splash crown + a spreading puddle where it lands. Plus a value step down the right of the body.",
+        "The long-spray variant got the same tapered-jet + splash treatment."
+      ],
+      draw:function(){var O="#51251f",D="#a63b2c",M="#d95237",L="#f27a54",STEEL="#b8c2c7",W="#c9edf2",HI="#f2ffff";
+        return [[16,14,6,3,W],[19,11,6,4,HI],[23,9,6,4,W],[27,10,5,4,HI],[30,13,4,5,W],[31,17,3,5,HI],[31,21,3,3,W],
+          [28,22,10,2,W],[29,21,6,1,HI],[26,20,2,2,W],[34,19,2,3,HI],[31,18,1,2,W],[37,21,1,3,HI],
+          [23,25,15,1,"#8fd6de"],[27,24,10,1,"#c6eef2"],[23,26,15,1,"#63aeb7"],[24,23,1,1,HI],[36,23,1,1,W],
+          [7,5,10,3,O],[9,3,6,3,O],[10,3,4,2,STEEL],[5,7,14,3,O],[6,7,12,2,L],
+          [7,9,10,15,O],[8,9,8,14,M],[9,10,2,12,L],[13,10,3,13,"#b8432c"],[5,12,4,7,O],[3,13,4,5,O],[4,14,3,3,M],
+          [16,11,4,8,O],[17,12,2,6,STEEL],[6,19,12,5,O],[7,19,10,3,D],[3,23,19,4,O],[5,23,15,2,L]];}
+    },
+
+    { g:"day", name:"Hydrant — long spray", key:"obstacle-hydrant-long0", tw:90, th:28, ingame:42, family:"hydrant", verdict:"ok", was:"Reads murky",
+      notes:[
+        "Spray now tapers: a solid sheet at the nozzle, thick dashes through the middle, then scattered droplets fading out and arcing down by ~x84.",
+        "Reads as water thrown from the hydrant rather than a bar across the lane. Body unchanged, texture size unchanged."
+      ],
+      draw:function(){var O="#51251f",D="#a63b2c",M="#d95237",L="#f27a54",STEEL="#b8c2c7",W="#c9edf2",HI="#f2ffff";
+        return [[17,14,8,3,W],[23,11,10,4,HI],[31,8,11,4,W],[40,6,12,4,HI],[50,5,12,4,W],
+          [60,6,10,4,HI],[68,8,9,5,W],[75,11,8,5,HI],[81,15,7,6,W],[86,21,4,6,HI],
+          [78,20,3,2,HI],[70,23,3,2,W],[83,25,3,2,W],
+          [7,5,10,3,O],[9,3,6,3,O],[10,3,4,2,STEEL],[5,7,14,3,O],[6,7,12,2,L],
+          [7,9,10,15,O],[8,9,8,14,M],[9,10,2,12,L],[5,12,4,7,O],[3,13,4,5,O],[4,14,3,3,M],
+          [16,11,4,8,O],[17,12,2,6,STEEL],[6,19,12,5,O],[7,19,10,3,D],[3,23,19,4,O],[5,23,15,2,L]];}
+      ,
+      v2:{ tw:90, th:28, ingame:42, verdict:"ok",
+        draw:function(){var O="#51251f",D="#a63b2c",M="#d95237",L="#f27a54",STEEL="#b8c2c7",W="#c9edf2",HI="#f2ffff";
+          return [
+            [17,13,7,5,W],[19,12,7,3,HI],[22,11,7,3,W],[26,11,6,3,HI],[30,12,5,3,W],
+            [35,12,4,2,HI],[41,11,4,2,W],[47,11,4,2,HI],[52,12,3,2,W],
+            [58,12,2,2,HI],[63,13,2,2,W],[68,14,2,2,HI],[72,16,2,2,W],[76,18,1,2,HI],[80,21,1,2,W],[83,24,1,2,HI],
+            [45,9,1,1,HI],[55,10,1,1,W],[66,11,1,1,HI],
+            [7,5,10,3,O],[9,3,6,3,O],[10,3,4,2,STEEL],[5,7,14,3,O],[6,7,12,2,L],
+            [7,9,10,15,O],[8,9,8,14,M],[9,10,2,12,L],[5,12,4,7,O],[3,13,4,5,O],[4,14,3,3,M],
+            [16,11,4,8,O],[17,12,2,6,STEEL],[6,19,12,5,O],[7,19,10,3,D],[3,23,19,4,O],[5,23,15,2,L]];}
+      }
+    },
+
+    { g:"day", name:"Shopping cart", key:"obstacle-shoppingcart0", tw:56, th:42, ingame:68, family:"shoppingcart", verdict:"warn", was:"Reads murky", tall:true,
+      notes:[
+        "Interior blocks cut to one clear paper grocery bag rising above the rim; a couple of diagonal cage bars added so the wire reads.",
+        "Still the busiest silhouette in the set — the cage + wheels + handle carry it, but it’s the one most worth a second look in-game.",
+        "Texture size unchanged."
+      ],
+      draw:function(){var O="#22252a",D="#50575d",M="#818a8f",L="#cbd0d1",R="#a84b42",B="#435d78",T="#786044",Y="#b99a4d",G="#607054";
+        var wheels=[[10,34,10,8,O],[14,35,2,6,M],[11,37,8,2,M],[39,34,10,8,O],[43,35,2,6,M],[40,37,8,2,M],[13,36,4,2,L],[42,36,4,2,L]];
+        return [[2,4,15,4,O],[2,2,12,3,R],[14,5,4,28,O],[15,6,2,26,L],
+          [19,13,10,15,B],[21,11,6,4,L],[29,16,10,12,T],[32,13,6,5,Y],
+          [39,14,8,14,R],[45,17,6,10,G],[25,19,7,9,"#9a7650"],
+          [15,9,38,3,O],[16,10,36,1,L],[16,11,3,19,O],[18,28,31,3,O],
+          [50,11,4,5,O],[49,15,4,6,O],[48,20,4,6,O],[47,25,4,5,O],
+          [19,11,2,18,M],[26,11,2,18,L],[33,11,2,18,M],[40,11,2,18,L],[47,11,2,16,M],
+          [17,14,35,2,M],[17,20,34,2,L],[18,26,31,2,M],
+          [18,11,11,10,O],[19,12,9,8,B],[21,13,5,2,L],[22,16,3,3,O],
+          [15,29,35,4,O],[17,30,31,1,L],[17,33,31,2,O],[20,35,25,2,M],
+          [15,31,4,6,O],[47,31,4,6,O],[18,32,2,5,L],[48,32,2,5,L]].concat(wheels);}
+      ,
+      v2:{ tw:56, th:42, ingame:68, verdict:"warn",
+        draw:function(){var O="#22252a",D="#50575d",M="#818a8f",L="#cbd0d1",R="#a84b42",BAG="#9a7c50",BAGH="#b89463",BAGD="#836542",BOT="#6f8a5f",BOTH="#8fb07d";
+          var wheels=[[10,34,10,8,O],[14,35,2,6,M],[11,37,8,2,M],[39,34,10,8,O],[43,35,2,6,M],[40,37,8,2,M],[13,36,4,2,L],[42,36,4,2,L]];
+          return [[2,4,15,4,O],[2,2,12,3,R],[14,5,4,28,O],[15,6,2,26,L],
+            [22,3,13,5,O],[23,1,10,3,O],[24,4,11,16,O],[25,4,9,15,BAG],[25,4,9,2,BAGH],[25,10,9,1,BAGD],[26,2,6,2,BAG],
+            [38,2,4,11,O],[39,2,2,10,BOT],[39,1,2,2,O],[39,3,1,4,BOTH],
+            [15,9,38,3,O],[16,10,36,1,L],[16,11,3,19,O],[18,28,31,3,O],
+            [50,11,4,5,O],[49,15,4,6,O],[48,20,4,6,O],[47,25,4,5,O],
+            [19,11,2,18,M],[26,11,2,18,L],[33,11,2,18,M],[40,11,2,18,L],[47,11,2,16,M],
+            [17,14,35,2,M],[17,20,34,2,L],[18,26,31,2,M],
+            [19,27,2,2,L],[24,24,2,2,L],[29,21,2,2,L],[34,18,2,2,L],[39,15,2,2,L],[44,13,2,2,L],
+            [18,11,11,10,O],[19,12,9,8,BAGD],[21,13,5,2,L],[22,16,3,3,O],
+            [15,29,35,4,O],[17,30,31,1,L],[17,33,31,2,O],[20,35,25,2,M],
+            [15,31,4,6,O],[47,31,4,6,O],[18,32,2,5,L],[48,32,2,5,L]].concat(wheels);}
+      }
+    },
+
+    { g:"day", name:"Umbrella hot-dog cart", key:"obstacle-hotdogcart", tw:44, th:64, ingame:96, family:"hotdogcart", verdict:"warn", was:"redraw rejected",
+      notes:[
+        "Kept as-is by decision — the current art (vendor and all) is what ships.",
+        "A redraw was tried (vendor removed, HOT-DOG signboard added) and rejected; it's out of this sheet now."
+      ],
+      tall:true,
+      draw:function(){var O="#202126",D="#8e2f28",R="#d34a3c",Y="#e2b942",L="#f1e3c8",STEEL="#a9b2b4",GLASS="#86a9b2",NAVY="#27375c",
+          SKIN="#b97852",SKINL="#d79a6e",HAIR="#3a2923",APRON="#e2ddd0",SHIRT="#35617a";
+        return [[18,1,8,1,O],[11,2,22,2,O],[6,4,32,2,O],[3,6,38,4,O],[1,9,42,3,O],
+          [18,2,8,2,R],[12,3,8,3,NAVY],[24,3,8,3,NAVY],[7,5,10,4,R],[17,4,10,6,R],[27,5,10,4,R],
+          [3,7,7,3,NAVY],[10,8,7,2,NAVY],[27,8,7,2,NAVY],[34,7,7,3,NAVY],
+          [2,10,7,2,NAVY],[10,10,7,2,R],[18,10,8,2,R],[27,10,7,2,R],[35,10,7,2,NAVY],
+          [21,11,3,32,O],[22,11,1,32,STEEL],
+          [29,14,8,2,O],[27,16,11,3,NAVY],[26,18,3,2,NAVY],
+          [29,19,8,8,HAIR],[28,19,8,7,SKIN],[29,20,6,5,SKINL],[34,21,1,1,O],
+          [28,26,10,11,O],[29,27,8,10,SHIRT],[31,28,5,9,APRON],[32,29,3,7,L],
+          [27,27,4,4,SHIRT],[24,29,6,3,SKIN],[23,30,3,2,SKINL],
+          [8,31,28,2,O],[5,33,34,3,O],[7,33,30,2,R],[4,36,36,3,O],[5,36,34,2,Y],
+          [7,39,30,10,O],[8,39,28,9,GLASS],[9,40,26,2,"#cce0df"],[10,43,8,4,L],[20,42,7,5,R],[29,41,5,6,Y],
+          [5,48,34,10,O],[6,49,32,8,R],[7,50,30,3,Y],[9,54,12,3,L],[25,54,9,3,D],
+          [3,57,38,3,O],[5,57,34,1,STEEL],[8,59,4,3,O],[33,59,4,3,O],
+          [6,60,8,4,O],[8,61,4,2,STEEL],[31,60,8,4,O],[33,61,4,2,STEEL]];}
+      ,
+      v2:{ tw:44, th:64, ingame:96, verdict:"ok",
+        draw:function(){var O="#202126",D="#8e2f28",R="#d34a3c",Y="#e2b942",YL="#f0d27a",L="#f1e3c8",STEEL="#a9b2b4",GLASS="#86a9b2",NAVY="#27375c",BUN="#e0a55a",DOG="#b5482f",STM="#dfe6e6",STMH="#eef2f2";
+          return [[18,1,8,1,O],[11,2,22,2,O],[6,4,32,2,O],[3,6,38,4,O],[1,9,42,3,O],
+            [18,2,8,2,R],[12,3,8,3,NAVY],[24,3,8,3,NAVY],[7,5,10,4,R],[17,4,10,6,R],[27,5,10,4,R],
+            [3,7,7,3,NAVY],[10,8,7,2,NAVY],[27,8,7,2,NAVY],[34,7,7,3,NAVY],
+            [2,10,7,2,NAVY],[10,10,7,2,R],[18,10,8,2,R],[27,10,7,2,R],[35,10,7,2,NAVY],
+            [21,11,3,30,O],[22,11,1,30,STEEL],
+            [25,24,4,3,STM],[27,21,3,3,STMH],[24,19,3,3,STM],
+            [8,31,28,2,O],[5,33,34,3,O],[7,33,30,2,R],[4,36,36,3,O],[5,36,34,2,Y],
+            [7,39,30,10,O],[8,39,28,9,GLASS],[9,40,26,2,"#cce0df"],[10,43,8,4,L],[20,42,7,5,R],[29,41,5,6,Y],
+            [5,48,34,10,O],[6,49,32,8,R],[7,50,30,3,Y],
+            [9,51,26,6,O],[10,52,24,4,YL],[12,53,20,2,BUN],[13,53,18,1,DOG],[14,54,16,1,"#e6b878"],
+            [3,57,38,3,O],[5,57,34,1,STEEL],[8,59,4,3,O],[33,59,4,3,O],
+            [6,60,8,4,O],[8,61,4,2,STEEL],[31,60,8,4,O],[33,61,4,2,STEEL]];}
+      }
+    },
+
+    { g:"day", name:"Parking meter", key:"obstacle-parkingmeter", tw:18, th:60, ingame:75, family:"parkingmeter", verdict:"ok", was:"Head beefed up",
+      tall:true,
+      notes:[
+        "Iconic silhouette — reads fine even at 18px wide.",
+        "Head fattened to fill the full texture width so it out-reads the pole; no size change."
+      ],
+      draw:function(){var O="#1b2023",DEEP="#111517",D="#3e494d",M="#68767a",L="#aab5b6",HI="#d8dedc",GLASS="#92afb0",BLUE="#35577b",R="#c85045",G="#75a36a";
+        return [[5,1,8,1,O],[2,2,14,2,O],[0,4,18,6,O],[0,8,18,10,O],
+          [6,2,6,1,HI],[3,3,12,2,L],[1,5,16,5,M],[1,9,16,8,D],
+          [3,5,12,8,O],[4,5,10,7,GLASS],[5,6,7,2,HI],[7,9,4,2,D],[9,6,1,5,M],
+          [1,14,16,4,O],[2,14,14,2,L],[3,17,12,8,O],[4,17,10,7,BLUE],
+          [5,18,6,2,HI],[11,18,2,3,R],[5,21,2,2,G],[9,21,3,2,DEEP],
+          [4,24,10,3,O],[6,24,6,2,M],[8,24,2,2,L],
+          [7,26,4,29,O],[8,26,2,29,M],[9,27,1,27,L],
+          [6,54,6,3,O],[7,54,4,2,HI],[5,56,8,3,O],[3,59,12,1,O]];}
+    },
+
+    // ======================= NIGHT =======================
+    { g:"night", name:"Running cat", key:"obstacle-cat0", tw:30, th:27, ingame:44, family:"cat", verdict:"ok", was:"Legs never moved",
+      notes:[
+        "Shipped: a real 4-frame gallop (obstacle-cat-run @ 10fps) — gather → airborne reach with the legs splayed fore/aft → front contact → back push-off, echoing Stella's double-suspension cycle.",
+        "The old arched pose is kept as obstacle-cat-hiss (2 frames) for the enraged charge when a cat spots Nicole. No texture size change.",
+        "Animating here at 9fps."
+      ],
+      fps:5,
+      frames:[
+        function(){var O="#1d1b25",D="#34323e",M="#4a4852",L="#716d7b",E="#d9e04a",W="#f1e7d8";
+          return [[25,5,3,13,O],[24,6,2,11,M],[22,3,4,4,O],
+            [4,15,20,9,O],[7,11,13,6,O],[8,10,11,5,M],[5,16,18,7,M],[6,16,6,2,L],[18,18,5,5,D],
+            [8,4,13,9,O],[9,2,4,4,O],[17,2,4,4,O],[9,5,11,7,M],[10,5,3,2,L],
+            [11,7,3,2,O],[17,7,3,2,O],[12,8,2,1,E],[17,8,2,1,E],[14,10,3,1,O],[13,11,2,2,W],[17,11,2,2,W],
+            [4,22,6,4,O],[18,22,7,4,O],[5,22,5,2,D],[19,22,5,2,D]];},
+        function(){var O="#1d1b25",D="#34323e",M="#4a4852",L="#716d7b",E="#d9e04a",W="#f1e7d8";
+          return [[25,2,3,12,O],[24,3,2,10,M],[22,1,4,3,O],
+            [4,15,20,9,O],[7,11,13,6,O],[8,10,11,5,M],[5,16,18,7,M],[6,16,6,2,L],[18,18,5,5,D],
+            [8,4,13,9,O],[9,2,4,4,O],[17,2,4,4,O],[9,5,11,7,M],[10,5,3,2,L],
+            [11,7,3,2,O],[17,7,3,2,O],[12,8,2,1,E],[17,8,2,1,E],[14,10,3,1,O],[13,11,2,2,W],[17,11,2,2,W],
+            [4,22,6,4,O],[18,22,7,4,O],[5,22,5,2,D],[19,22,5,2,D],
+            [1,9,5,1,L],[2,12,5,1,L],[21,9,5,1,L],[21,12,6,1,L]];}
+      ],
+      draw:function(){var O="#1d1b25",D="#34323e",M="#4a4852",L="#716d7b",E="#d9e04a",W="#f1e7d8";
+        return [[25,5,3,13,O],[24,6,2,11,M],[22,3,4,4,O],
+          [4,15,20,9,O],[7,11,13,6,O],[8,10,11,5,M],[5,16,18,7,M],[6,16,6,2,L],[18,18,5,5,D],
+          [8,4,13,9,O],[9,2,4,4,O],[17,2,4,4,O],[9,5,11,7,M],[10,5,3,2,L],
+          [11,7,3,2,O],[17,7,3,2,O],[12,8,2,1,E],[17,8,2,1,E],[14,10,3,1,O],[13,11,2,2,W],[17,11,2,2,W],
+          [4,22,6,4,O],[18,22,7,4,O],[5,22,5,2,D],[19,22,5,2,D]];}
+      ,
+      v2:{ tw:30, th:27, ingame:44, verdict:"ok", fps:9,
+        frames:(function(){
+          function catRun(f){
+            var O="#1d1b25",D="#34323e",M="#4a4852",L="#716d7b",E="#d9e04a",W="#f1e7d8";
+            var by=[0,-1,1,-1][f];
+            var ext=[[7,21],[5,24],[6,22],[6,23]][f], x0=ext[0], x1=ext[1];
+            var core=[
+              [8,4+by,13,9,O],[9,2+by,4,3,O],[16,2+by,4,3,O],
+              [9,6+by,11,6,M],[10,6+by,3,2,L],
+              [11,8+by,2,2,O],[16,8+by,2,2,O],[12,8+by,2,1,E],[16,8+by,2,1,E],
+              [9,10+by,3,1,W],[10,12+by,4,1,W],
+              [x0,10+by,x1-x0,9,O],[x0+1,11+by,x1-x0-2,7,M],[x0+1,11+by,8,2,L],[x0+2,16+by,x1-x0-6,2,D]
+            ];
+            var tail=[
+              [[22,2,5,3,O],[24,3,3,9,O],[25,4,2,7,M]],
+              [[23,12,6,2,O],[27,11,3,2,O],[28,10,2,2,O],[24,13,4,1,M]],
+              [[23,7,4,7,O],[24,8,3,6,M],[25,4,3,4,O]],
+              [[22,3,5,3,O],[23,4,3,10,O],[24,5,2,8,M]]
+            ][f];
+            var legs=[
+              [[8,17,3,7,O],[9,18,2,5,M],[8,23,3,2,O],[15,17,4,7,O],[16,18,3,5,M],[16,23,3,2,O]],
+              [[7,14,3,4,O],[2,15,6,3,O],[0,16,4,2,M],[0,17,2,2,L],[16,14,3,4,O],[19,15,6,3,O],[24,16,4,2,M],[26,17,2,2,L]],
+              [[5,16,3,9,O],[6,17,2,7,M],[4,24,4,2,O],[17,17,3,3,O],[13,18,4,5,O],[14,19,3,4,M],[15,22,3,2,O]],
+              [[16,16,4,9,O],[17,17,3,7,M],[18,24,4,2,O],[8,15,3,4,O],[9,16,2,3,M],[10,17,2,2,O]]
+            ][f];
+            return tail.concat(core, legs);
+          }
+          return [function(){return catRun(0);}, function(){return catRun(1);},
+                  function(){return catRun(2);}, function(){return catRun(3);}];
+        })(),
+        draw:function(){
+          var O="#1d1b25",D="#34323e",M="#4a4852",L="#716d7b",E="#d9e04a",W="#f1e7d8";
+          return [[22,2,5,3,O],[24,3,3,9,O],[25,4,2,7,M],
+            [8,4,13,9,O],[9,2,4,3,O],[16,2,4,3,O],[9,6,11,6,M],[10,6,3,2,L],
+            [11,8,2,2,O],[16,8,2,2,O],[12,8,2,1,E],[16,8,2,1,E],[9,10,3,1,W],[10,12,4,1,W],
+            [7,10,14,9,O],[8,11,12,7,M],[8,11,8,2,L],[9,16,8,2,D],
+            [8,17,3,7,O],[9,18,2,5,M],[8,23,3,2,O],[15,17,4,7,O],[16,18,3,5,M],[16,23,3,2,O]];}
+      }
+    },
+
+    { g:"night", name:"Burn barrel", key:"obstacle-trashfire0", tw:28, th:36, ingame:60, family:"trashfire", verdict:"ok",
+      notes:[
+        "Drum ribs + dark mouth under the flame land it as a burn barrel, not the daytime basket.",
+        "The flame core could push one frame taller for more flicker range."
+      ],
+      fps:9,
+      frames:[function(){return A.fire(false);},function(){return A.fire(true);}],
+      draw:function(){return A.fire(false);}
+    },
+
+    { g:"night", name:"Passed-out drunk", key:"obstacle-sleeping0", tw:48, th:28, ingame:40, family:"sleeping", verdict:"ok", was:"Vanished on asphalt / too busy",
+      notes:[
+        "Shipped, then cut down twice: from a flat unreadable mound → a detailed figure → this spare version. A slumped khaki-coat mass, a capped head, one bent knee up as the bump to hurdle, a single bottle on its side by his hip, all on a flattened cardboard sheet for contrast against the dark pavement. ~40 rects, down from ~90.",
+        "Texture 48×20 → 48×28, in-game height 28 → 40 so the raised knee affects jump timing."
+      ],
+      draw:function(){var O="#171822",D="#2e2e38",M="#464858",L="#686b7d",SK="#a86f61",S="#d99a82",SH="#3c3445",
+          GLASS="#4d765a",GLINT="#94b58c",LABEL="#d7c59a",FLY="#111014",WING="#aaa6ad";
+        return [[3,4,2,1,FLY],[3,3,1,1,WING],[8,1,2,1,FLY],[10,2,1,1,WING],[12,5,2,1,FLY],[11,4,1,1,WING],
+          [1,12,10,7,O],[3,10,7,3,O],[4,11,6,5,S],[3,13,3,4,SK],[7,12,2,1,SH],
+          [9,13,23,6,O],[10,12,18,6,M],[11,12,8,2,L],[25,14,10,5,D],[30,15,10,4,O],
+          [33,14,8,3,SH],[31,17,11,3,O],[32,17,9,1,"#6c5d62"],[8,17,24,3,O],[12,17,13,1,D],
+          [39,15,7,4,O],[40,15,5,3,GLASS],[37,16,4,2,O],[37,16,3,1,GLINT],
+          [42,15,2,3,LABEL],[45,16,2,2,O],[40,15,1,1,GLINT],[0,19,48,1,"#12131a"]];}
+      ,
+      v2:{ tw:48, th:28, ingame:40, verdict:"ok",
+        draw:function(){var O="#33302a",COAT="#847a5c",COAT_D="#5a5340",COLLAR="#c9bf99",
+            PANTS="#4a5470",PANTS_L="#66708c",SKIN="#b88a6e",CAP="#22202a",BOOT="#4a3a2e",
+            GLASS="#7a6a45",GLASS_L="#bfae82",CAP_G="#caa85a",
+            GRND="#2c2b31",CARD="#7a6647",CARD_L="#9a8560",CARD_D="#5c4c34";
+          return [
+            [2,25,44,2,GRND],[0,27,48,1,"#0d0d14"],
+            [4,21,40,6,CARD],[5,21,38,1,CARD_L],[5,26,38,1,CARD_D],[18,22,3,1,CARD_D],[32,23,3,1,CARD_D],
+            [10,22,17,3,O],[11,23,15,2,PANTS],[25,21,7,3,O],[26,22,5,2,BOOT],
+            [21,19,9,3,O],[22,20,7,1,GLASS_L],[22,21,7,1,GLASS],[20,19,2,3,O],[20,20,1,1,CAP_G],
+            [10,12,18,12,O],[11,13,16,10,COAT],[11,13,4,3,COLLAR],[12,18,14,1,COAT_D],
+            [18,12,8,2,COAT],
+            [20,16,6,3,O],[21,17,5,2,COAT_D],[25,18,3,3,O],[26,19,2,2,SKIN],
+            [3,12,8,9,O],[4,13,6,6,SKIN],[3,11,7,3,CAP],[4,16,6,1,CAP],
+            [5,17,3,1,O],[4,20,4,1,"#8a5c4c"],
+            [24,16,6,8,O],[25,17,4,7,PANTS],
+            [26,9,7,8,O],[27,10,5,6,PANTS],[28,11,3,3,PANTS_L],
+            [31,12,6,11,O],[32,13,4,9,PANTS],
+            [31,21,8,4,O],[32,22,6,2,BOOT]
+          ];}
+      }
+    },
+
+    { g:"night", name:"Boombox", key:"obstacle-boombox0", tw:44, th:28, ingame:40, family:"boombox", verdict:"ok", fps:6,
+      notes:[
+        "Great read — folding handle, tuner strip, twin woofers all land.",
+        "The boom frame’s cone expansion sells it; 1–2px of grille rings would add polish."
+      ],
+      frames:[function(){return A.boombox(false);},function(){return A.boombox(true);},function(){return A.boombox(false);}],
+      draw:function(){return A.boombox(false);}
+    },
+
+    { g:"night", name:"Steam stack", key:"obstacle-steamstack0", tw:34, th:42, ingame:104, family:"steamstack", verdict:"ok", was:"Too stout → slimmed", tall:true, fps:4,
+      notes:[
+        "Shipped, then re-slimmed after it read stout: the tube is now tall and narrow (6px wide, ~27 tall), the cone base is compact, with a ribbed collar joint, a hazard diamond and a 2-frame vertical steam plume (animating here).",
+        "Texture grew 34×42 → 34×52 (aspect 34/52) — because aspect drops below 1, the sprite renders NARROWER on screen (68px vs 84), which is what sells the slimness."
+      ],
+      fps:3,
+      frames:[
+        function(){var O="#4a2822",D="#a43f27",M="#e0752f",L="#f08a45",W="#e7ddd1",WS="#bebbc0",WH="#f7f5ef",SOOT="#3b3736";
+          return [[0,4,11,4,WS],[3,1,12,7,WH],[7,7,14,5,WS],[1,9,11,4,WH],[12,3,9,6,WH],[16,9,6,3,WS],
+            [20,8,9,3,O],[21,8,7,2,SOOT],[19,10,11,23,O],[20,10,9,22,M],
+            [21,10,7,5,D],[20,15,9,4,W],[21,15,7,1,WH],[20,19,9,5,M],[21,19,2,5,L],[20,24,9,4,W],[21,24,7,1,WH],
+            [20,28,9,5,M],[21,28,2,5,L],[26,29,2,3,D],
+            [17,32,15,7,O],[18,32,13,7,M],[20,32,9,2,L],[19,35,11,4,M],
+            [15,38,19,3,O],[16,38,17,2,L],[13,40,21,2,O],[16,40,16,1,M],
+            [22,17,3,1,"#c7beb2"],[25,25,2,1,"#b5ada4"],[19,36,2,1,D]];},
+        function(){var O="#4a2822",D="#a43f27",M="#e0752f",L="#f08a45",W="#e7ddd1",WS="#bebbc0",WH="#f7f5ef",SOOT="#3b3736";
+          return [[2,2,12,3,WS],[0,5,18,5,WS],[5,1,8,8,WH],[9,7,12,4,WH],[2,10,15,3,WS],[14,5,8,5,WH],
+            [20,8,9,3,O],[21,8,7,2,SOOT],[19,10,11,23,O],[20,10,9,22,M],
+            [21,10,7,5,D],[20,15,9,4,W],[21,15,7,1,WH],[20,19,9,5,M],[21,19,2,5,L],[20,24,9,4,W],[21,24,7,1,WH],
+            [20,28,9,5,M],[21,28,2,5,L],[26,29,2,3,D],
+            [17,32,15,7,O],[18,32,13,7,M],[20,32,9,2,L],[19,35,11,4,M],
+            [15,38,19,3,O],[16,38,17,2,L],[13,40,21,2,O],[16,40,16,1,M],
+            [22,17,3,1,"#c7beb2"],[25,25,2,1,"#b5ada4"],[19,36,2,1,D]];}
+      ],
+      draw:function(){return [];},
+      v2:{ tw:34, th:52, ingame:104, verdict:"ok", fps:3,
+        frames:(function(){
+          function stk(flip){
+            var O="#4a2822",D="#a43f27",M="#e0752f",L="#f08a45",W="#e7ddd1",WS="#bebbc0",WH="#f7f5ef",SOOT="#3b3736",
+              COL="#8f8a82",COLH="#b7b2a8",COLD="#5f5a52",SIGN="#e8c53a";
+            var steam = flip
+              ? [[15,1,12,5,WH],[12,4,17,6,WS],[14,9,13,4,WH],[6,3,7,4,WS],[3,7,6,3,WH],[19,0,5,3,WS]]
+              : [[17,0,10,5,WH],[15,4,13,6,WS],[17,9,11,4,WH],[11,5,6,4,WS],[9,9,5,3,WH]];
+            return steam.concat([
+              [20,11,10,3,O],[21,11,8,2,SOOT],
+              [19,14,12,3,O],[19,14,12,1,COLH],[20,15,10,1,COL],[20,16,10,1,COLD],
+              [21,17,8,27,O],
+              [22,17,6,3,D],[22,20,6,4,M],[22,20,2,4,L],
+              [22,24,6,3,W],[22,24,6,1,WH],
+              [22,27,6,4,M],[22,27,2,4,L],
+              [22,31,6,3,W],[22,31,6,1,WH],
+              [22,34,6,4,M],[22,34,2,4,L],
+              [22,38,6,3,W],[22,38,6,1,WH],
+              [22,41,6,3,M],[22,41,2,3,L],
+              [24,25,4,4,O],[25,25,2,3,SIGN],[24,26,4,2,SIGN],[25,24,1,1,SIGN],
+              [18,43,14,5,O],[19,43,12,5,M],[21,44,7,2,L],[20,47,10,3,M],
+              [15,48,19,3,O],[16,48,17,2,L],[14,50,20,2,O],[16,50,16,1,M],
+              [23,35,2,1,"#c7beb2"],[20,49,2,1,D]
+            ]);
+          }
+          return [function(){return stk(false);}, function(){return stk(true);}];
+        })(),
+        draw:function(){return [];}
+      }
+    },
+
+    { g:"night", name:"Scurrying rats", key:"obstacle-rats0", tw:44, th:18, ingame:20, family:"rats", verdict:"ok", was:"Reads murky",
+      notes:[
+        "Shipped: bigger lead rat with a humped back and an S-curl tail standing up; a smaller rat trails behind. Tails thickened to 2–3px and curved so they no longer read as scratches, plus scurry scuffs.",
+        "Texture 44×18 → 44×22, in-game height 20 → 24. Frames animate here."
+      ],
+      draw:function(){var O="#171414",D="#4b3731",M="#765548",L="#a77b68",TAIL="#c49a89",EYE="#e7cf58";
+        var legs=[[6,14,5,2,O],[19,14,5,2,O],[23,8,4,2,O],[33,8,4,2,O]];
+        var tails=[[27,12,7,2,TAIL],[33,13,6,2,TAIL],[38,11,5,2,TAIL],[42,9,2,3,TAIL]];
+        return [[23,5,3,5,O],[26,3,11,7,O],[36,5,5,5,O],[25,4,11,5,D],[28,3,7,4,M],
+          [21,6,6,4,O],[22,6,4,3,M],[21,5,2,2,L],[22,7,1,1,EYE],[20,8,3,1,L],
+          [37,6,5,2,TAIL],[41,4,3,2,TAIL],
+          [7,9,4,6,O],[11,7,17,8,O],[26,10,5,5,O],[10,8,17,6,D],[13,7,12,5,M],[15,8,8,2,L],
+          [2,10,8,5,O],[3,9,5,2,M],[5,8,3,3,L],[4,11,1,1,EYE],[0,13,4,1,L]].concat(tails,legs,
+          [[4,16,24,2,O],[23,10,13,1,L]]);}
+      ,
+      v2:{ tw:44, th:22, ingame:24, verdict:"ok", fps:8,
+        frames:[function(){return A.rats(false);},function(){return A.rats(true);}],
+        draw:function(){var O="#171414",D="#4b3731",M="#765548",L="#a77b68",TAIL="#c49a89",TAILD="#9c7666",EYE="#e7cf58",SCUFF="#2c2722";
+          return [
+            [8,10,20,9,O],[10,7,15,4,O],[13,5,8,3,O],
+            [10,9,15,7,D],[13,6,8,3,M],[12,10,12,3,M],[13,8,7,2,L],
+            [2,12,8,7,O],[3,13,5,4,M],[4,12,3,3,L],[1,15,2,2,O],[5,14,1,1,EYE],
+            [4,9,4,4,O],[5,10,2,2,M],
+            [10,18,3,3,O],[15,19,3,3,O],[20,18,3,3,O],[24,17,3,3,O],
+            [26,13,3,3,TAIL],[28,10,3,3,TAIL],[30,7,2,3,TAIL],[30,4,3,3,TAIL],[29,2,3,2,TAILD],
+            [30,14,10,6,O],[31,15,8,4,D],[38,14,3,3,O],[39,13,2,2,M],[40,15,1,1,EYE],
+            [39,16,5,2,TAIL],[42,14,2,3,TAIL],[35,19,2,2,O],[31,19,2,2,O],
+            [6,20,4,1,SCUFF],[16,20,5,1,SCUFF],[26,20,3,1,SCUFF],
+            [1,21,40,1,"#1a1614"]];}
+      }
+    },
+
+    { g:"night", name:"Beat cop", key:"obstacle-cop0", tw:30, th:48, ingame:70, family:"cop", verdict:"ok", was:"Read as a pedestrian",
+      notes:[
+        "Shipped: the rest frame now brandishes the club up-and-forward instead of holding it flat at the side, so a standing cop reads as a cop.",
+        "Night-legible accents on all four phases: a silver hat band, a light-blue shoulder yoke over the navy, and a gold badge glint on the chest. No size change.",
+        "Only phase 0 shown here (the walk/club-swing phases carry the same accents)."
+      ],
+      draw:function(){var O="#151923",N="#263a5a",B="#355783",L="#6686aa",SK="#c98b75",S="#e6ad92",G="#d2b750",SHOE="#11141b",CLUB="#4d3528",CLUBL="#805c43";
+        var club=[[22,1,4,13,CLUB],[23,2,2,11,CLUBL]];
+        var raisedArm=[[20,21,5,7,O],[21,16,4,7,B],[21,13,4,4,S]];
+        var body=[
+          [10,11,10,3,O],[8,14,14,3,O],[10,13,10,2,N],
+          [11,16,8,7,O],[12,16,6,6,S],[13,17,2,1,SK],[17,18,1,1,O],
+          [9,22,12,15,O],[10,22,10,14,N],[11,23,4,3,B],[16,23,3,3,L],
+          [14,24,2,3,G],[10,28,10,2,O],
+          [5,24,5,5,O],[4,27,4,8,B],[4,33,4,3,S],
+          [8,35,6,10,O],[9,36,4,8,N],[5,44,10,4,SHOE],[17,36,5,10,O],[18,37,3,8,N],[17,45,8,3,SHOE]
+        ];
+        return club.concat(raisedArm,body);}
+      ,
+      v2:{ tw:30, th:48, ingame:70, verdict:"ok",
+        draw:function(){var O="#151923",N="#263a5a",B="#355783",L="#6686aa",YOKE="#4f7bb0",SK="#c98b75",S="#e6ad92",G="#d2b750",BAND="#c8cdd6",BADGE="#e8c86a",BADGEH="#fff2c0",SHOE="#11141b",CLUB="#4d3528",CLUBL="#805c43";
+          var club=[[24,1,4,5,CLUB],[22,5,4,5,CLUB],[20,9,4,5,CLUB],[24,1,2,4,CLUBL]];
+          var raisedArm=[[19,20,5,7,O],[20,15,4,7,B],[20,12,4,4,S]];
+          var body=[
+            [10,11,10,3,O],[8,14,14,3,O],[10,13,10,2,N],[10,13,10,1,BAND],
+            [11,16,8,7,O],[12,16,6,6,S],[13,17,2,1,SK],[17,18,1,1,O],
+            [9,22,12,15,O],[10,22,10,14,N],[9,22,12,2,YOKE],
+            [11,25,4,3,B],[16,25,3,3,L],[12,27,2,2,BADGE],[12,27,1,1,BADGEH],[10,28,10,2,O],
+            [5,24,5,5,O],[4,27,4,8,B],[4,33,4,3,S],
+            [8,35,6,10,O],[9,36,4,8,N],[5,44,10,4,SHOE],[17,36,5,10,O],[18,37,3,8,N],[17,45,8,3,SHOE]
+          ];
+          return club.concat(raisedArm,body);}
+      }
+    },
+
+    { g:"night", name:"Streetwalker", key:"obstacle-streetwalker0", tw:24, th:38, ingame:57, family:"streetwalker", verdict:"warn", was:"redraw reverted",
+      notes:[
+        "Kept as-is by decision — the original art ships unchanged.",
+        "A contrapposto redraw (hand on hip, weight shift) was tried and rolled back."
+      ],
+      draw:function(){var O="#231824",H="#5a2e31",SK="#b97868",S="#dc9b85",P="#b33f72",PL="#e06b9b",D="#442744",BOOT="#17141b";
+        return [[7,1,10,3,O],[5,3,14,10,O],[6,2,12,5,H],[7,5,10,7,S],[8,5,3,2,SK],[14,7,1,1,O],[6,10,3,4,H],
+          [7,12,10,14,O],[8,12,8,13,P],[9,13,3,5,PL],[7,22,10,4,D],
+          [4,14,4,12,O],[5,15,3,3,P],[3,15,4,3,S],[17,14,4,11,O],[17,15,3,9,P],[19,22,3,3,S],
+          [8,25,4,11,O],[9,25,3,10,SK],[14,25,4,11,O],[14,25,3,10,SK],
+          [7,34,6,4,BOOT],[13,34,7,4,BOOT],[8,34,4,1,PL],[15,34,3,1,PL]];}
+      ,
+      v2:{ tw:26, th:38, ingame:57, verdict:"warn",
+        draw:function(){var O="#231824",H="#5a2e31",HL="#7a4147",SK="#b97868",S="#dc9b85",SKH="#e9b39c",P="#b33f72",PL="#e06b9b",D="#442744",BOOT="#17141b";
+          return [
+            [8,1,9,3,O],[7,3,11,7,O],[8,2,9,4,H],[9,3,6,1,HL],[9,5,8,6,S],[10,5,3,2,SKH],[15,7,1,1,O],
+            [7,8,2,4,H],[17,4,3,6,H],
+            [9,11,9,10,O],[10,11,7,9,P],[11,12,3,4,PL],[10,18,7,2,D],
+            [5,12,4,3,O],[4,13,3,3,O],[5,14,3,3,O],[6,16,3,3,O],
+            [6,15,2,2,S],[7,17,2,2,S],[8,18,2,2,SK],
+            [17,12,3,4,O],[18,13,2,4,P],[18,17,3,4,O],[19,18,2,3,P],[19,21,2,2,S],
+            [9,20,10,4,O],[10,21,8,3,P],[10,21,8,1,PL],
+            [9,24,4,10,O],[10,24,3,9,SK],[10,32,3,2,SK],
+            [15,24,4,7,O],[16,24,3,6,SK],[17,30,4,4,O],[18,30,3,3,SK],
+            [8,33,6,5,O],[9,33,4,3,BOOT],[9,36,4,1,PL],
+            [16,32,7,5,O],[17,32,4,3,BOOT],[17,35,4,1,PL]
+          ];}
+      }
+    },
+
+    // ======================= AIR =======================
+    { g:"air", name:"Sneaker boost pickup", key:"pickup-pink-sneakers", tw:36, th:26, ingame:42, family:"pickup", verdict:"ok", was:"Blocky pink blobs",
+      notes:[
+        "Redrawn from two flat pink rectangles into a proper side-view running shoe: rocker sole with tread, cyan midsole stripe, laced eyestay + tongue, padded heel collar with a pull tab, a swept side stripe, and a second shoe tucked behind.",
+        "It's a collectible, not a hazard — in-game it floats mid-air and bobs, tilts and pulses. Sparkle pixels and the all-pink/cyan palette keep it clearly a pickup. setDisplaySize bumped 54×38 → 58×42."
+      ],
+      draw:function(){var O="#4a123a",P="#ff3f9b",PD="#cf2c7c",PL="#ff8bc5",HI="#ffe0f0",SOLE="#f7f2f6",SOLD="#c9bcc6",TREAD="#b2a5b0",CY="#5fe8ff",CYD="#2ab4d6",LACE="#ffffff";
+        return [[2,1,1,1,HI],[4,0,1,1,CY],[0,3,1,1,CY],[1,2,1,1,PL],
+          [33,3,1,1,HI],[35,1,1,1,CY],[34,5,1,1,PL],[31,1,1,1,CY],
+          [1,21,1,1,CY],[34,20,1,1,HI],[3,24,1,1,PL],
+          [0,16,10,6,O],[1,17,7,4,PD],[6,16,3,2,PD],[0,20,11,2,SOLD],[1,21,8,1,TREAD],[1,15,3,2,CYD],
+          [6,19,27,5,O],[7,19,25,3,SOLE],[7,21,25,1,SOLD],[8,22,23,1,TREAD],
+          [6,18,3,2,O],[7,17,2,2,O],[31,17,3,3,O],[32,16,2,2,O],
+          [9,23,2,1,O],[14,23,2,1,O],[19,23,2,1,O],[24,23,2,1,O],[28,23,2,1,O],
+          [7,18,25,1,CY],[31,17,2,1,CY],[7,18,3,1,HI],
+          [8,8,23,11,O],[9,9,21,9,P],[10,16,19,2,PD],[27,10,4,6,PL],[29,12,2,3,O],[10,10,7,2,HI],
+          [7,4,10,7,O],[8,5,8,5,P],[8,5,8,1,PL],[5,4,3,3,O],[5,5,2,2,PD],[9,8,6,2,PD],
+          [15,3,7,5,O],[16,4,5,3,P],[16,4,5,1,HI],
+          [14,7,1,10,O],[26,7,1,10,O],
+          [15,8,10,1,CY],[16,10,9,1,LACE],[15,12,10,1,CY],[16,14,9,1,LACE],
+          [18,9,1,1,CYD],[22,9,1,1,CYD],[18,13,1,1,CYD],[22,13,1,1,CYD],
+          [22,13,3,2,CY],[19,14,3,2,CY],[16,15,3,2,CY],[13,16,3,2,CY],
+          [13,17,2,1,CYD],[16,16,2,1,CYD],[19,15,2,1,CYD]];}
+    },
+
+    { g:"air", name:"Pigeon", key:"pigeon-fly0", tw:24, th:14, ingame:24, family:"pigeon", verdict:"ok", fps:9,
+      notes:[
+        "Clean small-bird read — grey body, amber eye, tiny feet.",
+        "Distinct enough from the seagull by size and value."
+      ],
+      frames:[function(){return A.pigeon(0);},function(){return A.pigeon(1);},function(){return A.pigeon(2);}],
+      draw:function(){return A.pigeon(0);}
+    },
+
+    { g:"air", name:"Seagull", key:"seagull-fly0", tw:30, th:15, ingame:54, family:"seagull", verdict:"ok", fps:8,
+      notes:[
+        "White body + orange beak = obvious, and clearly not the pigeon.",
+        "Biggest of the three; the wing-up frame is a strong pose."
+      ],
+      frames:[function(){return A.seagull(0);},function(){return A.seagull(1);},function(){return A.seagull(2);}],
+      draw:function(){return A.seagull(0);}
+    },
+
+    { g:"air", name:"Crow (hostile)", key:"crow-fly0", tw:26, th:15, ingame:46, family:"crow", verdict:"ok", was:"Read like the pigeon", fps:10,
+      notes:[
+        "Shipped: a mean, angular silhouette so it can't be mistaken for the bonus pigeon at speed — a lean body, a hunched head with a heavy brow, a bigger red eye, an open pointed beak and a notched wedge tail. Only the long swept wing changes across the three flap frames (animating here).",
+        "Texture 25×14 → 26×15. The earlier speed fix already stopped it hanging beside obstacles at the top scroll rate."
+      ],
+      frames:[function(){return A.crowMean(0);},function(){return A.crowMean(1);},function(){return A.crowMean(2);}],
+      draw:function(){return A.crowMean(0);}
+    },
+
+    // ======================= CAST =======================
+    { g:"cast", plain:true, name:"Nicole — idle", key:"player-idle", tw:21, th:30, family:"player", fps:2,
+      notes:["Rest pose while the world is stopped — a slow two-frame sway of the arm and skirt."],
+      frames:[function(){return CHAR.nicole("idle0");},function(){return CHAR.nicole("idle1");}],
+      draw:function(){return CHAR.nicole("idle0");} },
+
+    { g:"cast", plain:true, name:"Nicole — run", key:"player-walk", tw:21, th:30, family:"player", fps:12,
+      notes:["Six-frame run cycle. She holds a fixed screen x; the world scrolls under her, so this loops in place."],
+      frames:[0,1,2,3,4,5].map(function(i){return function(){return CHAR.nicole("walk"+i);};}),
+      draw:function(){return CHAR.nicole("walk0");} },
+
+    { g:"cast", plain:true, name:"Nicole — jump", key:"player-jump", tw:21, th:30, family:"player", fps:3,
+      notes:["Two poses — rise, then fall. The texture swaps on the sign of vertical velocity, so the switch tracks the arc's apex."],
+      frames:[function(){return CHAR.nicole("jumpRise");},function(){return CHAR.nicole("jumpFall");}],
+      draw:function(){return CHAR.nicole("jumpRise");} },
+
+    { g:"cast", plain:true, name:"Nicole — hit & recover", key:"player-stumble", tw:21, th:30, family:"player", fps:3,
+      notes:["Non-fatal hit: recoil → pitch forward → face-down → up to her knees → stand. Each beat is its own authored silhouette, not a standing sprite rotated around its ankle. ~0.9s total in play."],
+      frames:[function(){return CHAR.nicole("stumble");},function(){return CHAR.nicole("fallForward");},function(){return CHAR.nicole("prone");},function(){return CHAR.nicole("kneel");},function(){return CHAR.nicole("idle0");}],
+      draw:function(){return CHAR.nicole("fallForward");} },
+
+    { g:"cast", plain:true, name:"Stella — gallop", key:"dog-run", tw:30, th:15, family:"dog", fps:12,
+      notes:["The real double-suspension gallop a greyhound runs — a gathered pose and a fully-extended pose alternating, with two airborne moments per stride."],
+      frames:[function(){return CHAR.DOG.gathered0;},function(){return CHAR.DOG.extended0;},function(){return CHAR.DOG.gathered1;},function(){return CHAR.DOG.extended1;}],
+      draw:function(){return CHAR.DOG.extended0;} },
+
+    { g:"cast", plain:true, name:"Stella — idle / lick", key:"dog-idle", tw:30, th:15, family:"dog", fps:2,
+      notes:["Alert seated pose whenever the world is stopped — upright chest, planted forelegs, folded haunch. In the finale she adds a pink lick."],
+      frames:[function(){return CHAR.DOG.idle;},function(){return CHAR.DOG.lick;}],
+      draw:function(){return CHAR.DOG.idle;} },
+
+    { g:"cast", plain:true, name:"Stella — leap", key:"dog-jump", tw:30, th:15, family:"dog",
+      notes:["One stretched frame driven along a hand-authored arc — she echoes Nicole's jump a beat later, timed off the current scroll speed."],
+      draw:function(){return CHAR.DOG.leap;} },
+
+    { g:"cast", plain:true, name:"Stella — marking", key:"dog-marking", tw:30, th:15, family:"dog",
+      notes:["Rear leg raised. She stops at a fire hydrant, the scrolling street carries her briefly out of frame, then she sprints back to Nicole."],
+      draw:function(){return CHAR.DOG.marking;} },
+
+    { g:"cast", plain:true, name:"Stella — attack", key:"dog-attack", tw:30, th:15, family:"dog", fps:8,
+      notes:["A snapping lunge at a cop Nicole has cleared — alternating high/low head with bared teeth, not the ordinary run cycle. The cop then flees."],
+      frames:[function(){return CHAR.DOG.attack0;},function(){return CHAR.DOG.attack1;}],
+      draw:function(){return CHAR.DOG.attack0;} },
+
+    { g:"cast", plain:true, name:"Matt", key:"matt-standing", tw:24, th:40, family:"matt", fps:1,
+      notes:["He waits at the end of the day→night run — a head taller than Nicole, dark-hair silhouette against the dawn sky. Standing → pats Stella → hugs Nicole."],
+      frames:[function(){return CHAR.matt("standing");},function(){return CHAR.matt("pat");},function(){return CHAR.matt("hug");}],
+      draw:function(){return CHAR.matt("standing");} }
+  ];
+
+  var VERDICT_LABEL = { ok:"Reads clear", warn:"Reads murky", flag:"Needs rework" };
+
+  function makeStage(item, dims, label, proposed){
+    var stage = document.createElement("div");
+    stage.className = "stage" + (proposed ? " proposed" : "");
+    var floor = document.createElement("div");
+    floor.className = "floor";
+    stage.appendChild(floor);
+    if (label){
+      var lb = document.createElement("div");
+      lb.className = "lbl";
+      lb.textContent = label;
+      stage.appendChild(lb);
+    }
+    var d = document.createElement("div");
+    d.className = "dims";
+    d.textContent = (dims.tw*2) + "×" + (dims.th*2);
+    stage.appendChild(d);
+
+    var texW = dims.tw*2, texH = dims.th*2;
+    var boxW = dims.two ? 138 : 268, boxH = 150;
+    var s = Math.min(boxW/texW, boxH/texH, 7);
+    s = Math.round(s*2)/2;
+    if (s < 1.5) s = 1.5;
+
+    var cssW = Math.ceil(texW*s), cssH = Math.ceil(texH*s);
+    var dpr = window.devicePixelRatio || 1;
+    var canvas = document.createElement("canvas");
+    canvas.width = cssW*dpr; canvas.height = cssH*dpr;
+    canvas.style.width = cssW+"px";
+    canvas.style.height = cssH+"px";
+    canvas.style.marginBottom = "30px";
+    var ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+    ctx.imageSmoothingEnabled = false;
+
+    function paint(parts){
+      ctx.clearRect(0, 0, cssW, cssH);
+      for (var i=0;i<parts.length;i++){
+        var p = parts[i];
+        ctx.fillStyle = p[4];
+        ctx.fillRect(Math.round(p[0]*2*s), Math.round(p[1]*2*s), Math.round(p[2]*2*s), Math.round(p[3]*2*s));
+      }
+    }
+
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (dims.frames && dims.frames.length > 1 && !reduce){
+      var fi = 0, fps = dims.fps || 8, last = 0;
+      (function loop(t){
+        if (t - last >= 1000/fps){ last = t; paint(dims.frames[fi]()); fi = (fi+1) % dims.frames.length; }
+        requestAnimationFrame(loop);
+      })(0);
+    } else {
+      paint((dims.frames ? dims.frames[0] : dims.draw)());
+    }
+    stage.appendChild(canvas);
+    return stage;
+  }
+
+  // Where each obstacle landed. Anything not listed here is "shipped".
+  var DECISIONS = {
+    "obstacle-cone":"open",
+    "obstacle-hotdogcart":"kept", "obstacle-streetwalker0":"kept",
+    "obstacle-trashfire0":"unchanged", "obstacle-boombox0":"unchanged",
+    "pigeon-fly0":"unchanged", "seagull-fly0":"unchanged"
+  };
+  var STATUS_LABEL = { shipped:"Shipped", kept:"Kept as-is", unchanged:"No change", open:"In review" };
+  var STATUS_CLASS = { shipped:"shipped", kept:"kept", unchanged:"kept", open:"review" };
+
+  function render(item){
+    var card = document.createElement("div");
+    card.className = "card";
+    var decision = DECISIONS[item.key] || "shipped";
+    // Two-panel compare only while a call is still open; once decided we show
+    // just the art that won.
+    var showCompare = !!item.v2 && decision === "open";
+    var useV2 = !!item.v2 && decision !== "open" && decision !== "kept";
+
+    var stages = document.createElement("div");
+    stages.className = "stages";
+    if (showCompare){
+      stages.appendChild(makeStage(item, {tw:item.tw, th:item.th, draw:item.draw, frames:item.frames, fps:item.fps, two:true}, "Now", false));
+      stages.appendChild(makeStage(item, {tw:item.v2.tw, th:item.v2.th, draw:item.v2.draw, frames:item.v2.frames, fps:item.v2.fps, two:true}, "Proposed", true));
+    } else if (useV2){
+      stages.appendChild(makeStage(item, {tw:item.v2.tw, th:item.v2.th, draw:item.v2.draw, frames:item.v2.frames, fps:item.v2.fps}, null, false));
+    } else {
+      stages.appendChild(makeStage(item, {tw:item.tw, th:item.th, draw:item.draw, frames:item.frames, fps:item.fps}, null, false));
+    }
+    card.appendChild(stages);
+
+    var body = document.createElement("div");
+    body.className = "body";
+
+    var nameRow = document.createElement("div");
+    nameRow.className = "name-row";
+    var name = document.createElement("span");
+    name.className = "name";
+    name.textContent = item.name;
+    nameRow.appendChild(name);
+    var st = document.createElement("span");
+    st.className = "status " + STATUS_CLASS[decision];
+    st.textContent = STATUS_LABEL[decision];
+    nameRow.appendChild(st);
+    if (item.tall){
+      var t = document.createElement("span");
+      t.className = "tag-tall";
+      t.textContent = "Super-jump";
+      nameRow.appendChild(t);
+    }
+    body.appendChild(nameRow);
+
+    var eff = useV2 ? item.v2 : item;
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    var sizeTxt = (useV2 || showCompare) && (item.v2.tw !== item.tw || item.v2.th !== item.th)
+      ? (item.tw*2)+"×"+(item.th*2)+" → "+(item.v2.tw*2)+"×"+(item.v2.th*2)+" px"
+      : (eff.tw*2)+"×"+(eff.th*2)+" px";
+    meta.textContent = item.key + "  ·  " + sizeTxt + "  ·  " + item.family;
+    body.appendChild(meta);
+
+    // Obstacle cards carry a height gauge and a legibility verdict; cast cards
+    // (plain) skip both - they're not hazards being judged.
+    if (!item.plain){
+      var prop = document.createElement("div");
+      prop.className = "prop";
+      var track = document.createElement("div");
+      track.className = "track";
+      track.title = "height in-game vs the tallest obstacle (steam stack, " + MAXH + "px)";
+      var fill = document.createElement("div");
+      fill.className = "fill";
+      fill.style.height = Math.round((eff.ingame/MAXH)*100) + "%";
+      track.appendChild(fill);
+      var lbl = document.createElement("span");
+      lbl.className = "lbl";
+      lbl.textContent = "in-game height ~" + eff.ingame + "px";
+      prop.appendChild(track); prop.appendChild(lbl);
+      body.appendChild(prop);
+
+      var verdict = document.createElement("div");
+      verdict.className = "verdict";
+      var pill = document.createElement("span");
+      pill.className = "pill " + eff.verdict;
+      pill.textContent = VERDICT_LABEL[eff.verdict];
+      verdict.appendChild(pill);
+      if (item.was){
+        var was = document.createElement("span");
+        was.className = "was";
+        was.textContent = "was: " + item.was;
+        verdict.appendChild(was);
+      }
+      body.appendChild(verdict);
+    }
+
+    var ul = document.createElement("ul");
+    ul.className = "notes";
+    (eff.notes || item.notes).forEach(function(n){
+      var li = document.createElement("li");
+      li.textContent = n;
+      ul.appendChild(li);
+    });
+    body.appendChild(ul);
+
+    card.appendChild(body);
+    return card;
+  }
+
+  var buckets = { day:document.getElementById("grid-day"),
+                  night:document.getElementById("grid-night"),
+                  air:document.getElementById("grid-air"),
+                  cast:document.getElementById("grid-cast") };
+  var tally = { shipped:0, kept:0, unchanged:0, open:0 }, cast = 0;
+  DATA.forEach(function(item){
+    buckets[item.g].appendChild(render(item));
+    if (item.plain) cast++;
+    else tally[DECISIONS[item.key] || "shipped"]++;
+  });
+
+  document.getElementById("tally").textContent =
+    (DATA.length - cast) + " obstacles  ·  " +
+    tally.shipped + " shipped  ·  " + tally.kept + " kept as-is  ·  " +
+    tally.unchanged + " needed no change  ·  " + tally.open + " still in review  ·  " +
+    cast + " cast animations  ·  the game is the source of truth";
+})();
+</script>
+</body>
+</html>
