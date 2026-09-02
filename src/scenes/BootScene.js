@@ -87,6 +87,7 @@ export class BootScene extends Phaser.Scene {
     this.drawMattTexture('matt-hug', 'hug');
     this.drawPinkSneakerPickup();
     this.drawZoomiesTreat();
+    this.drawPinkStarPickup();
     this.drawPigeonFrame('pigeon-fly0', 0);
     this.drawPigeonFrame('pigeon-fly1', 1);
     this.drawPigeonFrame('pigeon-fly2', 2);
@@ -716,6 +717,20 @@ export class BootScene extends Phaser.Scene {
       [9,9,12,1,HI],[9,13,12,1,D],
       // Baked dimples make it unmistakably edible rather than a bone icon.
       [11,10,2,2,D],[16,11,2,2,D],[20,9,1,1,O]
+    ]);
+  }
+
+  drawPinkStarPickup() {
+    const O=0x67143d,D=0xc51f69,P=0xff3f96,L=0xff83bd,HI=0xffe1f0,CY=0x63efff,GOLD=0xffe66b;
+    this.drawObstacleTexture('pickup-pink-star',24,24,[
+      // Thick outlined five-point star with a bright faceted center.
+      [10,1,4,5,O],[8,5,8,3,O],[2,7,20,5,O],[5,11,14,4,O],
+      [6,14,5,4,O],[4,17,6,5,O],[13,14,5,4,O],[15,17,6,5,O],
+      [11,3,2,5,P],[9,7,6,6,P],[4,9,16,2,P],[7,11,10,4,D],
+      [7,14,4,5,P],[14,14,4,5,P],[10,7,3,5,L],[11,7,2,3,HI],
+      // Alternating cyan/gold glints distinguish it from the shoe pickup.
+      [2,2,1,4,CY],[0,4,5,1,CY],[21,3,1,4,GOLD],[19,5,5,1,GOLD],
+      [1,19,1,3,GOLD],[0,20,3,1,GOLD],[22,19,1,3,CY],[21,20,3,1,CY]
     ]);
   }
 

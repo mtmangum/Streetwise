@@ -184,3 +184,11 @@ export const ZOOMIES = {
   respawnMinMs: 52000,
   respawnMaxMs: 70000
 };
+
+export const PINK_STAR = {
+  durationMs: 7000,
+  firstSpawnMinMs: 44000,
+  firstSpawnMaxMs: 62000,
+  respawnMinMs: 58000,
+  respawnMaxMs: 78000
+};
