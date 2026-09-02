@@ -21,12 +21,12 @@ Open the local URL Vite prints (usually `http://localhost:5173`).
 ## Art reference
 
 All sprites are drawn procedurally at runtime (no image assets). The
-[**Art Read-Check**](docs/art-read-check.html) is a self-contained page that
-renders every obstacle, pickup and character from its exact pixel data,
-blown up and animated, with a legibility note and status on each.
+**Art Read-Check** is a self-contained page that renders every obstacle,
+pickup and character from its exact pixel data, blown up and animated, with
+a legibility note and status on each. It ships with the site build.
 
-- **Rendered on GitHub:** <https://htmlpreview.github.io/?https://github.com/mtmangum/Streetwise/blob/main/docs/art-read-check.html>
-- **Locally:** open `docs/art-read-check.html` in a browser (no build step)
+- **Live:** <https://mtmangum.github.io/Streetwise/art-read-check.html>
+- **Locally:** open `public/art-read-check.html` in a browser (no build step)
 
 ## Controls
 
