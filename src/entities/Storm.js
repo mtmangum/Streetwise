@@ -8,6 +8,8 @@ export class Storm {
   constructor(scene) {
     this.scene = scene;
     this.active = false;
+    this.clearing = false;
+    this.hasStarted = false;
     this.nextLightningAt = Infinity;
     this.drops = Array.from({ length: STORM.rainDropCount }, (_, index) => {
       const drop = scene.add
@@ -32,14 +34,33 @@ export class Storm {
   }
 
   start(time) {
-    if (this.active) return;
+    if (this.hasStarted) return;
+    this.hasStarted = true;
     this.active = true;
     this.drops.forEach((drop) => drop.setVisible(true));
     this.nextLightningAt = time + Phaser.Math.Between(2600, 5200);
   }
 
-  update(time, delta) {
+  stop() {
     if (!this.active) return;
+    this.active = false;
+    this.clearing = true;
+    this.nextLightningAt = Infinity;
+    this.flash.setAlpha(0);
+    this.scene.tweens.add({
+      targets: this.drops,
+      alpha: 0,
+      duration: 2400,
+      ease: 'Quad.easeIn',
+      onComplete: () => {
+        this.clearing = false;
+        this.drops.forEach((drop) => drop.setVisible(false));
+      }
+    });
+  }
+
+  update(time, delta) {
+    if (!this.active && !this.clearing) return;
     const seconds = delta / 1000;
     for (const drop of this.drops) {
       drop.y += drop.getData('fallSpeed') * seconds;
@@ -49,7 +70,7 @@ export class Storm {
         drop.y = Phaser.Math.Between(-100, -10);
       }
     }
-    if (time >= this.nextLightningAt) this.strike(time);
+    if (this.active && time >= this.nextLightningAt) this.strike(time);
   }
 
   strike(time) {

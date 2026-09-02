@@ -69,8 +69,8 @@ export class BootScene extends Phaser.Scene {
     this.drawBoomboxObstacle('obstacle-boombox1', true);
     this.drawSteamStackObstacle('obstacle-steamstack0', false);
     this.drawSteamStackObstacle('obstacle-steamstack1', true);
-    this.drawGarbageBagsObstacle('obstacle-garbagebags0', false);
-    this.drawGarbageBagsObstacle('obstacle-garbagebags1', true);
+    this.drawScurryingRatsObstacle('obstacle-rats0', false);
+    this.drawScurryingRatsObstacle('obstacle-rats1', true);
     this.drawCopObstacle('obstacle-cop0', 0);
     this.drawCopObstacle('obstacle-cop1', 1);
     this.drawCopObstacle('obstacle-cop2', 2);
@@ -129,10 +129,19 @@ export class BootScene extends Phaser.Scene {
   // an orange body, white reflective band, and a dark base.
   drawConeObstacle(key) {
     const O=0x392626,D=0xb94d24,M=COLORS.coneOrange,L=0xf19a4b,W=0xf1e8d7;
-    this.drawObstacleTexture(key,18,30,[
-      [8,2,3,2,O],[7,4,5,5,O],[6,9,7,6,O],[5,15,9,7,O],[4,22,11,4,O],
-      [8,4,2,5,L],[8,5,3,4,M],[7,9,5,6,M],[6,15,7,7,M],[5,22,9,3,D],
-      [7,12,5,3,W],[7,15,6,1,0xd1c6b6],[2,25,15,4,O],[3,25,13,2,COLORS.coneBase],[1,28,17,2,O],[4,27,11,1,0x62616a]
+    const cone = (offset) => [
+      [offset+8,4,3,2,O],[offset+7,6,5,5,O],[offset+6,11,7,6,O],[offset+5,17,9,7,O],[offset+4,24,11,4,O],
+      [offset+8,6,2,5,L],[offset+8,7,3,4,M],[offset+7,11,5,6,M],[offset+6,17,7,7,M],[offset+5,24,9,3,D],
+      [offset+7,14,5,3,W],[offset+7,17,6,1,0xd1c6b6],[offset+2,27,15,3,O],[offset+3,27,13,2,COLORS.coneBase],[offset+1,30,17,2,O]
+    ];
+    this.drawObstacleTexture(key,58,32,[
+      // Broad striped road plank sits behind and hooks onto both cones.
+      [7,6,44,11,O],[5,8,48,7,O],[8,8,42,7,W],
+      [8,8,7,7,M],[22,8,7,7,M],[36,8,7,7,M],[50,9,2,5,M],
+      [14,8,4,7,L],[28,8,4,7,L],[42,8,4,7,L],
+      [9,6,5,2,0x69625b],[44,6,5,2,0x69625b],
+      ...cone(0),
+      ...cone(40)
     ]);
   }
 
@@ -424,35 +433,25 @@ export class BootScene extends Phaser.Scene {
     ]);
   }
 
-  drawGarbageBagsObstacle(key, flip) {
-    const O=0x0c0f12,D=0x1b2126,M=0x303940,L=0x59656a,RAT=0x755548,RATL=0xa47b68,TAIL=0xc09583,EYE=0xe5d55c;
-    const rat=flip
-      ? [
-          [31,17,11,6,RAT],[33,16,8,2,RATL],[40,14,7,7,RAT],[41,13,3,3,RATL],[45,13,2,3,RAT],
-          [44,16,1,1,EYE],[46,18,2,1,RATL],[31,20,3,3,RAT],
-          [31,20,3,2,TAIL],[27,21,5,2,TAIL],[24,19,4,2,TAIL],[22,17,3,2,TAIL]
-        ]
-      : [
-          [32,18,11,6,RAT],[34,17,8,2,RATL],[41,15,7,7,RAT],[42,14,3,3,RATL],[46,14,2,3,RAT],
-          [45,17,1,1,EYE],[46,19,2,1,RATL],[32,21,3,3,RAT],
-          [32,21,3,2,TAIL],[28,20,5,2,TAIL],[25,21,4,2,TAIL],[22,22,4,2,TAIL]
-        ];
-    this.drawObstacleTexture(key,48,44,[
-      // Three distinct stepped silhouettes read as bulging, tied bags.
-      [3,20,2,18,O],[5,16,3,25,O],[8,14,7,28,O],[15,17,3,24,O],[18,22,2,18,O],
-      [6,18,10,21,D],[8,16,6,3,D],[10,12,3,4,O],[8,11,7,2,O],[9,18,3,18,M],[12,20,2,15,L],
-      [14,13,2,27,O],[16,9,3,32,O],[19,7,10,35,O],[29,10,3,31,O],[32,16,2,24,O],
-      [17,11,14,28,D],[20,9,8,3,D],[22,4,4,4,O],[19,3,10,2,O],[20,12,4,24,M],[25,11,3,25,L],
-      [29,23,2,17,O],[31,19,3,22,O],[34,17,8,25,O],[42,20,3,21,O],[45,25,2,15,O],
-      [32,21,12,18,D],[35,19,7,3,D],[37,14,3,4,O],[34,13,9,2,O],[34,23,3,14,M],[39,21,3,16,L],
-      // Smaller front bag overlaps the seams and breaks up the big pile.
-      [10,29,2,12,O],[12,26,4,16,O],[16,24,9,18,O],[25,27,4,14,O],[29,31,2,10,O],
-      [13,28,15,12,M],[17,26,7,3,D],[19,22,3,4,O],[16,21,9,2,O],[16,30,3,8,L],
-      // Creases, tied plastic ears, and a solid pavement-contact shadow.
-      [6,23,4,2,L],[22,15,5,2,L],[35,27,5,2,L],[19,35,6,2,D],
-      [1,40,46,4,O],[5,40,37,1,M],
-      // The rat sits on top instead of disappearing behind the bags.
-      ...rat
+  drawScurryingRatsObstacle(key, stride) {
+    const O=0x171414,D=0x4b3731,M=0x765548,L=0xa77b68,TAIL=0xc49a89,EYE=0xe7cf58;
+    const legs = stride
+      ? [[9,14,5,2,O],[22,14,5,2,O],[26,8,4,2,O],[36,8,4,2,O]]
+      : [[6,14,5,2,O],[19,14,5,2,O],[23,8,4,2,O],[33,8,4,2,O]];
+    const tails = stride
+      ? [[27,12,7,2,TAIL],[33,10,6,2,TAIL],[38,7,5,2,TAIL],[42,5,2,3,TAIL]]
+      : [[27,12,7,2,TAIL],[33,13,6,2,TAIL],[38,11,5,2,TAIL],[42,9,2,3,TAIL]];
+    this.drawObstacleTexture(key,44,18,[
+      // Smaller rear rat creates a readable little curbside pack.
+      [23,5,3,5,O],[26,3,11,7,O],[36,5,5,5,O],[25,4,11,5,D],[28,3,7,4,M],
+      [21,6,6,4,O],[22,6,4,3,M],[21,5,2,2,L],[22,7,1,1,EYE],[20,8,3,1,L],
+      [37,6,5,2,TAIL],[41,4,3,2,TAIL],
+      // Larger lead rat: pointed nose, round ears, long body, feet and eye.
+      [7,9,4,6,O],[11,7,17,8,O],[26,10,5,5,O],[10,8,17,6,D],[13,7,12,5,M],[15,8,8,2,L],
+      [2,10,8,5,O],[3,9,5,2,M],[5,8,3,3,L],[4,11,1,1,EYE],[0,13,4,1,L],
+      ...tails,
+      ...legs,
+      [4,16,24,2,O],[23,10,13,1,L]
     ]);
   }
 
@@ -1117,9 +1116,13 @@ export class BootScene extends Phaser.Scene {
       repeat: -1
     });
     this.anims.create({
-      key: 'obstacle-rat-tail',
-      frames: [{ key: 'obstacle-garbagebags0' }, { key: 'obstacle-garbagebags1' }],
-      frameRate: 5,
+      key: 'obstacle-rats-scurry',
+      frames: [
+        { key: 'obstacle-rats0' },
+        { key: 'obstacle-rats1' },
+        { key: 'obstacle-rats0' }
+      ],
+      frameRate: 10,
       repeat: -1
     });
     this.anims.create({

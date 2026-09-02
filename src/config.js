@@ -1,7 +1,7 @@
 export const GAME_WIDTH = 800;
 export const GAME_HEIGHT = 360;
 export const RENDER_SCALE = 2;
-export const BUILD_NUMBER = '00.01';
+export const BUILD_NUMBER = '00.02';
 
 export const GROUND_HEIGHT = 60;
 export const GROUND_Y = GAME_HEIGHT - GROUND_HEIGHT;
@@ -45,6 +45,9 @@ export const DOG = {
 export const WORLD = {
   baseScrollSpeed: 185,
   maxScrollSpeed: 340,
+  jumpClearSlowdown: 0.07,
+  minimumMomentum: 0.8,
+  momentumRecoveryPerSecond: 0.045,
   // Reach maximum speed near the end of the day/night transition rather
   // than spiking at the one-minute mark.
   rampSeconds: 90
@@ -80,9 +83,15 @@ export const DAY_CYCLE = {
 
 export const STORM = {
   startSeconds: 105,
+  endSeconds: 135,
   rainDropCount: 44,
   lightningMinMs: 4200,
   lightningMaxMs: 8500
+};
+
+export const DAWN = {
+  startSeconds: 135,
+  durationSeconds: 45
 };
 
 export const COLORS = {

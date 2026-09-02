@@ -38,7 +38,7 @@ function allDayWeight() {
 const TYPES = [
   // Day: sunny neighborhood
   { key: 'obstacle-mailbox', aspect: 22 / 34, height: 56, safeFirst: true, weight: dayWeight },
-  { key: 'obstacle-cone', aspect: 18 / 30, height: 46, safeFirst: true, weight: dayWeight },
+  { key: 'obstacle-cone', aspect: 58 / 32, height: 48, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-child0', animation: 'obstacle-child-jumprope', aspect: 30 / 28, height: 42, groundOffset: 3, weight: daylightOnlyWeight },
   { key: 'obstacle-trashbin0', animation: 'obstacle-trashbin-flies', aspect: 30 / 36, height: 54, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-crate', aspect: 1, height: 50, safeFirst: true, weight: dayWeight },
@@ -53,7 +53,7 @@ const TYPES = [
   { key: 'obstacle-sleeping0', animation: 'obstacle-sleeping-flies', aspect: 48 / 20, height: 28, weight: nightWeight },
   { key: 'obstacle-boombox0', animation: 'obstacle-boombox-boom', aspect: 44 / 28, height: 40, safeFirst: true, weight: allDayWeight },
   { key: 'obstacle-steamstack0', animation: 'obstacle-steamstack-puff', aspect: 34 / 42, height: 104, weight: nightWeight },
-  { key: 'obstacle-garbagebags0', animation: 'obstacle-rat-tail', aspect: 48 / 44, height: 118, weight: nightWeight },
+  { key: 'obstacle-rats0', animation: 'obstacle-rats-scurry', aspect: 44 / 18, height: 30, speedFactor: 1.3, weight: nightWeight },
   { key: 'obstacle-cop0', animation: 'obstacle-cop-patrol', aspect: 30 / 48, height: 70, chasesAfterAvoid: true, weight: nightWeight },
   { key: 'obstacle-streetwalker0', animation: 'obstacle-streetwalker-idle', aspect: 24 / 38, height: 57, weight: nightWeight }
 ];
@@ -107,6 +107,7 @@ export class Obstacle extends Entity {
     this.chasing = false;
     this.retiring = false;
     this.rewarded = false;
+    this.wasJumped = false;
     this.sprite.setDisplaySize(width, height);
     this.sprite.setDepth(8);
     if (type.flipX) this.sprite.setFlipX(true);
@@ -123,6 +124,12 @@ export class Obstacle extends Entity {
   }
 
   onUpdate(time, delta) {
+    if (
+      !this.rewarded &&
+      this.scene.player.isAirborne &&
+      Math.abs(this.sprite.x - PLAYER.startX) < this.sprite.displayWidth / 2 + 34
+    ) this.wasJumped = true;
+
     if (
       this.behavior === 'cat' &&
       !this.enraged &&
@@ -150,12 +157,15 @@ export class Obstacle extends Entity {
       this.sprite.setFlipX(true).setDepth(8);
       this.scene.onObstacleAvoided(
         this.sprite.x,
-        this.sprite.y - this.sprite.displayHeight / 2
+        this.sprite.y - this.sprite.displayHeight / 2,
+        this.wasJumped
       );
     }
 
     if (this.chasing) {
-      const targetX = PLAYER.startX - 76 + Math.sin(time * 0.012) * 5;
+      // Lower player momentum lets the pursuing cop visibly close the gap.
+      const chaseGap = 12 + 48 * this.scene.momentumFactor;
+      const targetX = PLAYER.startX - chaseGap + Math.sin(time * 0.012) * 5;
       this.sprite.x = Phaser.Math.Linear(this.sprite.x, targetX, 0.065);
       if (time >= this.chaseEndsAt) {
         this.chasing = false;
@@ -180,7 +190,8 @@ export class Obstacle extends Entity {
       this.rewarded = true;
       this.scene.onObstacleAvoided(
         this.sprite.x,
-        this.sprite.y - this.sprite.displayHeight / 2
+        this.sprite.y - this.sprite.displayHeight / 2,
+        this.wasJumped
       );
     }
 

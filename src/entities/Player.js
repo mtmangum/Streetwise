@@ -52,6 +52,10 @@ export class Player extends Entity {
     return this.sprite.body.blocked.down || this.sprite.body.touching.down;
   }
 
+  get isAirborne() {
+    return !this._isOnGround;
+  }
+
   // Returns whether it actually jumped (ignored while airborne or
   // recovering) - PlayScene uses that to decide whether to echo the jump
   // to the dog a beat later, rather than echoing every keypress.

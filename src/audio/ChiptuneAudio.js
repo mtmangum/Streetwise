@@ -10,7 +10,8 @@ const ARRANGEMENTS = {
   afternoon: { transpose: 2, bass: [40,43,45,43,38,40,43,38], lead: 'square', pulse: 2 },
   dusk: { transpose: -2, bass: [38,38,41,41,34,34,36,36], lead: 'triangle', pulse: 4 },
   night: { transpose: -5, bass: [35,35,38,38,31,31,33,33], lead: 'square', pulse: 4 },
-  storm: { melody: STORM_MELODY, transpose: 0, bass: [28,28,31,29,25,25,30,24], lead: 'square', pulse: 2 }
+  storm: { melody: STORM_MELODY, transpose: 0, bass: [28,28,31,29,25,25,30,24], lead: 'square', pulse: 2 },
+  dawn: { transpose: -1, bass: [36,36,40,40,33,33,35,35], lead: 'triangle', pulse: 4 }
 };
 
 // Tiny Web Audio synth: no downloaded assets, just square/triangle waves

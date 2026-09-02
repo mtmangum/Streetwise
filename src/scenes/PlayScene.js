@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, BUILD_NUMBER, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG, PLAYER, STORM } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, BUILD_NUMBER, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -12,6 +12,7 @@ import { Storm } from '../entities/Storm.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 import { ChiptuneAudio } from '../audio/ChiptuneAudio.js';
+import { JumpController } from '../systems/JumpController.js';
 
 // `width` is the 0..max track; `overchargeWidth` is extra track for the
 // max..overchargeMax stretch, rendered as a distinct sparking color rather
@@ -29,6 +30,10 @@ export class PlayScene extends Phaser.Scene {
     // collision timing while doubling the backing resolution.
     this.cameras.main.setZoom(RENDER_SCALE);
     this.cameras.main.centerOn(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+    const loadingScreen = document.getElementById('loading-screen');
+    loadingScreen?.setAttribute('aria-busy', 'false');
+    loadingScreen?.classList.add('is-hidden');
+    this.time.delayedCall(260, () => loadingScreen?.remove());
 
     this.state = 'ready'; // ready | running | paused | gameover
     this.elapsed = 0;
@@ -40,15 +45,15 @@ export class PlayScene extends Phaser.Scene {
     this.firstObstacleSpawned = false;
     this.clusterSpawnsRemaining = 0;
     this.scrollSpeed = WORLD.baseScrollSpeed;
+    this.momentumFactor = 1;
     this.health = HEALTH.start;
     this.damageInvulnerableUntil = 0;
     this.avoidedCount = 0;
     this.overchargeActive = false;
     this.dayPhase = 0;
-    this.jumpInputHeld = false;
-    this.lastJumpTapAt = -Infinity;
-    this.powerReadyAt = 0;
-    this.powerWasReady = true;
+    this.healthTextureKey = '';
+    this.healthColorBucket = -1;
+    this.nextPaletteUpdateAt = 0;
     this.audio = new ChiptuneAudio(this);
 
     this.parallax = new Parallax(this);
@@ -63,6 +68,12 @@ export class PlayScene extends Phaser.Scene {
     this.player = new Player(this);
     this.physics.add.collider(this.player.sprite, this.ground.body);
     this.dog = new Dog(this);
+    this.jumpController = new JumpController(
+      this,
+      this.player,
+      this.audio,
+      () => this.scheduleDogJump()
+    );
     this.storm = new Storm(this);
 
     // Every non-player game object lives here. PlayScene doesn't care what
@@ -142,29 +153,6 @@ export class PlayScene extends Phaser.Scene {
         .setVisible(false)
     );
     this.updateHealthBar();
-
-    this.superMeterLabel = this.add
-      .text(HEALTH_BAR.x, 39, 'POWER', {
-        fontFamily: 'monospace',
-        fontSize: '10px',
-        fontStyle: 'bold',
-        resolution: RENDER_SCALE,
-        color: '#f2c14e',
-        stroke: '#090b10',
-        strokeThickness: 2
-      })
-      .setOrigin(0, 0.5)
-      .setDepth(23);
-    this.superMeterBg = this.add
-      .rectangle(HEALTH_BAR.x + 48, 34, 150, 10, 0x14161c)
-      .setOrigin(0, 0)
-      .setStrokeStyle(1, 0x000000, 0.8)
-      .setDepth(22);
-    this.superMeterFill = this.add
-      .rectangle(HEALTH_BAR.x + 50, 36, 146, 6, 0x58c8f2)
-      .setOrigin(0, 0)
-      .setScale(1, 1)
-      .setDepth(23);
 
     const panelX = GAME_WIDTH / 2 - 190;
     const panelY = GAME_HEIGHT / 2 - 74;
@@ -316,41 +304,11 @@ export class PlayScene extends Phaser.Scene {
     if (this.state === 'ready') return this.startRun();
     if (this.state === 'gameover') return this.restart();
     if (this.state === 'paused') return;
-    if (this.jumpInputHeld) return;
-    this.jumpInputHeld = true;
-    const now = this.time.now;
-    const doubleTap = now - this.lastJumpTapAt <= PLAYER.doubleTapWindowMs;
-    this.lastJumpTapAt = now;
-    if (doubleTap && now >= this.powerReadyAt && this.player.powerJump()) {
-      this.powerReadyAt = now + PLAYER.powerJumpRecoveryMs;
-      this.powerWasReady = false;
-      this.lastJumpTapAt = -Infinity;
-      this.audio.superJump();
-      return;
-    }
-    if (this.player.jump()) {
-      this.audio.jump();
-      this.scheduleDogJump();
-    }
+    this.jumpController.press();
   }
 
   handleInputUp() {
-    this.jumpInputHeld = false;
-  }
-
-  updatePowerMeter() {
-    const recovery = Phaser.Math.Clamp(
-      1 - (this.powerReadyAt - this.time.now) / PLAYER.powerJumpRecoveryMs,
-      0,
-      1
-    );
-    this.superMeterFill.setScale(recovery, 1);
-    const ready = recovery >= 1;
-    this.superMeterFill.setFillStyle(ready ? 0xf2c14e : 0x58c8f2);
-    this.superMeterLabel.setText(ready ? 'POWER' : 'RECOVER');
-    this.superMeterLabel.setColor(ready ? '#b8ffbf' : '#f2c14e');
-    if (ready && !this.powerWasReady) this.audio.powerReady();
-    this.powerWasReady = ready;
+    this.jumpController.release();
   }
 
   scheduleDogJump() {
@@ -362,7 +320,6 @@ export class PlayScene extends Phaser.Scene {
     if (this.state === 'running') {
       this.audio.jump();
       this.scheduleDogJump();
-      if (this.jumpInputHeld) this.beginSuperCharge();
     }
   }
 
@@ -446,9 +403,19 @@ export class PlayScene extends Phaser.Scene {
     const overchargeWidth = overchargeFraction * (HEALTH_BAR.overchargeWidth - HEALTH_BAR.padding);
 
     this.healthBarFill.setScale(normalFraction, 1);
-    this.healthBarFill.fillColor = healthBarColor(normalFraction);
+    const colorBucket = Math.round(normalFraction * 100);
+    if (colorBucket !== this.healthColorBucket) {
+      this.healthColorBucket = colorBucket;
+      this.healthBarFill.fillColor = healthBarColor(colorBucket / 100);
+    }
     this.overchargeBarFill.setScale(overchargeFraction, 1);
-    this.updateHealthBarTexture(normalWidth, overchargeWidth);
+    const textureNormalWidth = Math.round(normalWidth);
+    const textureOverchargeWidth = Math.round(overchargeWidth);
+    const textureKey = `${textureNormalWidth}:${textureOverchargeWidth}`;
+    if (textureKey !== this.healthTextureKey) {
+      this.healthTextureKey = textureKey;
+      this.updateHealthBarTexture(textureNormalWidth, textureOverchargeWidth);
+    }
 
     this.setOverchargeFx(overchargeFraction > 0);
     this.sparkStars.forEach((star, index) => {
@@ -518,8 +485,14 @@ export class PlayScene extends Phaser.Scene {
   }
 
   // Called by Obstacle when it scrolls safely past the player.
-  onObstacleAvoided(x, y) {
+  onObstacleAvoided(x, y, jumped = false) {
     if (this.state !== 'running') return;
+    if (jumped) {
+      this.momentumFactor = Math.max(
+        WORLD.minimumMomentum,
+        this.momentumFactor - WORLD.jumpClearSlowdown
+      );
+    }
     this.avoidedCount += 1;
     this.health = Phaser.Math.Clamp(this.health + HEALTH.gainPerAvoid, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
@@ -591,8 +564,7 @@ export class PlayScene extends Phaser.Scene {
   gameOver() {
     if (this.state !== 'running') return;
     this.state = 'gameover';
-    this.jumpInputHeld = false;
-    this.lastJumpTapAt = -Infinity;
+    this.jumpController.resetInput();
     this.audio.stop();
     this.audio.gameOver();
     this.physics.pause();
@@ -616,9 +588,7 @@ export class PlayScene extends Phaser.Scene {
     );
     this.firstObstacleSpawned = true;
     this.lastObstacleFamily = obstacle.family;
-    obstacle.sprite.setData('entity', obstacle);
-    this.obstacleGroup.add(obstacle.sprite);
-    this.entities.push(obstacle);
+    this.registerEntity(obstacle, this.obstacleGroup);
   }
 
   scheduleNextObstacleSpawn(time, ramp) {
@@ -651,25 +621,14 @@ export class PlayScene extends Phaser.Scene {
     this.nextSpawnAt = time + gap - ramp * 100;
   }
 
-  spawnPigeon() {
-    const pigeon = new Pigeon(this, this.scrollSpeed);
-    pigeon.sprite.setData('entity', pigeon);
-    this.birdGroup.add(pigeon.sprite);
-    this.entities.push(pigeon);
+  registerEntity(entity, group) {
+    entity.sprite.setData('entity', entity);
+    group.add(entity.sprite);
+    this.entities.push(entity);
   }
 
-  spawnCrow() {
-    const crow = new Crow(this, this.scrollSpeed);
-    crow.sprite.setData('entity', crow);
-    this.birdGroup.add(crow.sprite);
-    this.entities.push(crow);
-  }
-
-  spawnSeagull() {
-    const seagull = new Seagull(this, this.scrollSpeed);
-    seagull.sprite.setData('entity', seagull);
-    this.birdGroup.add(seagull.sprite);
-    this.entities.push(seagull);
+  spawnBird(BirdType) {
+    this.registerEntity(new BirdType(this, this.scrollSpeed), this.birdGroup);
   }
 
   canSpawnBird() {
@@ -771,8 +730,9 @@ export class PlayScene extends Phaser.Scene {
     if (this.state !== 'running') return;
 
     this.elapsed += delta / 1000;
-    this.updatePowerMeter();
-    if (!this.storm.active && this.elapsed >= STORM.startSeconds) this.storm.start(time);
+    this.jumpController.update();
+    if (!this.storm.hasStarted && this.elapsed >= STORM.startSeconds) this.storm.start(time);
+    if (this.storm.active && this.elapsed >= STORM.endSeconds) this.storm.stop();
     this.storm.update(time, delta);
     this.health = Phaser.Math.Clamp(
       this.health - HEALTH.drainPerSecond * (delta / 1000),
@@ -786,18 +746,34 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
     const ramp = Phaser.Math.Clamp(this.elapsed / WORLD.rampSeconds, 0, 1);
-    this.scrollSpeed = Phaser.Math.Linear(
+    this.momentumFactor = Math.min(
+      1,
+      this.momentumFactor + WORLD.momentumRecoveryPerSecond * (delta / 1000)
+    );
+    const paceSpeed = Phaser.Math.Linear(
       WORLD.baseScrollSpeed,
       WORLD.maxScrollSpeed,
       ramp
     );
+    this.scrollSpeed = paceSpeed * this.momentumFactor;
 
-    this.dayPhase = Phaser.Math.Clamp(this.elapsed / DAY_CYCLE.durationSeconds, 0, 1);
-    const palette = dayNightPalette(this.dayPhase);
-    this.parallax.applyPalette(palette);
-    this.ground.setTint(palette.ground);
+    this.dayPhase = this.elapsed >= DAWN.startSeconds
+      ? 1 - Phaser.Math.Clamp(
+          (this.elapsed - DAWN.startSeconds) / DAWN.durationSeconds,
+          0,
+          1
+        )
+      : Phaser.Math.Clamp(this.elapsed / DAY_CYCLE.durationSeconds, 0, 1);
+    if (time >= this.nextPaletteUpdateAt) {
+      this.nextPaletteUpdateAt = time + 50;
+      const palette = dayNightPalette(this.dayPhase);
+      this.parallax.applyPalette(palette);
+      this.ground.setTint(palette.ground);
+    }
     const musicScene = this.storm.active
       ? 'storm'
+      : this.elapsed >= DAWN.startSeconds && this.dayPhase > 0
+        ? 'dawn'
       : this.dayPhase >= 1
         ? 'night'
         : this.dayPhase >= 2 / 3
@@ -813,11 +789,15 @@ export class PlayScene extends Phaser.Scene {
     this.dog.update(delta);
 
     // Same call, different behavior per entity type — no type-checking here.
+    let activeEntityCount = 0;
     for (const entity of this.entities) {
-      if (entity.alive) entity.setSpeed?.(this.scrollSpeed);
-      entity.update(time, delta);
+      if (entity.alive) {
+        entity.setSpeed?.(this.scrollSpeed);
+        entity.update(time, delta);
+      }
+      if (entity.alive) this.entities[activeEntityCount++] = entity;
     }
-    this.entities = this.entities.filter((e) => e.alive);
+    this.entities.length = activeEntityCount;
 
     if (time > this.nextSpawnAt && this.birdGroup.countActive(true) === 0) {
       this.spawnObstacle();
@@ -825,15 +805,15 @@ export class PlayScene extends Phaser.Scene {
     }
 
     if (time > this.nextPigeonAt && this.canSpawnBird()) {
-      this.spawnPigeon();
+      this.spawnBird(Pigeon);
       this.nextPigeonAt = time + Phaser.Math.Between(11000, 19000);
     }
     if (time > this.nextCrowAt && this.canSpawnBird()) {
-      this.spawnCrow();
+      this.spawnBird(Crow);
       this.nextCrowAt = time + Phaser.Math.Between(12000, 20000);
     }
     if (time > this.nextSeagullAt && this.canSpawnBird()) {
-      this.spawnSeagull();
+      this.spawnBird(Seagull);
       this.nextSeagullAt = time + Phaser.Math.Between(60000, 100000);
     }
   }
