@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>Obstacle Read-Check</title>
+<title>Art Read-Check</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Hanken+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -91,9 +91,27 @@
   .status.kept{color:var(--muted)}
   .status.review{color:var(--cone)}
 
+  nav.toc{
+    position:sticky; top:0; z-index:20;
+    display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+    margin:22px -24px 0; padding:9px 24px;
+    background:var(--bg); border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+  }
+  nav.toc span{
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-size:10px;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-right:6px;
+  }
+  nav.toc a{
+    font-family:"JetBrains Mono",ui-monospace,monospace; font-size:11px;
+    letter-spacing:.08em; text-transform:uppercase; text-decoration:none;
+    color:var(--muted); padding:4px 10px; border-radius:4px;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible{ color:var(--ink); background:var(--card); outline:none }
+
   h2.section{
     font-family:"DotGothic16","Hanken Grotesk",sans-serif; font-weight:400;
     font-size:22px; margin:56px 0 4px; letter-spacing:.02em;
+    scroll-margin-top:52px;
     display:flex; align-items:baseline; gap:14px;
   }
   h2.section::after{content:""; flex:1; height:1px; background:var(--rule); transform:translateY(-6px)}
@@ -175,14 +193,14 @@
 <div class="wrap">
   <header class="masthead">
     <p class="eyebrow">Streetwise: Nicole &amp; Stella — art review</p>
-    <h1>Obstacle Read-Check</h1>
+    <h1>Art Read-Check</h1>
     <p class="standfirst">
-      Every hazard in the spawn roster, drawn from its <b>exact</b> pixel data and blown up on an
-      asphalt stage. Each card carries its status, and the art shown is what's live in the game —
-      except the one still-open call, which keeps a <b>Now / Proposed</b> comparison. Figures under
-      each canvas are the drawn texture size, then the in-game height it scales to. Obstacles
-      aren't tinted by the day/night cycle, so these colours are what you see in play. Many cards
-      <b>play the real animation</b>.
+      Every sprite in the game — the obstacle roster, the pickups, and the cast — drawn from its
+      <b>exact</b> procedural pixel data, blown up on an asphalt stage, and where it moves,
+      <b>playing the real animation</b>. Obstacle cards carry a legibility verdict and a decision
+      status; the one still-open call keeps a <b>Now / Proposed</b> comparison. Figures under each
+      canvas are the drawn texture size, then the in-game height. Obstacles aren't tinted by the
+      day/night cycle, so these colours are what you see in play.
     </p>
     <div class="legend">
       <span class="k"><span class="status shipped">Shipped</span> redrawn and in the game</span>
@@ -203,19 +221,27 @@
     </p>
   </header>
 
-  <h2 class="section">Daytime roster</h2>
+  <nav class="toc">
+    <span>Jump to</span>
+    <a href="#day">Daytime roster</a>
+    <a href="#night">Nighttime roster</a>
+    <a href="#air">Airborne</a>
+    <a href="#cast">Cast</a>
+  </nav>
+
+  <h2 class="section" id="day">Daytime roster</h2>
   <p class="section-note">Sunny-neighbourhood set — full weight until dusk (dayPhase 0.67).</p>
   <div class="grid" id="grid-day"></div>
 
-  <h2 class="section">Nighttime roster</h2>
+  <h2 class="section" id="night">Nighttime roster</h2>
   <p class="section-note">Derelict-city set — hands off from dusk, all-night by dayPhase 1.</p>
   <div class="grid" id="grid-night"></div>
 
-  <h2 class="section">Airborne</h2>
+  <h2 class="section" id="air">Airborne</h2>
   <p class="section-note">Not grounded. Pigeon &amp; seagull reward a power-jump strike, the crow is hostile, and the sneaker pickup grants a timed jump boost.</p>
   <div class="grid" id="grid-air"></div>
 
-  <h2 class="section">Cast</h2>
+  <h2 class="section" id="cast">Cast</h2>
   <p class="section-note">The characters — every animation state, from playerFrames.js / dogFrames.js / drawMattTexture, playing.</p>
   <div class="grid" id="grid-cast"></div>
 

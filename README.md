@@ -21,12 +21,12 @@ Open the local URL Vite prints (usually `http://localhost:5173`).
 ## Art reference
 
 All sprites are drawn procedurally at runtime (no image assets). The
-[**Obstacle Read-Check**](docs/obstacle-readcheck.html) is a self-contained
-page that renders every obstacle, pickup and character from its exact pixel
-data, blown up and animated, with a legibility note and status on each.
+[**Art Read-Check**](docs/art-read-check.html) is a self-contained page that
+renders every obstacle, pickup and character from its exact pixel data,
+blown up and animated, with a legibility note and status on each.
 
-- **Rendered on GitHub:** <https://htmlpreview.github.io/?https://github.com/mtmangum/scroller/blob/main/docs/obstacle-readcheck.html>
-- **Locally:** open `docs/obstacle-readcheck.html` in a browser (no build step)
+- **Rendered on GitHub:** <https://htmlpreview.github.io/?https://github.com/mtmangum/scroller/blob/main/docs/art-read-check.html>
+- **Locally:** open `docs/art-read-check.html` in a browser (no build step)
 
 ## Controls
 
