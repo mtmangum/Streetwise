@@ -1,4 +1,4 @@
-# Handoff: Scroller
+# Handoff: Streetwise
 
 Status as of this handoff: playable game with an animated player sprite, a
 full day-to-night run arc with matching scenery/obstacle themes, a health
@@ -37,14 +37,14 @@ down and the run ends.
   by night — reaching ~2/3 up the screen), drifting clouds — all driven by
   `src/gfx/dayNightPalette.js` (`src/entities/Parallax.js`); ground is a
   plain scrolling tile, tinted by time of day.
-- **Repo:** https://github.com/mtmangum/scroller — pushed, deploy workflow
-  has run successfully, live at https://mtmangum.github.io/scroller/
+- **Repo:** https://github.com/mtmangum/Streetwise — pushed, deploy workflow
+  has run successfully, live at https://mtmangum.github.io/Streetwise/
 
 ## Architecture
 
 ```
 index.html            Mounts the game, no game logic
-vite.config.js         base: '/scroller/' for GitHub Pages
+vite.config.js         base: '/Streetwise/' for GitHub Pages
 src/
   main.js               Phaser boot/config
   config.js              Tunable constants (sizes, gravity, scroll speed,
@@ -104,7 +104,7 @@ the same methods on every entity regardless of type).
 - `Ground` and `Parallax` deliberately do **not** extend `Entity` — neither
   has collision or per-entity lifecycle, so forcing inheritance there
   wasn't worth it.
-- `vite.config.js`'s `base: '/scroller/'` must match the GitHub repo name
+- `vite.config.js`'s `base: '/Streetwise/'` must match the GitHub repo name
   exactly, or the deployed site's asset paths will 404. Update it first if
   the repo gets renamed.
 - **Health bar, not score.** `HEALTH` in `config.js` (max/overchargeMax/

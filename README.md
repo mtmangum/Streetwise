@@ -25,7 +25,7 @@ All sprites are drawn procedurally at runtime (no image assets). The
 renders every obstacle, pickup and character from its exact pixel data,
 blown up and animated, with a legibility note and status on each.
 
-- **Rendered on GitHub:** <https://htmlpreview.github.io/?https://github.com/mtmangum/scroller/blob/main/docs/art-read-check.html>
+- **Rendered on GitHub:** <https://htmlpreview.github.io/?https://github.com/mtmangum/Streetwise/blob/main/docs/art-read-check.html>
 - **Locally:** open `docs/art-read-check.html` in a browser (no build step)
 
 ## Controls
@@ -112,7 +112,7 @@ the project and publishes `dist/` to GitHub Pages automatically.
 One-time setup in the GitHub repo: **Settings → Pages → Source → GitHub
 Actions**. After that, every push to `main` redeploys.
 
-The site will be served at `https://<your-username>.github.io/scroller/`.
+The site will be served at `https://<your-username>.github.io/Streetwise/`.
 If you rename the repo, update `base` in `vite.config.js` to match.
 
 ## Roadmap

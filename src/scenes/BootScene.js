@@ -591,28 +591,24 @@ export class BootScene extends Phaser.Scene {
   }
 
   drawScurryingRatsObstacle(key, stride) {
-    const O=0x171414,D=0x4b3731,M=0x765548,L=0xa77b68,TAIL=0xc49a89,TAILD=0x9c7666,EYE=0xe7cf58,SCUFF=0x2c2722;
+    const O=0x171414,D=0x4b3731,M=0x765548,L=0xa77b68,SM=0x60463d,SL=0x916b5d,TAIL=0xc49a89,EYE=0xe7cf58;
     const b = stride ? 1 : 0;
     const legs = stride
-      ? [[9,18,3,3,O],[14,19,3,3,O],[19,18,3,3,O],[24,17,3,3,O],[33,19,2,2,O],[38,19,2,2,O]]
-      : [[10,18,3,3,O],[15,19,3,3,O],[21,18,3,3,O],[24,17,3,3,O],[32,19,2,2,O],[37,19,2,2,O]];
-    const leadTail = stride
-      ? [[26,13,3,3,TAIL],[28,10,3,3,TAIL],[30,7,2,3,TAIL],[30,4,3,3,TAIL],[29,2,3,2,TAILD]]
-      : [[26,14,3,3,TAIL],[28,12,3,3,TAIL],[31,10,2,3,TAIL],[32,7,3,3,TAIL],[32,4,3,2,TAILD]];
+      ? [[8,18,3,3,O],[16,18,3,3,O],[31,18,2,3,O],[38,18,2,3,O]]
+      : [[10,18,3,3,O],[18,18,3,3,O],[32,18,2,3,O],[39,18,2,3,O]];
     this.drawObstacleTexture(key,44,22,[
-      // Lead rat: humped back, pointed nose, round ear, curled tail standing up.
-      [8,10-b,20,9,O],[10,7-b,15,4,O],[13,5-b,8,3,O],
-      [10,9-b,15,7,D],[13,6-b,8,3,M],[12,10-b,12,3,M],[13,8-b,7,2,L],
-      [2,12,8,7,O],[3,13,5,4,M],[4,12,3,3,L],[1,15,2,2,O],[5,14,1,1,EYE],
-      [4,9,4,4,O],[5,10,2,2,M],
-      ...leadTail,
-      // Trailing rat, smaller and lower, so it reads as a little pack.
-      [30,14,10,6,O],[31,15,8,4,D],[38,14,3,3,O],[39,13,2,2,M],[40,15,1,1,EYE],
-      [39,16,5,2,TAIL],[42,14,2,3,TAIL],
-      ...legs,
-      // Scurry scuffs and the curb line.
-      [6,20,4,1,SCUFF],[16,20,5,1,SCUFF],[26,20,3,1,SCUFF],
-      [1,21,40,1,0x1a1614]
+      // Large lead rat faces left: pointed snout, separate ear, arched back.
+      [1,13-b,7,6,O],[0,16-b,3,2,O],[3,14-b,4,3,M],[5,13-b,1,1,EYE],
+      [5,9-b,5,5,O],[6,10-b,3,3,L],
+      [7,10-b,15,9,O],[9,8-b,10,4,O],[8,11-b,13,6,D],[10,9-b,8,3,M],[11,10-b,5,1,L],
+      // Its thin tail curls upward entirely inside its own half of the frame.
+      [20,12-b,3,2,TAIL],[22,10-b,2,3,TAIL],[23,7-b,2,3,TAIL],[24,5-b,2,3,TAIL],[23,4-b,3,1,TAIL],
+      // Smaller trailing rat also faces left, separated by clear air.
+      [27,15,5,4,O],[26,17,3,1,O],[28,15,3,2,SM],[30,14,1,1,EYE],
+      [30,12,4,4,O],[31,13,2,2,SL],
+      [32,13,10,6,O],[33,12,7,3,O],[33,14,8,4,SM],[35,13,4,1,SL],
+      [40,13,2,2,TAIL],[42,11,2,3,TAIL],[43,9,1,3,TAIL],
+      ...legs
     ]);
   }
 
