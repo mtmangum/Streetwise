@@ -165,3 +165,13 @@ export const HEALTH = {
   invulnerabilityMs: 900,
   dangerThreshold: 30
 };
+
+export const SNEAKER_BOOST = {
+  durationMs: 8000,
+  jumpMultiplier: 1.22,
+  powerJumpMultiplier: 1.16,
+  firstSpawnMinMs: 22000,
+  firstSpawnMaxMs: 32000,
+  respawnMinMs: 30000,
+  respawnMaxMs: 44000
+};

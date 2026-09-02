@@ -1,5 +1,5 @@
 import { Entity } from './Entity.js';
-import { PLAYER, GROUND_Y, HEALTH } from '../config.js';
+import { PLAYER, GROUND_Y, HEALTH, SNEAKER_BOOST } from '../config.js';
 
 const RECOVERY_TIMING = { recoil: 65, fall: 90, down: 130, pushUp: 110, stand: 70 };
 
@@ -24,6 +24,7 @@ export class Player extends Entity {
     this.powerJumpUsed = false;
     this.jumpBufferUntil = 0;
     this.coyoteUntil = 0;
+    this.sneakerBoostUntil = 0;
   }
 
   // A second hit can land mid-recovery (a different obstacle, while still
@@ -75,15 +76,21 @@ export class Player extends Entity {
 
   _startJump() {
     this.jumpBufferUntil = 0;
-    this.sprite.body.setVelocityY(PLAYER.jumpVelocity);
+    const multiplier = this.scene.time.now < this.sneakerBoostUntil ? SNEAKER_BOOST.jumpMultiplier : 1;
+    this.sprite.body.setVelocityY(PLAYER.jumpVelocity * multiplier);
     this.powerJumpUsed = false;
   }
 
   powerJump() {
     if (this.recovering || this._isOnGround || this.powerJumpUsed) return false;
     this.powerJumpUsed = true;
-    this.sprite.body.setVelocityY(PLAYER.powerJumpVelocity);
+    const multiplier = this.scene.time.now < this.sneakerBoostUntil ? SNEAKER_BOOST.powerJumpMultiplier : 1;
+    this.sprite.body.setVelocityY(PLAYER.powerJumpVelocity * multiplier);
     return true;
+  }
+
+  activateSneakerBoost(until) {
+    this.sneakerBoostUntil = Math.max(this.sneakerBoostUntil, until);
   }
 
   // Called once per frame while the run is active (PlayScene drives this

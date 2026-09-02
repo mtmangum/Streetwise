@@ -85,6 +85,7 @@ export class BootScene extends Phaser.Scene {
     this.drawMattTexture('matt-standing', 'standing');
     this.drawMattTexture('matt-pat', 'pat');
     this.drawMattTexture('matt-hug', 'hug');
+    this.drawPinkSneakerPickup();
     this.drawPigeonFrame('pigeon-fly0', 0);
     this.drawPigeonFrame('pigeon-fly1', 1);
     this.drawPigeonFrame('pigeon-fly2', 2);
@@ -691,6 +692,21 @@ export class BootScene extends Phaser.Scene {
       ...leftArm,...rightArm,
       [8,28,6,10,O],[9,29,4,8,PANTS],[15,28,6,10,O],[16,29,4,8,PANTS],
       [7,37,8,3,SHOE],[15,37,8,3,SHOE]
+    ]);
+  }
+
+  drawPinkSneakerPickup() {
+    const P=0xff3f9b,PL=0xff8bc5,HI=0xffd8ed,CYAN=0x73f4ff,O=0x5b1646,SOLE=0xf7f0f5;
+    this.drawObstacleTexture('pickup-pink-sneakers',30,22,[
+      // Cyan corner glints and a pink aura make this unlike any grounded,
+      // dark-outlined obstacle before the shoe silhouettes are even read.
+      [2,2,1,4,CYAN],[0,4,5,1,CYAN],[27,1,1,4,CYAN],[25,3,5,1,CYAN],
+      [4,15,2,2,CYAN],[24,17,2,2,CYAN],
+      // Two offset hot-pink running shoes with bright soles and laces.
+      [3,7,10,7,O],[5,6,6,7,P],[10,10,7,5,O],[11,11,6,3,PL],[4,13,14,3,SOLE],
+      [5,8,5,1,HI],[7,10,5,1,HI],
+      [14,4,9,7,O],[16,3,5,7,P],[21,7,6,5,O],[21,8,6,3,PL],[15,10,13,3,SOLE],
+      [16,5,5,1,HI],[18,7,5,1,HI]
     ]);
   }
 
