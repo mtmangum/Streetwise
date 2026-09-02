@@ -10,17 +10,20 @@ const dog=({headX,headY,bodyY,tailY,legs})=>[
   r(headX+5,headY+2,5,2,C.outline),r(headX+5,headY+1,4,2,C.body),r(headX+8,headY+1,1,1,C.light),r(headX+4,headY+1,1,1,C.eye),
   ...legs.flatMap(([x,y,w,h])=>[r(x,y,w,h,C.outline),r(x+1,y,Math.max(1,w-1),Math.max(1,h-1),C.dark)])
 ];
+const idlePose=[
+  r(20,1,6,5,C.outline),r(21,2,5,3,C.body),r(21,0,3,3,C.outline),r(22,1,2,2,C.dark),
+  r(25,3,4,2,C.outline),r(25,2,3,2,C.body),r(28,2,1,1,C.light),r(24,2,1,1,C.eye),
+  r(18,5,6,7,C.outline),r(19,5,4,6,C.body),r(20,5,2,2,C.light),r(19,5,1,4,C.collar),
+  r(11,8,9,6,C.outline),r(12,8,7,5,C.body),r(12,9,3,3,C.light),r(9,11,6,4,C.outline),r(10,11,5,3,C.dark),
+  r(18,10,3,5,C.outline),r(19,10,2,5,C.dark),r(22,10,3,5,C.outline),r(23,10,2,5,C.body),
+  r(5,12,7,2,C.outline),r(4,13,7,1,C.dark)
+];
 const POSES={
  // Alert seated pose used whenever the world is stopped. The upright chest,
  // planted forelegs and folded haunch read as resting rather than frozen mid-run.
- idle:[
-   r(20,1,6,5,C.outline),r(21,2,5,3,C.body),r(21,0,3,3,C.outline),r(22,1,2,2,C.dark),
-   r(25,3,4,2,C.outline),r(25,2,3,2,C.body),r(28,2,1,1,C.light),r(24,2,1,1,C.eye),
-   r(18,5,6,7,C.outline),r(19,5,4,6,C.body),r(20,5,2,2,C.light),r(19,5,1,4,C.collar),
-   r(11,8,9,6,C.outline),r(12,8,7,5,C.body),r(12,9,3,3,C.light),r(9,11,6,4,C.outline),r(10,11,5,3,C.dark),
-   r(18,10,3,5,C.outline),r(19,10,2,5,C.dark),r(22,10,3,5,C.outline),r(23,10,2,5,C.body),
-   r(5,12,7,2,C.outline),r(4,13,7,1,C.dark)
- ],
+ idle:idlePose,
+ lick0:idlePose,
+ lick1:[...idlePose,r(28,5,2,1,0xf06d91),r(29,6,1,1,0xffa0b8)],
  marking:[
    r(20,1,6,5,C.outline),r(21,2,5,3,C.body),r(21,0,3,3,C.outline),r(22,1,2,2,C.dark),
    r(25,3,4,2,C.outline),r(25,2,3,2,C.body),r(28,2,1,1,C.light),r(24,2,1,1,C.eye),

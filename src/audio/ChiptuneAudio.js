@@ -109,6 +109,12 @@ export class ChiptuneAudio {
     [72, 76, 79, 84, 88].forEach((note, i) => this.tone(midiToHz(note), 0.2, 0.075, 'square', null, i * 0.075));
   }
 
+  sneakerBoost() {
+    [76, 81, 88, 93].forEach((note, i) =>
+      this.tone(midiToHz(note), 0.14, 0.055, 'square', null, i * 0.055)
+    );
+  }
+
   hit() {
     this.tone(170, 0.28, 0.1, 'sawtooth', 55);
   }

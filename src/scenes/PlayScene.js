@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, RENDER_SCALE, WORLD, SPAWN_RHYTHM, HEALTH, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -9,6 +9,7 @@ import { Pigeon } from '../entities/Pigeon.js';
 import { Crow } from '../entities/Crow.js';
 import { Seagull } from '../entities/Seagull.js';
 import { Storm } from '../entities/Storm.js';
+import { SneakerBoost } from '../entities/SneakerBoost.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 import { ChiptuneAudio } from '../audio/ChiptuneAudio.js';
@@ -42,6 +43,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextPigeonAt = Infinity;
     this.nextCrowAt = Infinity;
     this.nextSeagullAt = Infinity;
+    this.nextSneakerAt = Infinity;
     this.lastObstacleFamily = null;
     this.firstObstacleSpawned = false;
     this.firstObstacleHintShown = false;
@@ -58,6 +60,7 @@ export class PlayScene extends Phaser.Scene {
     this.healthTextureKey = '';
     this.healthColorBucket = -1;
     this.nextPaletteUpdateAt = 0;
+    this.nextSneakerSparkAt = 0;
     this.audio = new ChiptuneAudio(this);
 
     this.parallax = new Parallax(this);
@@ -101,6 +104,15 @@ export class PlayScene extends Phaser.Scene {
         const bird = birdSprite.getData('entity');
         if (bird) bird.onCollide(this.player);
       },
+      null,
+      this
+    );
+
+    this.pickupGroup = this.physics.add.group();
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.pickupGroup,
+      (_playerSprite, pickupSprite) => pickupSprite.getData('entity')?.collect(),
       null,
       this
     );
@@ -293,6 +305,9 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard.on('keyup-SPACE', () => this.handleInputUp());
     this.input.keyboard.on('keydown-P', () => this.togglePause());
     this.input.keyboard.on('keydown-ESC', () => this.togglePause());
+    if (import.meta.env.DEV) {
+      this.input.keyboard.on('keydown-F', () => this.skipToFinale());
+    }
     this.input.on('pointerdown', () => this.handleInputDown());
     this.input.on('pointerup', () => this.handleInputUp());
     this.input.on('pointerupoutside', () => this.handleInputUp());
@@ -307,6 +322,17 @@ export class PlayScene extends Phaser.Scene {
 
   handleInputUp() {
     this.jumpController.release();
+  }
+
+  skipToFinale() {
+    if (this.state === 'ready') this.startRun();
+    if (this.state !== 'running') return;
+    this.elapsed = FINALE_START_SECONDS;
+    this.dayPhase = 0;
+    const palette = dayNightPalette(0);
+    this.parallax.applyPalette(palette);
+    this.ground.setTint(palette.ground);
+    this.beginFinale();
   }
 
   scheduleDogJump() {
@@ -356,6 +382,10 @@ export class PlayScene extends Phaser.Scene {
     this.nextPigeonAt = this.time.now + easyStartMs + Phaser.Math.Between(3000, 7000);
     this.nextCrowAt = this.time.now + easyStartMs + Phaser.Math.Between(2000, 6000);
     this.nextSeagullAt = this.time.now + Phaser.Math.Between(45000, 75000);
+    this.nextSneakerAt = this.time.now + Phaser.Math.Between(
+      SNEAKER_BOOST.firstSpawnMinMs,
+      SNEAKER_BOOST.firstSpawnMaxMs
+    );
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
@@ -624,66 +654,67 @@ export class PlayScene extends Phaser.Scene {
     this.state = 'ending';
     this.jumpController.resetInput();
     this.audio.setScene('day');
-    this.physics.pause();
     this.entities.forEach((entity) => entity.destroy());
     this.entities.length = 0;
     this.player.sprite.body.setVelocity(0, 0);
+    this.player.sprite.body.enable = false;
     this.player.sprite.anims.stop();
     this.player.sprite.setTexture('player-idle0').setAngle(0);
     this.dog.rest();
     this.pauseButton.setVisible(false);
     this.pauseButtonText.setVisible(false);
     this.openingHint.setVisible(false);
+    this.finaleElapsedMs = 0;
+    this.finaleDogStartX = this.dog.sprite.x;
+    this.finaleHeartsShown = false;
 
     const matt = this.add.sprite(GAME_WIDTH + 55, GROUND_Y, 'matt-standing')
       .setOrigin(0, 1)
       .setDepth(11);
     this.matt = matt;
+  }
 
-    // Matt arrives as Stella trots ahead to greet him.
-    this.tweens.add({
-      targets: matt,
-      x: 410,
-      duration: 1800,
-      ease: 'Sine.easeOut'
-    });
-    this.tweens.add({
-      targets: this.dog.sprite,
-      x: 450,
-      duration: 1500,
-      ease: 'Sine.easeInOut',
-      onStart: () => this.dog.sprite.anims.play('dog-run', true),
-      onComplete: () => {
-        this.dog.sprite.setTexture('dog-idle').setFlipX(true);
-        matt.setTexture('matt-pat');
+  updateFinale(delta) {
+    if (!this.matt) return;
+    this.finaleElapsedMs += Math.min(delta, 100);
+    const finaleElapsed = this.finaleElapsedMs;
+    const smooth = (value) => {
+      const t = Phaser.Math.Clamp(value, 0, 1);
+      return t * t * (3 - 2 * t);
+    };
+
+    const mattArrival = smooth(finaleElapsed / 1800);
+    this.matt.x = Phaser.Math.Linear(GAME_WIDTH + 55, 410, mattArrival);
+
+    if (finaleElapsed < 1500) {
+      const dogArrival = smooth(finaleElapsed / 1500);
+      this.dog.sprite.x = Phaser.Math.Linear(this.finaleDogStartX, 450, dogArrival);
+      this.dog.sprite.setFlipX(false);
+      this.dog.sprite.anims.play('dog-run', true);
+    } else if (finaleElapsed < 2850) {
+      this.dog.sprite.x = 450;
+      this.dog.sprite.setTexture('dog-idle').setFlipX(true);
+      this.matt.setTexture('matt-pat');
+    } else if (finaleElapsed < 3700) {
+      this.matt.setTexture('matt-standing');
+      const dogMove = smooth((finaleElapsed - 2850) / 450);
+      this.dog.sprite.x = Phaser.Math.Linear(450, 500, dogMove);
+      this.dog.sprite.setFlipX(true).anims.play('dog-lick', true);
+      const nicoleMove = smooth((finaleElapsed - 2850) / 850);
+      this.player.sprite.x = Phaser.Math.Linear(PLAYER.startX, 370, nicoleMove);
+    } else {
+      this.dog.sprite.x = 500;
+      this.dog.sprite.setFlipX(true).anims.play('dog-lick', true);
+      this.player.sprite.x = 370;
+      this.player.sprite.setTexture('player-idle0').setFlipX(false);
+      this.matt.setTexture('matt-hug');
+      if (!this.finaleHeartsShown) {
+        this.finaleHeartsShown = true;
+        this.showFinaleHearts(400, GROUND_Y - 72);
       }
-    });
+    }
 
-    // After the head pat, Stella settles to one side and Nicole steps into
-    // Matt's hug. Hearts rise around them to finish the run warmly.
-    this.time.delayedCall(2850, () => {
-      matt.setTexture('matt-standing');
-      this.tweens.add({
-        targets: this.dog.sprite,
-        x: 500,
-        duration: 450,
-        ease: 'Sine.easeOut',
-        onComplete: () => this.dog.sprite.setTexture('dog-idle').setFlipX(true)
-      });
-      this.tweens.add({
-        targets: this.player.sprite,
-        x: 370,
-        duration: 850,
-        ease: 'Sine.easeInOut',
-        onComplete: () => {
-          matt.setTexture('matt-hug');
-          this.player.sprite.setTexture('player-idle0').setFlipX(false);
-          this.showFinaleHearts(400, GROUND_Y - 72);
-        }
-      });
-    });
-
-    this.time.delayedCall(5400, () => {
+    if (finaleElapsed >= 5400) {
       this.state = 'complete';
       this.audio.stop();
       this.overlayTitle.setText('HOME AT LAST');
@@ -691,7 +722,7 @@ export class PlayScene extends Phaser.Scene {
       this.overlayPanel.setVisible(true).setDepth(40);
       this.overlayTitle.setVisible(true).setDepth(41);
       this.overlayText.setVisible(true).setDepth(41);
-    });
+    }
   }
 
   showFinaleHearts(x, y) {
@@ -772,6 +803,56 @@ export class PlayScene extends Phaser.Scene {
 
   spawnBird(BirdType) {
     this.registerEntity(new BirdType(this, this.scrollSpeed), this.birdGroup);
+  }
+
+  spawnSneakerBoost() {
+    this.registerEntity(new SneakerBoost(this, this.scrollSpeed), this.pickupGroup);
+  }
+
+  activateSneakerBoost(x, y) {
+    const until = this.time.now + SNEAKER_BOOST.durationMs;
+    this.player.activateSneakerBoost(until);
+    this.audio.sneakerBoost();
+    this.showControlHint('PINK SNEAKER BOOST!', 'HIGHER JUMPS  ·  8 SECONDS');
+    for (let i = 0; i < 10; i++) {
+      const spark = this.add.star(x, y, 4, 2, 5, i % 2 ? 0xff66ad : 0x73f4ff, 1)
+        .setDepth(25);
+      this.tweens.add({
+        targets: spark,
+        x: x + Phaser.Math.Between(-65, 65),
+        y: y + Phaser.Math.Between(-55, 35),
+        alpha: 0,
+        scale: { from: 0.45, to: 1.2 },
+        duration: Phaser.Math.Between(450, 800),
+        ease: 'Quad.easeOut',
+        onComplete: () => spark.destroy()
+      });
+    }
+  }
+
+  updateSneakerBoost(time) {
+    const active = time < this.player.sneakerBoostUntil;
+    if (!active) {
+      this.player.sprite.clearTint();
+      return;
+    }
+    this.player.sprite.setTint(Math.sin(time * 0.018) > 0 ? 0xff8fc9 : 0xffffff);
+    if (time < this.nextSneakerSparkAt) return;
+    this.nextSneakerSparkAt = time + 110;
+    const spark = this.add.circle(
+      this.player.sprite.x + Phaser.Math.Between(4, 36),
+      this.player.sprite.y - Phaser.Math.Between(5, 55),
+      Phaser.Math.Between(1, 3),
+      Math.random() < 0.5 ? 0xff66ad : 0x73f4ff,
+      0.9
+    ).setDepth(16);
+    this.tweens.add({
+      targets: spark,
+      y: spark.y - 22,
+      alpha: 0,
+      duration: 420,
+      onComplete: () => spark.destroy()
+    });
   }
 
   canSpawnBird() {
@@ -870,6 +951,10 @@ export class PlayScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    if (this.state === 'ending') {
+      this.updateFinale(delta);
+      return;
+    }
     if (this.state !== 'running') return;
 
     this.elapsed += delta / 1000;
@@ -937,6 +1022,7 @@ export class PlayScene extends Phaser.Scene {
     this.ground.scroll(this.scrollSpeed, delta);
     this.parallax.scroll(this.scrollSpeed, delta);
     this.player.update(time, delta);
+    this.updateSneakerBoost(time);
     this.dog.update(delta);
 
     // Same call, different behavior per entity type — no type-checking here.
@@ -966,6 +1052,17 @@ export class PlayScene extends Phaser.Scene {
     if (time > this.nextSeagullAt && this.canSpawnBird()) {
       this.spawnBird(Seagull);
       this.nextSeagullAt = time + Phaser.Math.Between(60000, 100000);
+    }
+    if (
+      this.elapsed < FINALE_START_SECONDS - 12 &&
+      time > this.nextSneakerAt &&
+      this.pickupGroup.countActive(true) === 0
+    ) {
+      this.spawnSneakerBoost();
+      this.nextSneakerAt = time + Phaser.Math.Between(
+        SNEAKER_BOOST.respawnMinMs,
+        SNEAKER_BOOST.respawnMaxMs
+      );
     }
   }
 }

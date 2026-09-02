@@ -25,6 +25,16 @@ export class Pigeon extends Entity {
   }
 
   onUpdate() {
+    const player = this.scene.player;
+    if (
+      player?.hasSneakerBoost &&
+      player.powerJumpUsed &&
+      Math.abs(this.sprite.x - player.sprite.x) < 62 &&
+      Math.abs(this.sprite.y - (player.sprite.y - 30)) < 105
+    ) {
+      this.onCollide(player);
+      return;
+    }
     if (
       (this.direction < 0 && this.sprite.x < -50) ||
       (this.direction > 0 && this.sprite.x > GAME_WIDTH + 50)

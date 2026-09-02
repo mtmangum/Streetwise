@@ -8,7 +8,7 @@ export class SneakerBoost extends Entity {
     this.baseY = sprite.y;
     this.spawnedAt = scene.time.now;
     this.collected = false;
-    this.sprite.setDisplaySize(54, 38).setDepth(14);
+    this.sprite.setDisplaySize(68, 48).setDepth(14);
     this.sprite.body.setAllowGravity(false);
     this.setSpeed(speed);
   }

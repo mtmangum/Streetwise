@@ -57,6 +57,10 @@ export class Player extends Entity {
     return !this._isOnGround;
   }
 
+  get hasSneakerBoost() {
+    return this.scene.time.now < this.sneakerBoostUntil;
+  }
+
   // Returns whether it actually jumped (ignored while airborne or
   // recovering) - PlayScene uses that to decide whether to echo the jump
   // to the dog a beat later, rather than echoing every keypress.
@@ -76,7 +80,7 @@ export class Player extends Entity {
 
   _startJump() {
     this.jumpBufferUntil = 0;
-    const multiplier = this.scene.time.now < this.sneakerBoostUntil ? SNEAKER_BOOST.jumpMultiplier : 1;
+    const multiplier = this.hasSneakerBoost ? SNEAKER_BOOST.jumpMultiplier : 1;
     this.sprite.body.setVelocityY(PLAYER.jumpVelocity * multiplier);
     this.powerJumpUsed = false;
   }
@@ -84,7 +88,7 @@ export class Player extends Entity {
   powerJump() {
     if (this.recovering || this._isOnGround || this.powerJumpUsed) return false;
     this.powerJumpUsed = true;
-    const multiplier = this.scene.time.now < this.sneakerBoostUntil ? SNEAKER_BOOST.powerJumpMultiplier : 1;
+    const multiplier = this.hasSneakerBoost ? SNEAKER_BOOST.powerJumpMultiplier : 1;
     this.sprite.body.setVelocityY(PLAYER.powerJumpVelocity * multiplier);
     return true;
   }

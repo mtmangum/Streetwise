@@ -41,7 +41,8 @@ const TYPES = [
   { key: 'obstacle-cone', aspect: 58 / 32, height: 48, safeFirst: true, weight: dayWeight },
   { key: 'obstacle-child0', animation: 'obstacle-child-jumprope', aspect: 30 / 28, height: 42, groundOffset: 3, weight: daylightOnlyWeight },
   { key: 'obstacle-trashbin0', animation: 'obstacle-trashbin-flies', animationChance: 0.45, aspect: 30 / 36, height: 54, safeFirst: true, weight: dayWeight },
-  { key: 'obstacle-signboard', aspect: 44 / 40, height: 48, safeFirst: true, weight: dayWeight },
+  // The wooden crate was removed; a café A-frame sign was tried in this slot
+  // and pulled for now (drawSignboardObstacle in BootScene is kept for later).
   { key: 'obstacle-hydrant0', family: 'hydrant', animation: 'obstacle-hydrant-spray', aspect: 38 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
   { key: 'obstacle-hydrant-long0', family: 'hydrant', animation: 'obstacle-hydrant-long-spray', aspect: 90 / 28, height: 42, groundOffset: 2, weight: halfDayWeight },
   { key: 'obstacle-shoppingcart0', animation: 'obstacle-shoppingcart-roll', aspect: 56 / 42, height: 68, speedFactor: 1.18, flipX: true, weight: dayWeight },
