@@ -328,6 +328,9 @@ export class PlayScene extends Phaser.Scene {
   }
 
   handleInputDown() {
+    // Keep the unlock attempt inside a real user gesture. If a browser rejects
+    // the first Web Audio resume, the next gameplay input safely retries it.
+    this.audio.start();
     if (this.state === 'ready') return this.startRun();
     if (this.state === 'gameover' || this.state === 'complete') return this.restart();
     if (this.state === 'paused' || this.state === 'ending') return;

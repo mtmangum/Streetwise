@@ -22,6 +22,7 @@ export class ChiptuneAudio {
     this.context = scene.sound.context;
     this.musicStep = 0;
     this.musicEvent = null;
+    this.startPromise = null;
     this.sceneName = 'day';
   }
 
@@ -42,14 +43,36 @@ export class ChiptuneAudio {
   }
 
   start() {
-    this.context?.resume?.();
-    if (this.musicEvent) return;
-    this.playMusicStep();
-    this.musicEvent = this.scene.time.addEvent({
-      delay: 145,
-      loop: true,
-      callback: () => this.playMusicStep()
-    });
+    if (this.musicEvent || this.startPromise) return this.startPromise;
+
+    // Browsers are allowed to keep Web Audio suspended until a user gesture.
+    // Waiting for resume() is significant on Safari/iOS: scheduling oscillators
+    // before its promise settles can leave the synth silent on hosted pages.
+    this.context = this.scene.sound.context ?? this.context;
+    if (!this.context) return null;
+
+    this.startPromise = Promise.resolve(
+      this.context.state === 'running' ? undefined : this.context.resume?.()
+    )
+      .then(() => {
+        if (this.context.state !== 'running' || this.musicEvent) return;
+        this.playMusicStep();
+        this.musicEvent = this.scene.time.addEvent({
+          delay: 145,
+          loop: true,
+          callback: () => this.playMusicStep()
+        });
+      })
+      .catch((error) => {
+        // A later gameplay gesture can call start() again if the browser did
+        // not accept the first unlock attempt.
+        console.warn('Unable to start Streetwise audio', error);
+      })
+      .finally(() => {
+        this.startPromise = null;
+      });
+
+    return this.startPromise;
   }
 
   stop() {
