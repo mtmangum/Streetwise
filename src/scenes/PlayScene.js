@@ -342,14 +342,15 @@ export class PlayScene extends Phaser.Scene {
     // run in that mode; Space / Enter starts whichever card is highlighted.
     // The tag in the corner shows an easier mode is on during play.
     const menuLeft = GAME_WIDTH / 2 - 210;
-    const menuTop = 50;
+    const menuTop = 72;
+    const menuHeight = 190;
     const menuPanel = this.add.graphics().setDepth(29);
     menuPanel.fillStyle(0x05070c, 0.45);
-    menuPanel.fillRoundedRect(menuLeft + 4, menuTop + 5, 420, 240, 14);
+    menuPanel.fillRoundedRect(menuLeft + 4, menuTop + 5, 420, menuHeight, 14);
     menuPanel.fillStyle(0x121823, 0.96);
-    menuPanel.fillRoundedRect(menuLeft, menuTop, 420, 240, 14);
+    menuPanel.fillRoundedRect(menuLeft, menuTop, 420, menuHeight, 14);
     menuPanel.lineStyle(2, 0xe0752f, 0.9);
-    menuPanel.strokeRoundedRect(menuLeft, menuTop, 420, 240, 14);
+    menuPanel.strokeRoundedRect(menuLeft, menuTop, 420, menuHeight, 14);
     menuPanel.fillStyle(0xf2c14e, 1);
     menuPanel.fillRoundedRect(menuLeft + 18, menuTop + 13, 384, 3, 2);
     const menuText = (x, y, text, size, color, extra = {}) => this.add
@@ -366,30 +367,24 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(31);
+    // Controls are taught in-game by the first-obstacle hints, so the menu is
+    // just the title and the two choices.
     this.menuItems = [
       menuPanel,
-      menuText(GAME_WIDTH / 2, menuTop + 34, 'STREETWISE: NICOLE & STELLA', 19, '#f2c14e', { strokeThickness: 4 }),
-      menuText(GAME_WIDTH / 2, menuTop + 62, 'CHOOSE YOUR RUN', 12, '#9fb0c2'),
-      menuText(GAME_WIDTH / 2, menuTop + 172, 'TAP  —  JUMP        DOUBLE-TAP  —  POWER JUMP', 14, '#eef3f6'),
-      menuText(GAME_WIDTH / 2, menuTop + 193, 'POWER JUMP TO STRIKE BIRDS', 14, '#eef3f6'),
-      // Touch is the primary input; keyboard shortcuts are only mentioned
-      // where a keyboard is likely to be present.
-      this.sys.game.device.input.touch
-        ? menuText(GAME_WIDTH / 2, menuTop + 221, 'TAP A MODE TO PLAY', 14, '#f2c14e')
-        : menuText(GAME_WIDTH / 2, menuTop + 221, 'CLICK A MODE TO PLAY   ·   ← →  CHOOSE   ·   SPACE  START', 12, '#9fb0c2')
+      menuText(GAME_WIDTH / 2, menuTop + 38, 'STREETWISE: NICOLE & STELLA', 20, '#f2c14e', { strokeThickness: 4 })
     ];
     this.modeCards = {};
     [
-      { key: 'normal', x: GAME_WIDTH / 2 - 102, title: 'NORMAL', desc: 'FULL-SPEED STREET', accent: 0xf2c14e },
-      { key: 'easy', x: GAME_WIDTH / 2 + 102, title: 'EASY — NICOLE', desc: 'SLOWER  ·  GENTLER  ·  MORE TIME', accent: 0x7fe3c4 }
+      { key: 'normal', x: GAME_WIDTH / 2 - 102, title: 'NORMAL', desc: 'FULL SPEED', accent: 0xf2c14e },
+      { key: 'easy', x: GAME_WIDTH / 2 + 102, title: 'EASY — NICOLE', desc: 'SLOWER & GENTLER', accent: 0x7fe3c4 }
     ].forEach((card) => {
       const box = this.add
-        .rectangle(card.x, menuTop + 118, 196, 76, 0x141b27, 1)
+        .rectangle(card.x, menuTop + 118, 196, 96, 0x141b27, 1)
         .setDepth(30)
         .setInteractive({ useHandCursor: true });
-      const title = menuText(card.x, menuTop + 102, card.title, 17, '#ffffff');
-      const desc = menuText(card.x, menuTop + 128, card.desc, 10, '#b9c6d3', { strokeThickness: 2 });
-      const play = menuText(card.x, menuTop + 148, '▶  PLAY', 11, '#ffffff', { strokeThickness: 2 });
+      const title = menuText(card.x, menuTop + 92, card.title, 20, '#ffffff');
+      const desc = menuText(card.x, menuTop + 120, card.desc, 13, '#d6e0ea', { strokeThickness: 2 });
+      const play = menuText(card.x, menuTop + 146, '▶  PLAY', 14, '#ffffff', { strokeThickness: 2 });
       box.on('pointerdown', (_pointer, _x, _y, event) => {
         event?.stopPropagation();
         this.setDifficulty(card.key);
@@ -998,16 +993,18 @@ export class PlayScene extends Phaser.Scene {
     this.setDifficulty(this.difficultyKey === 'easy' ? 'normal' : 'easy');
   }
 
-  // Highlights the chosen card and dims the other.
+  // Both cards are tappable; the remembered one gets the accent border and
+  // brighter text so Space / Enter has an obvious target.
   refreshDifficultyUi() {
     Object.entries(this.modeCards).forEach(([key, card]) => {
       const selected = key === this.difficultyKey;
+      const accent = `#${card.accent.toString(16).padStart(6, '0')}`;
       card.box
         .setFillStyle(selected ? 0x1d2c3a : 0x141b27, 1)
         .setStrokeStyle(selected ? 3 : 2, selected ? card.accent : 0x4a5566, 1);
-      card.title.setColor(selected ? '#ffffff' : '#8d99a8');
-      card.desc.setColor(selected ? '#d6e0ea' : '#6c7886');
-      card.play.setVisible(selected).setColor(selected ? `#${card.accent.toString(16).padStart(6, '0')}` : '#ffffff');
+      card.title.setColor(selected ? '#ffffff' : '#c3cdd8');
+      card.desc.setColor(selected ? '#d6e0ea' : '#97a4b2');
+      card.play.setColor(selected ? accent : '#97a4b2');
     });
     this.modeTag.setText(this.difficultyKey === 'easy' ? 'NICOLE MODE' : '');
   }
