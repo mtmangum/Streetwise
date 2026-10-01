@@ -167,6 +167,9 @@ export const DIFFICULTY = {
     invulnerabilityMs: 900,
     coyoteTimeMs: 80,
     jumpBufferMs: 120,
+    // Below 1 = floatier jumps: same takeoff speed, weaker gravity, so Nicole
+    // stays in the air longer (airtime scales by 1 / gravityScale).
+    gravityScale: 1,
     easyStartSeconds: 20,
     birdGapScale: 1,
     pickupGapScale: 1
@@ -181,6 +184,7 @@ export const DIFFICULTY = {
     invulnerabilityMs: 1500,
     coyoteTimeMs: 140,
     jumpBufferMs: 200,
+    gravityScale: 0.85,
     easyStartSeconds: 35,
     birdGapScale: 1.5,
     pickupGapScale: 0.7

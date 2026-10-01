@@ -11,7 +11,7 @@ export class Player extends Entity {
     super(scene, sprite);
 
     this.sprite.setOrigin(0, 1);
-    this.sprite.body.setGravityY(PLAYER.gravity);
+    this.applyDifficulty(scene.difficulty);
     this.sprite.body.setCollideWorldBounds(true);
     this.sprite.setDepth(10);
     this.sprite.anims.play('player-idle');
@@ -139,6 +139,12 @@ export class Player extends Entity {
         )
       )
     );
+  }
+
+  // Called when the run starts, since the mode can still change on the start
+  // menu after the player has been created.
+  applyDifficulty(difficulty) {
+    this.sprite.body.setGravityY(PLAYER.gravity * difficulty.gravityScale);
   }
 
   // Crow hit: pop Nicole off the pavement (or arrest a falling jump) and

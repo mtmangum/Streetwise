@@ -549,6 +549,7 @@ export class PlayScene extends Phaser.Scene {
       BARK_BLAST.firstSpawnMinMs,
       BARK_BLAST.firstSpawnMaxMs
     );
+    this.player.applyDifficulty(this.difficulty);
     this.menuItems.forEach((item) => item.setVisible(false));
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
