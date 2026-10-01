@@ -153,6 +153,40 @@ export const PARALLAX = {
 // growing past `max` up to `overchargeMax` - that extra stretch of bar
 // renders in a distinct sparking neon-green (see PlayScene.updateHealthBar)
 // rather than continuing the normal color ramp, which tops out at green.
+// Selectable on the start screen. "easy" is the Nicole mode: a slower world,
+// more room between obstacles, softer hits and a more forgiving jump. Every
+// value is a multiplier on (or replacement for) its normal-mode counterpart.
+export const DIFFICULTY = {
+  normal: {
+    label: 'NORMAL',
+    speedScale: 1,
+    spawnGapScale: 1,
+    damageScale: 1,
+    drainScale: 1,
+    gainScale: 1,
+    invulnerabilityMs: 900,
+    coyoteTimeMs: 80,
+    jumpBufferMs: 120,
+    easyStartSeconds: 20,
+    birdGapScale: 1,
+    pickupGapScale: 1
+  },
+  easy: {
+    label: 'EASY - NICOLE',
+    speedScale: 0.75,
+    spawnGapScale: 1.5,
+    damageScale: 0.6,
+    drainScale: 0.6,
+    gainScale: 1.25,
+    invulnerabilityMs: 1500,
+    coyoteTimeMs: 140,
+    jumpBufferMs: 200,
+    easyStartSeconds: 35,
+    birdGapScale: 1.5,
+    pickupGapScale: 0.7
+  }
+};
+
 export const HEALTH = {
   max: 100,
   overchargeMax: 160,

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, PINK_STAR, COFFEE, BARK_BLAST, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, PINK_STAR, COFFEE, BARK_BLAST, DIFFICULTY, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -25,6 +25,25 @@ import { JumpController } from '../systems/JumpController.js';
 const HEALTH_BAR = { x: 16, y: 14, width: 360, overchargeWidth: 160, height: 16, padding: 2 };
 const FINALE_START_SECONDS = DAWN.startSeconds + DAWN.durationSeconds;
 
+const DIFFICULTY_STORAGE_KEY = 'streetwise.difficulty';
+
+function loadDifficultyKey() {
+  try {
+    const saved = window.localStorage.getItem(DIFFICULTY_STORAGE_KEY);
+    return saved in DIFFICULTY ? saved : 'normal';
+  } catch {
+    return 'normal';
+  }
+}
+
+function saveDifficultyKey(key) {
+  try {
+    window.localStorage.setItem(DIFFICULTY_STORAGE_KEY, key);
+  } catch {
+    // Private windows / blocked storage: the choice just won't persist.
+  }
+}
+
 export class PlayScene extends Phaser.Scene {
   constructor() {
     super('Play');
@@ -42,6 +61,8 @@ export class PlayScene extends Phaser.Scene {
     this.time.delayedCall(260, () => loadingScreen?.remove());
 
     this.state = 'ready'; // ready | running | paused | ending | complete | gameover
+    this.difficultyKey = loadDifficultyKey();
+    this.difficulty = DIFFICULTY[this.difficultyKey];
     this.elapsed = 0;
     this.nextSpawnAt = 0;
     this.nextPigeonAt = Infinity;
@@ -317,11 +338,47 @@ export class PlayScene extends Phaser.Scene {
       this.togglePause();
     });
 
+    // Difficulty picker on the start screen, and a small tag in the corner
+    // while an easier mode is in play.
+    this.modeButton = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 100, 300, 30, 0x141b27, 0.94)
+      .setStrokeStyle(2, 0xf2c14e, 0.9)
+      .setDepth(30)
+      .setInteractive({ useHandCursor: true });
+    this.modeButtonText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 100, '', {
+        fontFamily: 'sans-serif',
+        fontSize: '12px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#f2c14e'
+      })
+      .setOrigin(0.5)
+      .setDepth(31);
+    this.modeTag = this.add
+      .text(GAME_WIDTH - 62, 46, '', {
+        fontFamily: 'sans-serif',
+        fontSize: '11px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#7fe3c4',
+        stroke: '#090b10',
+        strokeThickness: 3
+      })
+      .setOrigin(0.5)
+      .setDepth(30);
+    this.modeButton.on('pointerdown', (_pointer, _x, _y, event) => {
+      event?.stopPropagation();
+      this.toggleDifficulty();
+    });
+    this.refreshDifficultyUi();
+
     this.input.keyboard.on('keydown-SPACE', (event) => {
       if (!event.repeat) this.handleInputDown();
     });
     this.input.keyboard.on('keyup-SPACE', () => this.handleInputUp());
     this.input.keyboard.on('keydown-P', () => this.togglePause());
+    this.input.keyboard.on('keydown-E', () => this.toggleDifficulty());
     this.input.keyboard.on('keydown-ESC', () => this.togglePause());
     if (import.meta.env.DEV) {
       this.input.keyboard.on('keydown-F', () => this.skipToFinale());
@@ -415,30 +472,32 @@ export class PlayScene extends Phaser.Scene {
   startRun() {
     this.state = 'running';
     this.audio.start();
-    const easyStartMs = SPAWN_RHYTHM.easyStartSeconds * 1000;
+    const easyStartMs = this.difficulty.easyStartSeconds * 1000;
     this.nextPigeonAt = this.time.now + easyStartMs + Phaser.Math.Between(3000, 7000);
     this.nextCrowAt = this.time.now + easyStartMs + Phaser.Math.Between(2000, 6000);
     this.nextSeagullAt = this.time.now + Phaser.Math.Between(45000, 75000);
-    this.nextSneakerAt = this.time.now + Phaser.Math.Between(
+    this.nextSneakerAt = this.time.now + this.pickupGap(
       SNEAKER_BOOST.firstSpawnMinMs,
       SNEAKER_BOOST.firstSpawnMaxMs
     );
-    this.nextZoomiesAt = this.time.now + Phaser.Math.Between(
+    this.nextZoomiesAt = this.time.now + this.pickupGap(
       ZOOMIES.firstSpawnMinMs,
       ZOOMIES.firstSpawnMaxMs
     );
-    this.nextPinkStarAt = this.time.now + Phaser.Math.Between(
+    this.nextPinkStarAt = this.time.now + this.pickupGap(
       PINK_STAR.firstSpawnMinMs,
       PINK_STAR.firstSpawnMaxMs
     );
-    this.nextCoffeeAt = this.time.now + Phaser.Math.Between(
+    this.nextCoffeeAt = this.time.now + this.pickupGap(
       COFFEE.firstSpawnMinMs,
       COFFEE.firstSpawnMaxMs
     );
-    this.nextBarkBlastAt = this.time.now + Phaser.Math.Between(
+    this.nextBarkBlastAt = this.time.now + this.pickupGap(
       BARK_BLAST.firstSpawnMinMs,
       BARK_BLAST.firstSpawnMaxMs
     );
+    this.modeButton.setVisible(false);
+    this.modeButtonText.setVisible(false);
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
@@ -620,9 +679,10 @@ export class PlayScene extends Phaser.Scene {
       );
     }
     this.avoidedCount += 1;
-    this.health = Phaser.Math.Clamp(this.health + HEALTH.gainPerAvoid, 0, HEALTH.overchargeMax);
+    const gain = HEALTH.gainPerAvoid * this.difficulty.gainScale;
+    this.health = Phaser.Math.Clamp(this.health + gain, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
-    this.showHealthReward(x, y, HEALTH.gainPerAvoid);
+    this.showHealthReward(x, y, gain);
     this.audio.health();
   }
 
@@ -669,8 +729,8 @@ export class PlayScene extends Phaser.Scene {
       return;
     }
     if (this.time.now < this.damageInvulnerableUntil) return;
-    this.damageInvulnerableUntil = this.time.now + HEALTH.invulnerabilityMs;
-    this.health = Phaser.Math.Clamp(this.health - damage, 0, HEALTH.overchargeMax);
+    this.damageInvulnerableUntil = this.time.now + this.difficulty.invulnerabilityMs;
+    this.health = Phaser.Math.Clamp(this.health - damage * this.difficulty.damageScale, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
     this.audio.hit();
 
@@ -722,6 +782,7 @@ export class PlayScene extends Phaser.Scene {
     this.dog.rest();
     this.pauseButton.setVisible(false);
     this.pauseButtonText.setVisible(false);
+    this.modeTag.setVisible(false);
     this.openingHint.setVisible(false);
     this.finaleElapsedMs = 0;
     this.finaleDogStartX = this.dog.sprite.x;
@@ -808,7 +869,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   spawnObstacle() {
-    const easyStart = this.elapsed < SPAWN_RHYTHM.easyStartSeconds;
+    const easyStart = this.elapsed < this.difficulty.easyStartSeconds;
     const isFirst = !this.firstObstacleSpawned;
     const obstacle = new Obstacle(
       this,
@@ -826,7 +887,7 @@ export class PlayScene extends Phaser.Scene {
 
   scheduleNextObstacleSpawn(time, ramp) {
     let gap;
-    if (this.elapsed < SPAWN_RHYTHM.easyStartSeconds) {
+    if (this.elapsed < this.difficulty.easyStartSeconds) {
       this.clusterSpawnsRemaining = 0;
       gap = Phaser.Math.Between(SPAWN_RHYTHM.easyGapMinMs, SPAWN_RHYTHM.easyGapMaxMs);
     } else if (this.clusterSpawnsRemaining > 0) {
@@ -851,7 +912,7 @@ export class PlayScene extends Phaser.Scene {
 
     // Preserve reaction time as speed rises without flattening the authored
     // cluster/lull contrast.
-    this.nextSpawnAt = time + gap - ramp * 100;
+    this.nextSpawnAt = time + gap * this.difficulty.spawnGapScale - ramp * 100;
   }
 
   registerEntity(entity, group) {
@@ -870,6 +931,32 @@ export class PlayScene extends Phaser.Scene {
 
   spawnZoomiesPickup() {
     this.registerEntity(new ZoomiesPickup(this, this.scrollSpeed), this.pickupGroup);
+  }
+
+  toggleDifficulty() {
+    if (this.state !== 'ready') return;
+    this.difficultyKey = this.difficultyKey === 'easy' ? 'normal' : 'easy';
+    this.difficulty = DIFFICULTY[this.difficultyKey];
+    saveDifficultyKey(this.difficultyKey);
+    this.refreshDifficultyUi();
+  }
+
+  refreshDifficultyUi() {
+    const easy = this.difficultyKey === 'easy';
+    this.modeButtonText.setText(`MODE: ${this.difficulty.label}   (E / TAP TO CHANGE)`);
+    this.modeButton.setStrokeStyle(2, easy ? 0x7fe3c4 : 0xf2c14e, 0.9);
+    this.modeButtonText.setColor(easy ? '#7fe3c4' : '#f2c14e');
+    this.modeTag.setText(easy ? 'NICOLE MODE' : '');
+  }
+
+  // Gaps between birds and between power-ups, stretched or tightened by the
+  // chosen difficulty.
+  birdGap(minMs, maxMs) {
+    return Phaser.Math.Between(minMs, maxMs) * this.difficulty.birdGapScale;
+  }
+
+  pickupGap(minMs, maxMs) {
+    return Phaser.Math.Between(minMs, maxMs) * this.difficulty.pickupGapScale;
   }
 
   spawnBarkBlastPickup() {
@@ -1297,7 +1384,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.storm.active && this.elapsed >= STORM.endSeconds) this.storm.stop();
     this.storm.update(time, delta);
     this.health = Phaser.Math.Clamp(
-      this.health - HEALTH.drainPerSecond * (delta / 1000),
+      this.health - HEALTH.drainPerSecond * this.difficulty.drainScale * (delta / 1000),
       0,
       HEALTH.overchargeMax
     );
@@ -1316,7 +1403,7 @@ export class PlayScene extends Phaser.Scene {
       WORLD.baseScrollSpeed,
       WORLD.maxScrollSpeed,
       ramp
-    );
+    ) * this.difficulty.speedScale;
     this.scrollSpeed = paceSpeed * this.momentumFactor * this.updateCoffee(time, delta);
     // Obstacles are spaced by spawn time, so hold the next spawn back in step
     // with the slowed world to keep their spacing on the ground unchanged.
@@ -1381,15 +1468,15 @@ export class PlayScene extends Phaser.Scene {
 
     if (time > this.nextPigeonAt && this.canSpawnBird()) {
       this.spawnBird(Pigeon);
-      this.nextPigeonAt = time + Phaser.Math.Between(11000, 19000);
+      this.nextPigeonAt = time + this.birdGap(11000, 19000);
     }
     if (time > this.nextCrowAt && this.canSpawnBird()) {
       this.spawnBird(Crow);
-      this.nextCrowAt = time + Phaser.Math.Between(12000, 20000);
+      this.nextCrowAt = time + this.birdGap(12000, 20000);
     }
     if (time > this.nextSeagullAt && this.canSpawnBird()) {
       this.spawnBird(Seagull);
-      this.nextSeagullAt = time + Phaser.Math.Between(60000, 100000);
+      this.nextSeagullAt = time + this.birdGap(60000, 100000);
     }
     if (
       this.elapsed < FINALE_START_SECONDS - 12 &&
@@ -1397,7 +1484,7 @@ export class PlayScene extends Phaser.Scene {
       this.pickupGroup.countActive(true) === 0
     ) {
       this.spawnSneakerBoost();
-      this.nextSneakerAt = time + Phaser.Math.Between(
+      this.nextSneakerAt = time + this.pickupGap(
         SNEAKER_BOOST.respawnMinMs,
         SNEAKER_BOOST.respawnMaxMs
       );
@@ -1408,7 +1495,7 @@ export class PlayScene extends Phaser.Scene {
       this.pickupGroup.countActive(true) === 0
     ) {
       this.spawnZoomiesPickup();
-      this.nextZoomiesAt = time + Phaser.Math.Between(ZOOMIES.respawnMinMs, ZOOMIES.respawnMaxMs);
+      this.nextZoomiesAt = time + this.pickupGap(ZOOMIES.respawnMinMs, ZOOMIES.respawnMaxMs);
     }
     if (
       this.elapsed < FINALE_START_SECONDS - 12 &&
@@ -1416,7 +1503,7 @@ export class PlayScene extends Phaser.Scene {
       this.pickupGroup.countActive(true) === 0
     ) {
       this.spawnBarkBlastPickup();
-      this.nextBarkBlastAt = time + Phaser.Math.Between(BARK_BLAST.respawnMinMs, BARK_BLAST.respawnMaxMs);
+      this.nextBarkBlastAt = time + this.pickupGap(BARK_BLAST.respawnMinMs, BARK_BLAST.respawnMaxMs);
     }
     if (
       this.elapsed < FINALE_START_SECONDS - 12 &&
@@ -1424,7 +1511,7 @@ export class PlayScene extends Phaser.Scene {
       this.pickupGroup.countActive(true) === 0
     ) {
       this.spawnCoffeePickup();
-      this.nextCoffeeAt = time + Phaser.Math.Between(COFFEE.respawnMinMs, COFFEE.respawnMaxMs);
+      this.nextCoffeeAt = time + this.pickupGap(COFFEE.respawnMinMs, COFFEE.respawnMaxMs);
     }
     if (
       this.elapsed < FINALE_START_SECONDS - 12 &&
@@ -1432,7 +1519,7 @@ export class PlayScene extends Phaser.Scene {
       this.pickupGroup.countActive(true) === 0
     ) {
       this.spawnPinkStarPickup();
-      this.nextPinkStarAt = time + Phaser.Math.Between(PINK_STAR.respawnMinMs, PINK_STAR.respawnMaxMs);
+      this.nextPinkStarAt = time + this.pickupGap(PINK_STAR.respawnMinMs, PINK_STAR.respawnMaxMs);
     }
   }
 }

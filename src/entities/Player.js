@@ -73,7 +73,7 @@ export class Player extends Entity {
     // A slightly early press near landing is remembered instead of lost.
     // Rising presses remain reserved for the explicit power-jump input.
     if (!this.recovering && this.sprite.body.velocity.y >= 0) {
-      this.jumpBufferUntil = now + PLAYER.jumpBufferMs;
+      this.jumpBufferUntil = now + this.scene.difficulty.jumpBufferMs;
     }
     return false;
   }
@@ -104,7 +104,7 @@ export class Player extends Entity {
     if (this.recovering) return;
     const now = this.scene.time.now;
     if (this._isOnGround) {
-      this.coyoteUntil = now + PLAYER.coyoteTimeMs;
+      this.coyoteUntil = now + this.scene.difficulty.coyoteTimeMs;
       if (this.jumpBufferUntil >= now) {
         this._startJump();
         this.scene.onBufferedPlayerJump?.();

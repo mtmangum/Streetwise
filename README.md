@@ -33,6 +33,7 @@ a legibility note and status on each. It ships with the site build.
 - **Space / click / tap** — jump immediately, or start/restart the game
 - **Double-tap** — power jump when the power meter is ready
 - **P / Escape / Pause button** — pause or resume
+- **E / mode button (start screen)** — switch between Normal and Easy (Nicole) mode; the choice is remembered
 
 ## Project structure
 
@@ -127,6 +128,7 @@ If you rename the repo, update `base` in `vite.config.js` to match.
 - [x] 8-bit soundtrack and sound effects
 - [x] Power jump with aerial rewards and hazards
 - [x] Pause/resume controls
+- [x] Easy (Nicole) mode: slower world, wider obstacle spacing, softer hits
 - [x] Stella's Protective Leap (one crow dive intercepted per run)
 - [x] Coffee power-up (slows the world for five seconds)
 - [x] Stella Bark Blast power-up (scares off birds, cats, rats and cops on screen)
