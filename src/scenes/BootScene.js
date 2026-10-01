@@ -88,6 +88,7 @@ export class BootScene extends Phaser.Scene {
     this.drawPinkSneakerPickup();
     this.drawZoomiesTreat();
     this.drawPinkStarPickup();
+    this.drawCoffeePickup();
     this.drawPigeonFrame('pigeon-fly0', 0);
     this.drawPigeonFrame('pigeon-fly1', 1);
     this.drawPigeonFrame('pigeon-fly2', 2);
@@ -730,6 +731,24 @@ export class BootScene extends Phaser.Scene {
       [9,9,12,1,HI],[9,13,12,1,D],
       // Baked dimples make it unmistakably edible rather than a bone icon.
       [11,10,2,2,D],[16,11,2,2,D],[20,9,1,1,O]
+    ]);
+  }
+
+  drawCoffeePickup() {
+    const O=0x3a2314,CUP=0xf3ead8,CUPD=0xd2c4aa,LID=0x5a3a24,LIDL=0x8a5a38,
+      KRAFT=0xc98a3f,KRAFTL=0xe8b062,STEAM=0xe6e1d8,GOLD=0xffe66b,CY=0x63efff;
+    this.drawObstacleTexture('pickup-coffee',24,24,[
+      // Two curls of steam rising off the lid.
+      [8,0,1,2,STEAM],[9,2,1,2,STEAM],[8,3,1,1,STEAM],[14,0,1,2,STEAM],[13,2,1,2,STEAM],[14,3,1,1,STEAM],
+      // Tapered paper cup: outline first, then cup, then the kraft sleeve.
+      [4,7,16,3,O],[5,10,14,3,O],[6,13,12,4,O],[7,17,10,5,O],
+      [5,9,14,1,CUP],[6,10,12,3,CUP],[7,13,10,4,CUP],[8,17,8,4,CUP],
+      [17,10,1,3,CUPD],[16,13,1,4,CUPD],[15,17,1,4,CUPD],
+      [6,12,12,6,O],[7,13,10,4,KRAFT],[8,13,5,2,KRAFTL],[16,14,1,3,0xa8702d],
+      // Dark lid with a lighter rim and sip hole.
+      [3,5,18,3,O],[4,5,16,2,LID],[5,5,8,1,LIDL],[14,6,3,1,O],
+      // Sparkle glints so it reads as a collectible.
+      [1,10,1,3,GOLD],[0,11,3,1,GOLD],[22,13,1,3,CY],[21,14,3,1,CY]
     ]);
   }
 

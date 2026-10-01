@@ -178,6 +178,24 @@ export class ChiptuneAudio {
     this.tone(660, 0.16, 0.04, 'square', 180, 0.05);
   }
 
+  coffee() {
+    // A sip, then the beat drops: notes sliding down into a slower groove.
+    [76, 72, 67, 64].forEach((note, i) =>
+      this.tone(midiToHz(note), 0.14, 0.05, 'triangle', midiToHz(note - 2), i * 0.07)
+    );
+  }
+
+  coffeeEnd() {
+    [64, 67, 72].forEach((note, i) =>
+      this.tone(midiToHz(note), 0.08, 0.04, 'square', null, i * 0.05)
+    );
+  }
+
+  // Dragging the music clock slows the whole loop without touching its notes.
+  setMusicTempo(scale) {
+    if (this.musicEvent) this.musicEvent.timeScale = scale;
+  }
+
   thunder() {
     this.tone(72, 0.7, 0.11, 'sawtooth', 34);
     this.tone(49, 0.9, 0.08, 'triangle', 29, 0.08);

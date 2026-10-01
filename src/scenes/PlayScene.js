@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, PINK_STAR, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, PINK_STAR, COFFEE, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -12,6 +12,7 @@ import { Storm } from '../entities/Storm.js';
 import { SneakerBoost } from '../entities/SneakerBoost.js';
 import { ZoomiesPickup } from '../entities/ZoomiesPickup.js';
 import { PinkStarPickup } from '../entities/PinkStarPickup.js';
+import { CoffeePickup } from '../entities/CoffeePickup.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 import { ChiptuneAudio } from '../audio/ChiptuneAudio.js';
@@ -48,6 +49,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextSneakerAt = Infinity;
     this.nextZoomiesAt = Infinity;
     this.nextPinkStarAt = Infinity;
+    this.nextCoffeeAt = Infinity;
     this.lastObstacleFamily = null;
     this.firstObstacleSpawned = false;
     this.firstObstacleHintShown = false;
@@ -68,6 +70,9 @@ export class PlayScene extends Phaser.Scene {
     this.pinkStarUntil = 0;
     this.nextPinkStarSparkAt = 0;
     this.protectiveLeapUsed = false;
+    this.coffeeUntil = 0;
+    this.coffeeFactor = 1;
+    this.nextCoffeePuffAt = 0;
     this.audio = new ChiptuneAudio(this);
 
     this.parallax = new Parallax(this);
@@ -89,6 +94,10 @@ export class PlayScene extends Phaser.Scene {
       () => this.scheduleDogJump()
     );
     this.storm = new Storm(this);
+    this.coffeeTint = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0xffa640, 1)
+      .setOrigin(0, 0)
+      .setDepth(19)
+      .setAlpha(0);
 
     // Every non-player game object lives here. PlayScene doesn't care what
     // type each one is — it just calls entity.update() on all of them.
@@ -318,6 +327,10 @@ export class PlayScene extends Phaser.Scene {
         if (this.state === 'ready') this.startRun();
         if (this.state === 'running') this.activateZoomies(this.dog.sprite.x, this.dog.sprite.y - 25);
       });
+      this.input.keyboard.on('keydown-C', () => {
+        if (this.state === 'ready') this.startRun();
+        if (this.state === 'running') this.activateCoffee(this.player.sprite.x, this.player.sprite.y - 45);
+      });
       this.input.keyboard.on('keydown-I', () => {
         if (this.state === 'ready') this.startRun();
         if (this.state === 'running') this.activatePinkStar(this.player.sprite.x, this.player.sprite.y - 45);
@@ -411,6 +424,10 @@ export class PlayScene extends Phaser.Scene {
     this.nextPinkStarAt = this.time.now + Phaser.Math.Between(
       PINK_STAR.firstSpawnMinMs,
       PINK_STAR.firstSpawnMaxMs
+    );
+    this.nextCoffeeAt = this.time.now + Phaser.Math.Between(
+      COFFEE.firstSpawnMinMs,
+      COFFEE.firstSpawnMaxMs
     );
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
@@ -670,6 +687,7 @@ export class PlayScene extends Phaser.Scene {
     this.jumpController.resetInput();
     this.audio.stop();
     this.audio.gameOver();
+    this.clearCoffee();
     this.physics.pause();
     this.dog.rest();
     this.overlayTitle.setText('RUN OVER');
@@ -684,6 +702,7 @@ export class PlayScene extends Phaser.Scene {
     this.state = 'ending';
     this.jumpController.resetInput();
     this.audio.setScene('day');
+    this.clearCoffee();
     this.entities.forEach((entity) => entity.destroy());
     this.entities.length = 0;
     this.player.sprite.body.setVelocity(0, 0);
@@ -843,8 +862,67 @@ export class PlayScene extends Phaser.Scene {
     this.registerEntity(new ZoomiesPickup(this, this.scrollSpeed), this.pickupGroup);
   }
 
+  spawnCoffeePickup() {
+    this.registerEntity(new CoffeePickup(this, this.scrollSpeed), this.pickupGroup);
+  }
+
   spawnPinkStarPickup() {
     this.registerEntity(new PinkStarPickup(this, this.scrollSpeed), this.pickupGroup);
+  }
+
+  activateCoffee(x, y) {
+    this.coffeeUntil = Math.max(this.coffeeUntil, this.time.now + COFFEE.durationMs);
+    this.audio.coffee();
+    this.showControlHint('COFFEE!', 'THE WORLD SLOWS DOWN FOR NICOLE');
+    this.emitCoffeeSteam(x, y, 8);
+  }
+
+  clearCoffee() {
+    this.coffeeUntil = 0;
+    this.coffeeFactor = 1;
+    this.coffeeTint.setAlpha(0);
+    this.audio.setMusicTempo(1);
+  }
+
+  emitCoffeeSteam(x, y, count) {
+    for (let i = 0; i < count; i++) {
+      const puff = this.add.circle(x + Phaser.Math.Between(-10, 10), y, Phaser.Math.Between(2, 4), 0xf0e6d6, 0.8)
+        .setDepth(17);
+      this.tweens.add({
+        targets: puff,
+        x: puff.x + Phaser.Math.Between(-14, 14),
+        y: y - Phaser.Math.Between(28, 60),
+        scale: 2.2,
+        alpha: 0,
+        duration: Phaser.Math.Between(600, 1000),
+        onComplete: () => puff.destroy()
+      });
+    }
+  }
+
+  // Eases the world's speed toward COFFEE.slowFactor while the drink lasts and
+  // returns the multiplier to apply to this frame's scroll speed.
+  updateCoffee(time, delta) {
+    const active = time < this.coffeeUntil;
+    const wasSlowed = this.coffeeFactor < 1;
+    const step = ((1 - COFFEE.slowFactor) * delta) / COFFEE.easeMs;
+    this.coffeeFactor = active
+      ? Math.max(COFFEE.slowFactor, this.coffeeFactor - step)
+      : Math.min(1, this.coffeeFactor + step);
+    if (!active && wasSlowed && this.coffeeFactor >= 1) this.audio.coffeeEnd();
+    this.audio.setMusicTempo(1 / (1 + (1 - this.coffeeFactor)));
+
+    const intensity = (1 - this.coffeeFactor) / (1 - COFFEE.slowFactor);
+    // Warm amber wash over the street; it flickers through the final second
+    // so the effect ending isn't a surprise.
+    const warning = active && this.coffeeUntil - time < 1000 ? 0.5 + 0.5 * Math.sin(time * 0.03) : 1;
+    this.coffeeTint.setAlpha(0.13 * intensity * warning);
+
+    if (active && time >= this.nextCoffeePuffAt) {
+      this.nextCoffeePuffAt = time + 380;
+      this.emitCoffeeSteam(this.player.sprite.x + 14, this.player.sprite.y - 62, 1);
+    }
+    return this.coffeeFactor;
   }
 
   activatePinkStar(x, y) {
@@ -1148,7 +1226,10 @@ export class PlayScene extends Phaser.Scene {
       WORLD.maxScrollSpeed,
       ramp
     );
-    this.scrollSpeed = paceSpeed * this.momentumFactor;
+    this.scrollSpeed = paceSpeed * this.momentumFactor * this.updateCoffee(time, delta);
+    // Obstacles are spaced by spawn time, so hold the next spawn back in step
+    // with the slowed world to keep their spacing on the ground unchanged.
+    this.nextSpawnAt += delta * (1 - this.coffeeFactor);
 
     this.dayPhase = this.elapsed >= DAWN.startSeconds
       ? 1 - Phaser.Math.Clamp(
@@ -1237,6 +1318,14 @@ export class PlayScene extends Phaser.Scene {
     ) {
       this.spawnZoomiesPickup();
       this.nextZoomiesAt = time + Phaser.Math.Between(ZOOMIES.respawnMinMs, ZOOMIES.respawnMaxMs);
+    }
+    if (
+      this.elapsed < FINALE_START_SECONDS - 12 &&
+      time > this.nextCoffeeAt &&
+      this.pickupGroup.countActive(true) === 0
+    ) {
+      this.spawnCoffeePickup();
+      this.nextCoffeeAt = time + Phaser.Math.Between(COFFEE.respawnMinMs, COFFEE.respawnMaxMs);
     }
     if (
       this.elapsed < FINALE_START_SECONDS - 12 &&

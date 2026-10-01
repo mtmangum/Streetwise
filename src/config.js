@@ -198,6 +198,18 @@ export const ZOOMIES = {
   respawnMaxMs: 70000
 };
 
+// Coffee: the world scrolls at slowFactor of its normal speed for a while,
+// while Nicole's own jump physics stay untouched.
+export const COFFEE = {
+  durationMs: 5000,
+  slowFactor: 0.5,
+  easeMs: 350,
+  firstSpawnMinMs: 30000,
+  firstSpawnMaxMs: 46000,
+  respawnMinMs: 55000,
+  respawnMaxMs: 75000
+};
+
 export const PINK_STAR = {
   durationMs: 7000,
   firstSpawnMinMs: 44000,

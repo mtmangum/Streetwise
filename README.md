@@ -128,4 +128,5 @@ If you rename the repo, update `base` in `vite.config.js` to match.
 - [x] Power jump with aerial rewards and hazards
 - [x] Pause/resume controls
 - [x] Stella's Protective Leap (one crow dive intercepted per run)
+- [x] Coffee power-up (slows the world for five seconds)
 - [ ] Local high-score storage (e.g. best dodge streak)
