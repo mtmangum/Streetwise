@@ -31,6 +31,11 @@ export class Storm {
       this.restyle(drop);
       return drop;
     });
+    // Faint white haze that thickens through the snow stage, as visibility drops.
+    this.haze = scene.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xe8f0f8, 1)
+      .setDepth(16)
+      .setAlpha(0);
     this.flash = scene.add
       .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0xddeaff, 1)
       .setDepth(18)
@@ -67,15 +72,17 @@ export class Storm {
       drop.setData('drift', 55);
       drop.setData('sway', 0);
     } else {
-      // Fat, slow flakes that wobble sideways as they fall.
-      const size = Phaser.Math.Between(3, 5);
+      // Big, wind-driven flakes in a range of sizes that wobble as they fall.
+      // The largest ones drift in front of Nicole for depth.
+      const size = Phaser.Math.Between(3, 7);
       drop.setSize(size, size);
       drop.setFillStyle(0xffffff, Phaser.Math.FloatBetween(0.7, 1));
       drop.setAngle(0);
-      drop.setData('fallSpeed', Phaser.Math.Between(45, 95));
-      drop.setData('drift', 28);
-      drop.setData('sway', Phaser.Math.FloatBetween(0.6, 1.6));
+      drop.setData('fallSpeed', Phaser.Math.Between(55, 130));
+      drop.setData('drift', Phaser.Math.Between(60, 130));
+      drop.setData('sway', Phaser.Math.FloatBetween(0.6, 1.8));
     }
+    drop.setDepth(roll >= rain + sleet && drop.width >= 5 ? 15 : 7);
   }
 
   start(time) {
@@ -83,10 +90,7 @@ export class Storm {
     this.hasStarted = true;
     this.active = true;
     this.progress = 0;
-    this.drops.forEach((drop) => {
-      this.restyle(drop);
-      drop.setVisible(true);
-    });
+    this.drops.forEach((drop) => this.restyle(drop));
     this.nextLightningAt = time + Phaser.Math.Between(2600, 5200);
   }
 
@@ -96,6 +100,7 @@ export class Storm {
     this.clearing = true;
     this.nextLightningAt = Infinity;
     this.flash.setAlpha(0);
+    this.scene.tweens.add({ targets: this.haze, alpha: 0, duration: 2400 });
     this.scene.tweens.add({
       targets: this.drops,
       alpha: 0,
@@ -120,15 +125,24 @@ export class Storm {
     }
     if (!this.active && !this.clearing) return;
     const seconds = delta / 1000;
+    const { rain, sleet, snow } = this.mix();
+    const activeCount = Math.round(rain * STORM.rainActive + sleet * STORM.sleetActive + snow * STORM.snowActive);
+    this.haze.setAlpha(this.active ? 0.26 * snow : this.haze.alpha);
+    this.drops.forEach((drop, index) => {
+      if (this.active) drop.setVisible(index < activeCount);
+    });
     for (const drop of this.drops) {
       drop.y += drop.getData('fallSpeed') * seconds;
       const sway = drop.getData('sway');
       drop.x -= drop.getData('drift') * seconds;
       if (sway) drop.x += Math.sin(time * 0.003 * sway + drop.y * 0.05) * 18 * seconds;
       if (drop.y > GAME_HEIGHT + 18 || drop.x < -12) {
-        drop.x = Phaser.Math.Between(20, GAME_WIDTH + 80);
-        drop.y = Phaser.Math.Between(-100, -10);
         this.restyle(drop);
+        // Start far enough to the right that wind-blown flakes still reach the
+        // right-hand side of the screen on their way down.
+        const reach = Math.min(500, drop.getData('drift') * (GAME_HEIGHT + 100) / drop.getData('fallSpeed'));
+        drop.x = Phaser.Math.Between(20, GAME_WIDTH + reach);
+        drop.y = Phaser.Math.Between(-100, -10);
       }
     }
     if (this.active && this.progress < STORM.lightningUntil && time >= this.nextLightningAt) {

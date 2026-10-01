@@ -92,7 +92,12 @@ export const DAY_CYCLE = {
 export const STORM = {
   startSeconds: 105,
   endSeconds: 135,
-  rainDropCount: 150,
+  // Particle pool size, and how many of them are in use at each stage: the
+  // rain and sleet stay moderate, and the snow stage is a proper blizzard.
+  rainDropCount: 480,
+  rainActive: 150,
+  sleetActive: 230,
+  snowActive: 480,
   rainEnd: 0.34,
   sleetEnd: 0.67,
   // Lightning and thunder only belong to the rain half of the storm.
