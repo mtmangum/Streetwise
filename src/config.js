@@ -94,10 +94,10 @@ export const STORM = {
   endSeconds: 135,
   // Particle pool size, and how many of them are in use at each stage: the
   // rain and sleet stay moderate, and the snow stage is a proper blizzard.
-  rainDropCount: 480,
+  rainDropCount: 320,
   rainActive: 150,
-  sleetActive: 230,
-  snowActive: 480,
+  sleetActive: 220,
+  snowActive: 320,
   rainEnd: 0.34,
   sleetEnd: 0.67,
   // Lightning and thunder only belong to the rain half of the storm.
