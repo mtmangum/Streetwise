@@ -33,7 +33,7 @@ a legibility note and status on each. It ships with the site build.
 - **Space / click / tap** — jump immediately, or start/restart the game
 - **Double-tap** — power jump when the power meter is ready
 - **P / Escape / Pause button** — pause or resume
-- **E / mode button (start screen)** — switch between Normal and Easy (Nicole) mode; the choice is remembered
+- **Start menu** — tap the Normal or Easy (Nicole) card to play in that mode, or use ← → / E to highlight one and Space / Enter to start; the choice is remembered
 
 ## Project structure
 

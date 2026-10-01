@@ -338,23 +338,62 @@ export class PlayScene extends Phaser.Scene {
       this.togglePause();
     });
 
-    // Difficulty picker on the start screen, and a small tag in the corner
-    // while an easier mode is in play.
-    this.modeButton = this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 100, 300, 30, 0x141b27, 0.94)
-      .setStrokeStyle(2, 0xf2c14e, 0.9)
-      .setDepth(30)
-      .setInteractive({ useHandCursor: true });
-    this.modeButtonText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 100, '', {
+    // Start menu: pick a mode by tapping its card. Tapping a card starts the
+    // run in that mode; Space / Enter starts whichever card is highlighted.
+    // The tag in the corner shows an easier mode is on during play.
+    const menuLeft = GAME_WIDTH / 2 - 210;
+    const menuTop = 50;
+    const menuPanel = this.add.graphics().setDepth(29);
+    menuPanel.fillStyle(0x05070c, 0.45);
+    menuPanel.fillRoundedRect(menuLeft + 4, menuTop + 5, 420, 240, 14);
+    menuPanel.fillStyle(0x121823, 0.96);
+    menuPanel.fillRoundedRect(menuLeft, menuTop, 420, 240, 14);
+    menuPanel.lineStyle(2, 0xe0752f, 0.9);
+    menuPanel.strokeRoundedRect(menuLeft, menuTop, 420, 240, 14);
+    menuPanel.fillStyle(0xf2c14e, 1);
+    menuPanel.fillRoundedRect(menuLeft + 18, menuTop + 13, 384, 3, 2);
+    const menuText = (x, y, text, size, color, extra = {}) => this.add
+      .text(x, y, text, {
         fontFamily: 'sans-serif',
-        fontSize: '12px',
+        fontSize: `${size}px`,
         fontStyle: 'bold',
         resolution: RENDER_SCALE,
-        color: '#f2c14e'
+        color,
+        stroke: '#090b10',
+        strokeThickness: 3,
+        align: 'center',
+        ...extra
       })
       .setOrigin(0.5)
       .setDepth(31);
+    this.menuItems = [
+      menuPanel,
+      menuText(GAME_WIDTH / 2, menuTop + 34, 'STREETWISE: NICOLE & STELLA', 19, '#f2c14e', { strokeThickness: 4 }),
+      menuText(GAME_WIDTH / 2, menuTop + 62, 'CHOOSE YOUR RUN', 12, '#9fb0c2'),
+      menuText(GAME_WIDTH / 2, menuTop + 172, 'TAP  —  JUMP        DOUBLE-TAP  —  POWER JUMP', 12, '#eef3f6'),
+      menuText(GAME_WIDTH / 2, menuTop + 190, 'POWER JUMP TO STRIKE BIRDS', 12, '#eef3f6'),
+      menuText(GAME_WIDTH / 2, menuTop + 218, 'TAP A MODE TO PLAY   ·   SPACE / ENTER STARTS THE HIGHLIGHTED ONE   ·   ← → CHOOSE', 9, '#7d8a99')
+    ];
+    this.modeCards = {};
+    [
+      { key: 'normal', x: GAME_WIDTH / 2 - 102, title: 'NORMAL', desc: 'FULL-SPEED STREET', accent: 0xf2c14e },
+      { key: 'easy', x: GAME_WIDTH / 2 + 102, title: 'EASY — NICOLE', desc: 'SLOWER  ·  GENTLER  ·  MORE TIME', accent: 0x7fe3c4 }
+    ].forEach((card) => {
+      const box = this.add
+        .rectangle(card.x, menuTop + 118, 196, 76, 0x141b27, 1)
+        .setDepth(30)
+        .setInteractive({ useHandCursor: true });
+      const title = menuText(card.x, menuTop + 102, card.title, 17, '#ffffff');
+      const desc = menuText(card.x, menuTop + 128, card.desc, 10, '#b9c6d3', { strokeThickness: 2 });
+      const play = menuText(card.x, menuTop + 148, '▶  PLAY', 11, '#ffffff', { strokeThickness: 2 });
+      box.on('pointerdown', (_pointer, _x, _y, event) => {
+        event?.stopPropagation();
+        this.setDifficulty(card.key);
+        this.handleInputDown();
+      });
+      this.modeCards[card.key] = { box, title, desc, play, accent: card.accent };
+      this.menuItems.push(box, title, desc, play);
+    });
     this.modeTag = this.add
       .text(GAME_WIDTH - 62, 46, '', {
         fontFamily: 'sans-serif',
@@ -367,10 +406,11 @@ export class PlayScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(30);
-    this.modeButton.on('pointerdown', (_pointer, _x, _y, event) => {
-      event?.stopPropagation();
-      this.toggleDifficulty();
-    });
+    // The menu replaces the default start panel; it comes back for game over
+    // and the finale, which reuse it.
+    this.overlayPanel.setVisible(false);
+    this.overlayTitle.setVisible(false);
+    this.overlayText.setVisible(false);
     this.refreshDifficultyUi();
 
     this.input.keyboard.on('keydown-SPACE', (event) => {
@@ -378,7 +418,12 @@ export class PlayScene extends Phaser.Scene {
     });
     this.input.keyboard.on('keyup-SPACE', () => this.handleInputUp());
     this.input.keyboard.on('keydown-P', () => this.togglePause());
-    this.input.keyboard.on('keydown-E', () => this.toggleDifficulty());
+    ['E', 'LEFT', 'RIGHT', 'UP', 'DOWN', 'A', 'D'].forEach((key) =>
+      this.input.keyboard.on(`keydown-${key}`, () => this.cycleDifficulty())
+    );
+    this.input.keyboard.on('keydown-ENTER', () => {
+      if (this.state === 'ready') this.handleInputDown();
+    });
     this.input.keyboard.on('keydown-ESC', () => this.togglePause());
     if (import.meta.env.DEV) {
       this.input.keyboard.on('keydown-F', () => this.skipToFinale());
@@ -399,7 +444,11 @@ export class PlayScene extends Phaser.Scene {
         if (this.state === 'running') this.activatePinkStar(this.player.sprite.x, this.player.sprite.y - 45);
       });
     }
-    this.input.on('pointerdown', () => this.handleInputDown());
+    // On the start screen only the mode cards start a run, so a stray tap
+    // can't begin one in a mode that wasn't chosen.
+    this.input.on('pointerdown', () => {
+      if (this.state !== 'ready') this.handleInputDown();
+    });
     this.input.on('pointerup', () => this.handleInputUp());
     this.input.on('pointerupoutside', () => this.handleInputUp());
   }
@@ -496,8 +545,7 @@ export class PlayScene extends Phaser.Scene {
       BARK_BLAST.firstSpawnMinMs,
       BARK_BLAST.firstSpawnMaxMs
     );
-    this.modeButton.setVisible(false);
-    this.modeButtonText.setVisible(false);
+    this.menuItems.forEach((item) => item.setVisible(false));
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
@@ -933,20 +981,30 @@ export class PlayScene extends Phaser.Scene {
     this.registerEntity(new ZoomiesPickup(this, this.scrollSpeed), this.pickupGroup);
   }
 
-  toggleDifficulty() {
-    if (this.state !== 'ready') return;
-    this.difficultyKey = this.difficultyKey === 'easy' ? 'normal' : 'easy';
-    this.difficulty = DIFFICULTY[this.difficultyKey];
-    saveDifficultyKey(this.difficultyKey);
+  setDifficulty(key) {
+    this.difficultyKey = key;
+    this.difficulty = DIFFICULTY[key];
+    saveDifficultyKey(key);
     this.refreshDifficultyUi();
   }
 
+  cycleDifficulty() {
+    if (this.state !== 'ready') return;
+    this.setDifficulty(this.difficultyKey === 'easy' ? 'normal' : 'easy');
+  }
+
+  // Highlights the chosen card and dims the other.
   refreshDifficultyUi() {
-    const easy = this.difficultyKey === 'easy';
-    this.modeButtonText.setText(`MODE: ${this.difficulty.label}   (E / TAP TO CHANGE)`);
-    this.modeButton.setStrokeStyle(2, easy ? 0x7fe3c4 : 0xf2c14e, 0.9);
-    this.modeButtonText.setColor(easy ? '#7fe3c4' : '#f2c14e');
-    this.modeTag.setText(easy ? 'NICOLE MODE' : '');
+    Object.entries(this.modeCards).forEach(([key, card]) => {
+      const selected = key === this.difficultyKey;
+      card.box
+        .setFillStyle(selected ? 0x1d2c3a : 0x141b27, 1)
+        .setStrokeStyle(selected ? 3 : 2, selected ? card.accent : 0x4a5566, 1);
+      card.title.setColor(selected ? '#ffffff' : '#8d99a8');
+      card.desc.setColor(selected ? '#d6e0ea' : '#6c7886');
+      card.play.setVisible(selected).setColor(selected ? `#${card.accent.toString(16).padStart(6, '0')}` : '#ffffff');
+    });
+    this.modeTag.setText(this.difficultyKey === 'easy' ? 'NICOLE MODE' : '');
   }
 
   // Gaps between birds and between power-ups, stretched or tightened by the
