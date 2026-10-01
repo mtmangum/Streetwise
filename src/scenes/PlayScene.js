@@ -343,20 +343,28 @@ export class PlayScene extends Phaser.Scene {
     // Start menu: pick a mode by tapping its card. Tapping a card starts the
     // run in that mode; Space / Enter starts whichever card is highlighted.
     // The tag in the corner shows an easier mode is on during play.
-    const menuLeft = GAME_WIDTH / 2 - 210;
-    const menuTop = 72;
-    const menuHeight = 190;
+    const menuWidth = 540;
+    const menuHeight = 200;
+    const menuLeft = (GAME_WIDTH - menuWidth) / 2;
+    const menuTop = 34;
+    // A dark veil quiets the health bar and scenery behind the menu so the
+    // two choices have room to breathe.
+    const veil = this.add
+      .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x05070c, 0.5)
+      .setOrigin(0, 0)
+      .setDepth(28);
     const menuPanel = this.add.graphics().setDepth(29);
     menuPanel.fillStyle(0x05070c, 0.45);
-    menuPanel.fillRoundedRect(menuLeft + 4, menuTop + 5, 420, menuHeight, 14);
-    menuPanel.fillStyle(0x121823, 0.96);
-    menuPanel.fillRoundedRect(menuLeft, menuTop, 420, menuHeight, 14);
+    menuPanel.fillRoundedRect(menuLeft + 4, menuTop + 5, menuWidth, menuHeight, 16);
+    menuPanel.fillStyle(0x121823, 0.97);
+    menuPanel.fillRoundedRect(menuLeft, menuTop, menuWidth, menuHeight, 16);
     menuPanel.lineStyle(3, 0xd94a4a, 1);
-    menuPanel.strokeRoundedRect(menuLeft, menuTop, 420, menuHeight, 14);
+    menuPanel.strokeRoundedRect(menuLeft, menuTop, menuWidth, menuHeight, 16);
     // Candy-stripe bar in Christmas red and green.
-    for (let x = 0; x < 384; x += 12) {
+    const stripeWidth = menuWidth - 48;
+    for (let x = 0; x < stripeWidth; x += 12) {
       menuPanel.fillStyle(x % 24 === 0 ? 0xd94a4a : 0x3fae6a, 1);
-      menuPanel.fillRect(menuLeft + 18 + x, menuTop + 13, 12, 4);
+      menuPanel.fillRect(menuLeft + 24 + x, menuTop + 16, Math.min(12, stripeWidth - x), 4);
     }
     const menuText = (x, y, text, size, color, extra = {}) => this.add
       .text(x, y, text, {
@@ -375,21 +383,24 @@ export class PlayScene extends Phaser.Scene {
     // Controls are taught in-game by the first-obstacle hints, so the menu is
     // just the title and the two choices.
     this.menuItems = [
+      veil,
       menuPanel,
-      menuText(GAME_WIDTH / 2, menuTop + 38, 'STREETWISE: NICOLE & STELLA', 20, '#f2c14e', { strokeThickness: 4 })
+      menuText(GAME_WIDTH / 2, menuTop + 46, 'STREETWISE: NICOLE & STELLA', 22, '#f2c14e', { strokeThickness: 4 })
     ];
     this.modeCards = {};
+    const cardWidth = 232;
+    const cardCenterY = menuTop + 128;
     [
-      { key: 'normal', x: GAME_WIDTH / 2 - 102, title: 'NORMAL', desc: 'FULL SPEED', accent: 0xf2c14e },
-      { key: 'easy', x: GAME_WIDTH / 2 + 102, title: 'EASY — NICOLE', desc: 'SLOWER & GENTLER', accent: 0x7fe3c4 }
+      { key: 'normal', x: GAME_WIDTH / 2 - 128, title: 'NORMAL', desc: 'FULL SPEED', accent: 0xf2c14e },
+      { key: 'easy', x: GAME_WIDTH / 2 + 128, title: 'EASY — NICOLE', desc: 'SLOWER & GENTLER', accent: 0x7fe3c4 }
     ].forEach((card) => {
       const box = this.add
-        .rectangle(card.x, menuTop + 118, 196, 96, 0x141b27, 1)
+        .rectangle(card.x, cardCenterY, cardWidth, 104, 0x141b27, 1)
         .setDepth(30)
         .setInteractive({ useHandCursor: true });
-      const title = menuText(card.x, menuTop + 92, card.title, 20, '#ffffff');
-      const desc = menuText(card.x, menuTop + 120, card.desc, 13, '#d6e0ea', { strokeThickness: 2 });
-      const play = menuText(card.x, menuTop + 146, '▶  PLAY', 14, '#ffffff', { strokeThickness: 2 });
+      const title = menuText(card.x, cardCenterY - 28, card.title, 22, '#ffffff');
+      const desc = menuText(card.x, cardCenterY + 2, card.desc, 14, '#d6e0ea', { strokeThickness: 2 });
+      const play = menuText(card.x, cardCenterY + 30, '▶  PLAY', 16, '#ffffff', { strokeThickness: 2 });
       box.on('pointerdown', (_pointer, _x, _y, event) => {
         event?.stopPropagation();
         this.setDifficulty(card.key);
@@ -411,7 +422,10 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(30);
     // The menu replaces the default start panel; it comes back for game over
-    // and the finale, which reuse it.
+    // and the finale, which reuse it. Pause and the mode tag only matter in play.
+    this.pauseButton.setVisible(false);
+    this.pauseButtonText.setVisible(false);
+    this.modeTag.setVisible(false);
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
@@ -551,6 +565,9 @@ export class PlayScene extends Phaser.Scene {
     );
     this.player.applyDifficulty(this.difficulty);
     this.menuItems.forEach((item) => item.setVisible(false));
+    this.pauseButton.setVisible(true);
+    this.pauseButtonText.setVisible(true);
+    this.modeTag.setVisible(true);
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
