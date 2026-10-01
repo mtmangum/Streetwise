@@ -992,20 +992,61 @@ export class BootScene extends Phaser.Scene {
         // Wreaths with a red bow on a couple of windows per building.
         this.windowCells(b).forEach((win, i) => {
           if ((i + wreathIndex) % 4 !== 0) return;
-          const cx = win.x + win.w / 2;
-          const cy = win.y + win.h / 2;
-          g.lineStyle(3, 0x2f9e4f, 1);
-          g.strokeCircle(cx, cy, Math.max(4, win.w * 0.62));
-          g.fillStyle(0xd62f3f, 1);
-          g.fillRect(cx - 2, cy + Math.max(4, win.w * 0.62) - 2, 5, 3);
-          g.fillStyle(0xffd54a, 1);
-          g.fillRect(cx - 1, cy - Math.max(4, win.w * 0.62) - 1, 2, 2);
+          this.drawWreath(g, win.x + win.w / 2, win.y + win.h / 2, Math.max(5, Math.round(win.w * 0.7)));
         });
         wreathIndex++;
       }
       g.generateTexture(`xmasLights${frame}`, PARALLAX.hillsNear.tileWidth, PARALLAX.hillsNear.height);
       g.destroy();
     });
+  }
+
+  // A pixel-art holly wreath hung on a window: a ring of mixed greens with
+  // lit highlights, red berries, a couple of gold ornaments and a ribbon bow
+  // with tails at the bottom. The leaf pattern comes from a hash of the pixel
+  // position, so every frame and every copy draws identically.
+  drawWreath(g, cx, cy, radius) {
+    const GREENS = [0x1f6e3a, 0x2a8a46, 0x2f9e4f, 0x4cc06a];
+    const RED = 0xd62f3f, RED_DARK = 0x9e1f2f, RED_LIGHT = 0xff7a85, GOLD = 0xffd54a;
+    const px = (x, y, w, h, color) => {
+      g.fillStyle(color, 1);
+      g.fillRect(Math.round(x), Math.round(y), w, h);
+    };
+    const thick = radius >= 8 ? 4 : 3;
+    const inner = radius - thick;
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const dist = Math.hypot(dx, dy);
+        if (dist > radius + 0.3 || dist < inner) continue;
+        const h = Math.abs((dx * 73856093) ^ (dy * 19349663)) % 6;
+        let tone = h < 2 ? 1 : h < 4 ? 2 : 3;
+        if (dist > radius - 0.8) tone = h < 3 ? 0 : 1;   // shadowed outer edge
+        else if (dx + dy < 0 && h > 2) tone = 3;           // lit upper-left
+        px(cx + dx, cy + dy, 1, 1, GREENS[tone]);
+      }
+    }
+    // Berries and ornaments set into the ring.
+    const mid = radius - thick / 2;
+    [[-0.9, RED], [0.35, RED], [2.4, RED]].forEach(([angle, color]) => {
+      const bx = cx + Math.cos(angle) * mid, by = cy + Math.sin(angle) * mid;
+      px(bx - 1, by - 1, 2, 2, color);
+      px(bx - 1, by - 1, 1, 1, RED_LIGHT);
+    });
+    [[-2.2], [1.6]].forEach(([angle]) => {
+      px(cx + Math.cos(angle) * mid, cy + Math.sin(angle) * mid, 1, 1, GOLD);
+    });
+    // Ribbon bow with tails across the bottom of the ring.
+    const by = cy + radius - 1;
+    px(cx - 5, by - 2, 4, 4, RED_DARK);
+    px(cx - 4, by - 1, 3, 3, RED);
+    px(cx + 2, by - 2, 4, 4, RED_DARK);
+    px(cx + 2, by - 1, 3, 3, RED);
+    px(cx - 1, by - 1, 3, 3, RED_DARK);
+    px(cx, by, 1, 1, RED_LIGHT);
+    px(cx - 2, by + 2, 2, 4, RED);
+    px(cx + 1, by + 2, 2, 4, RED);
+    px(cx - 2, by + 5, 1, 1, RED_DARK);
+    px(cx + 2, by + 5, 1, 1, RED_DARK);
   }
 
   drawParkedCarsTexture(key, tileWidth, tileHeight) {
