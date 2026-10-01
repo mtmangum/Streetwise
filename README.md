@@ -129,4 +129,5 @@ If you rename the repo, update `base` in `vite.config.js` to match.
 - [x] Pause/resume controls
 - [x] Stella's Protective Leap (one crow dive intercepted per run)
 - [x] Coffee power-up (slows the world for five seconds)
+- [x] Stella Bark Blast power-up (scares off birds, cats, rats and cops on screen)
 - [ ] Local high-score storage (e.g. best dodge streak)

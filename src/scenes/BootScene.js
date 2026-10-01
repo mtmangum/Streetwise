@@ -90,6 +90,7 @@ export class BootScene extends Phaser.Scene {
     this.drawZoomiesTreat();
     this.drawPinkStarPickup();
     this.drawCoffeePickup();
+    this.drawBarkBlastPickup();
     this.drawPigeonFrame('pigeon-fly0', 0);
     this.drawPigeonFrame('pigeon-fly1', 1);
     this.drawPigeonFrame('pigeon-fly2', 2);
@@ -753,6 +754,23 @@ export class BootScene extends Phaser.Scene {
       [9,9,12,1,HI],[9,13,12,1,D],
       // Baked dimples make it unmistakably edible rather than a bone icon.
       [11,10,2,2,D],[16,11,2,2,D],[20,9,1,1,O]
+    ]);
+  }
+
+  // A speech bubble with Stella's paw print inside and sound-wave arcs: reads
+  // as "bark" and stays distinct from the bone-shaped zoomies treat.
+  drawBarkBlastPickup() {
+    const O=0x5a2a0a,Y=0xffd166,YL=0xffec9e,PAW=0xa5521a,PAWD=0x7a3a10,CY=0x63efff,PINK=0xff4b9b;
+    this.drawObstacleTexture('pickup-bark-blast',24,24,[
+      // Rounded bubble outline, then fill, with a tail pointing down-left.
+      [5,1,14,14,O],[2,3,20,10,O],[3,2,18,12,O],
+      [6,2,12,12,Y],[3,4,18,8,Y],[4,3,16,10,Y],[4,3,8,1,YL],
+      [5,15,6,3,O],[4,17,4,3,O],[6,15,3,2,Y],[5,17,2,1,Y],
+      // Paw print: four toes above one wide pad.
+      [6,6,2,3,PAW],[9,4,2,3,PAW],[13,4,2,3,PAW],[16,6,2,3,PAW],
+      [8,9,8,4,PAW],[9,8,6,5,PAW],[9,12,6,1,PAWD],
+      // Sound-wave glints in the usual cyan/pink collectible sparkle.
+      [22,0,1,3,CY],[21,1,3,1,CY],[0,10,1,3,PINK],[0,11,3,1,PINK],[21,17,1,3,CY],[20,18,3,1,CY]
     ]);
   }
 

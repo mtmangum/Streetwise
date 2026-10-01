@@ -1,5 +1,6 @@
 import { Entity } from './Entity.js';
 import { GAME_WIDTH, PLAYER } from '../config.js';
+import { flyAwayFrightened } from './birdScare.js';
 
 // Hostile city bird. Most cross at a low, jumpable height; occasionally one
 // approaches overhead, dive-bombs Nicole, and pulls up after passing her.
@@ -42,9 +43,18 @@ export class Crow extends Entity {
     this.sprite.setVelocity(210 + Math.random() * 60, -(190 + Math.random() * 60));
   }
 
+  // Stella's bark: the crow bolts instead of tumbling, and stops being a threat.
+  barkAway() {
+    if (!this.alive || this.knocked) return false;
+    this.knocked = true;
+    this.flightPhase = 'knocked';
+    flyAwayFrightened(this);
+    return true;
+  }
+
   onUpdate(_time, delta) {
     if (this.knocked) {
-      this.sprite.angle += delta * 0.9;
+      if (!this.scared) this.sprite.angle += delta * 0.9;
       if (this.sprite.x > GAME_WIDTH + 55 || this.sprite.y < -55) this.destroy();
       return;
     }

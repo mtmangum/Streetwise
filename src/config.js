@@ -210,6 +210,18 @@ export const COFFEE = {
   respawnMaxMs: 75000
 };
 
+// Stella Bark Blast: one bark that sends the screen's birds, cats, rats and
+// cops running. The shockwave travels outward from her at ringSpeed (px/ms),
+// and each animal bolts as it reaches them.
+export const BARK_BLAST = {
+  poseMs: 900,
+  ringSpeed: 0.85,
+  firstSpawnMinMs: 38000,
+  firstSpawnMaxMs: 54000,
+  respawnMinMs: 62000,
+  respawnMaxMs: 82000
+};
+
 export const PINK_STAR = {
   durationMs: 7000,
   firstSpawnMinMs: 44000,

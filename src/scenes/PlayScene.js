@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, PINK_STAR, COFFEE, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, GROUND_Y, RENDER_SCALE, PLAYER, WORLD, SPAWN_RHYTHM, HEALTH, SNEAKER_BOOST, ZOOMIES, PINK_STAR, COFFEE, BARK_BLAST, DAY_CYCLE, DOG, STORM, DAWN } from '../config.js';
 import { Player } from '../entities/Player.js';
 import { Obstacle } from '../entities/Obstacle.js';
 import { Ground } from '../entities/Ground.js';
@@ -13,6 +13,7 @@ import { SneakerBoost } from '../entities/SneakerBoost.js';
 import { ZoomiesPickup } from '../entities/ZoomiesPickup.js';
 import { PinkStarPickup } from '../entities/PinkStarPickup.js';
 import { CoffeePickup } from '../entities/CoffeePickup.js';
+import { BarkBlastPickup } from '../entities/BarkBlastPickup.js';
 import { healthBarColor, OVERCHARGE_COLOR } from '../gfx/healthColor.js';
 import { dayNightPalette } from '../gfx/dayNightPalette.js';
 import { ChiptuneAudio } from '../audio/ChiptuneAudio.js';
@@ -50,6 +51,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextZoomiesAt = Infinity;
     this.nextPinkStarAt = Infinity;
     this.nextCoffeeAt = Infinity;
+    this.nextBarkBlastAt = Infinity;
     this.lastObstacleFamily = null;
     this.firstObstacleSpawned = false;
     this.firstObstacleHintShown = false;
@@ -327,6 +329,10 @@ export class PlayScene extends Phaser.Scene {
         if (this.state === 'ready') this.startRun();
         if (this.state === 'running') this.activateZoomies(this.dog.sprite.x, this.dog.sprite.y - 25);
       });
+      this.input.keyboard.on('keydown-B', () => {
+        if (this.state === 'ready') this.startRun();
+        if (this.state === 'running') this.activateBarkBlast();
+      });
       this.input.keyboard.on('keydown-C', () => {
         if (this.state === 'ready') this.startRun();
         if (this.state === 'running') this.activateCoffee(this.player.sprite.x, this.player.sprite.y - 45);
@@ -428,6 +434,10 @@ export class PlayScene extends Phaser.Scene {
     this.nextCoffeeAt = this.time.now + Phaser.Math.Between(
       COFFEE.firstSpawnMinMs,
       COFFEE.firstSpawnMaxMs
+    );
+    this.nextBarkBlastAt = this.time.now + Phaser.Math.Between(
+      BARK_BLAST.firstSpawnMinMs,
+      BARK_BLAST.firstSpawnMaxMs
     );
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
@@ -860,6 +870,66 @@ export class PlayScene extends Phaser.Scene {
 
   spawnZoomiesPickup() {
     this.registerEntity(new ZoomiesPickup(this, this.scrollSpeed), this.pickupGroup);
+  }
+
+  spawnBarkBlastPickup() {
+    this.registerEntity(new BarkBlastPickup(this, this.scrollSpeed), this.pickupGroup);
+  }
+
+  // Stella barks. A shockwave ring spreads from her head, and every bird, cat,
+  // rat and cop currently on screen bolts as it reaches them. Anything that
+  // spawns afterwards is unaffected.
+  activateBarkBlast() {
+    this.audio.barkBlast();
+    this.dog.bark();
+    const dogSprite = this.dog.sprite;
+    const originX = dogSprite.x + dogSprite.displayWidth * 0.9;
+    const originY = dogSprite.y - dogSprite.displayHeight * 0.65;
+    this.showControlHint('STELLA BARK BLAST!', 'BIRDS, CATS, RATS & COPS RUN FOR IT');
+    this.emitBarkShockwave(originX, originY);
+
+    const onScreen = this.entities.filter((entity) =>
+      entity.alive && entity.barkAway && entity.sprite.x > -20 && entity.sprite.x < GAME_WIDTH + 20
+    );
+    onScreen.forEach((entity) => {
+      const distance = Phaser.Math.Distance.Between(originX, originY, entity.sprite.x, entity.sprite.y);
+      this.time.delayedCall(distance / BARK_BLAST.ringSpeed, () => {
+        if (!entity.alive || this.state !== 'running') return;
+        if (entity.barkAway()) this.showZoomiesImpact(entity.sprite.x, entity.sprite.y, 5);
+      });
+    });
+  }
+
+  emitBarkShockwave(x, y) {
+    const colors = [0xffd166, 0xff8a3d, 0xffffff];
+    colors.forEach((color, i) => {
+      const ring = this.add.circle(x, y, 8).setStrokeStyle(3, color, 1).setFillStyle(color, 0).setDepth(18);
+      this.tweens.add({
+        targets: ring,
+        radius: 720,
+        alpha: 0,
+        delay: i * 90,
+        duration: 720 / BARK_BLAST.ringSpeed,
+        ease: 'Quad.easeOut',
+        onComplete: () => ring.destroy()
+      });
+    });
+    const woof = this.add.text(x + 6, y - 14, 'WOOF!', {
+      fontFamily: '"DotGothic16", monospace',
+      fontSize: '22px',
+      color: '#ffd166',
+      stroke: '#3a1d08',
+      strokeThickness: 4
+    }).setOrigin(0, 1).setDepth(19);
+    this.tweens.add({
+      targets: woof,
+      y: woof.y - 26,
+      alpha: 0,
+      scale: 1.25,
+      duration: 800,
+      ease: 'Quad.easeOut',
+      onComplete: () => woof.destroy()
+    });
   }
 
   spawnCoffeePickup() {
@@ -1339,6 +1409,14 @@ export class PlayScene extends Phaser.Scene {
     ) {
       this.spawnZoomiesPickup();
       this.nextZoomiesAt = time + Phaser.Math.Between(ZOOMIES.respawnMinMs, ZOOMIES.respawnMaxMs);
+    }
+    if (
+      this.elapsed < FINALE_START_SECONDS - 12 &&
+      time > this.nextBarkBlastAt &&
+      this.pickupGroup.countActive(true) === 0
+    ) {
+      this.spawnBarkBlastPickup();
+      this.nextBarkBlastAt = time + Phaser.Math.Between(BARK_BLAST.respawnMinMs, BARK_BLAST.respawnMaxMs);
     }
     if (
       this.elapsed < FINALE_START_SECONDS - 12 &&

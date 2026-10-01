@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GROUND_Y, PLAYER, DOG, ZOOMIES, PROTECTIVE_LEAP } from '../config.js';
+import { GAME_WIDTH, GROUND_Y, PLAYER, DOG, ZOOMIES, PROTECTIVE_LEAP, BARK_BLAST } from '../config.js';
 
 // Companion character with scripted jumps and street interactions. She has
 // no physics body, so these authored sequences can stay expressive without
@@ -30,10 +30,11 @@ export class Dog {
     this.zoomiesActive = false;
     this.zoomiesElapsed = 0;
     this.leap = null;
+    this.barkElapsed = null;
   }
 
   jump() {
-    if (this.jumping || this.leap || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return;
+    if (this.jumping || this.leap || this.barkElapsed !== null || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return;
     this.jumping = true;
     this.jumpT = 0;
     this.jumpStartX = this.sprite.x;
@@ -47,6 +48,7 @@ export class Dog {
     this.returning = false;
     this.zoomiesActive = false;
     this.leap = null;
+    this.barkElapsed = null;
     this.jumpT = 0;
     this.sprite.x = this.restX;
     this.sprite.y = GROUND_Y;
@@ -57,6 +59,7 @@ export class Dog {
 
   attackCop(cop) {
     if (this.attackTarget || this.leap || this.zoomiesActive || !cop?.alive) return;
+    this.barkElapsed = null;
     this.jumping = false;
     this.markingHydrant = false;
     this.returning = false;
@@ -91,6 +94,7 @@ export class Dog {
     const crowY = crow.sprite.y + vy * (contactMs / 1000);
 
     this.jumping = false;
+    this.barkElapsed = null;
     this.markingHydrant = false;
     this.returning = false;
     this.markingDrops.forEach((drop) => drop.setVisible(false));
@@ -152,8 +156,37 @@ export class Dog {
     }
   }
 
+  // Stella plants her feet and barks: the snapping head pose with a small
+  // recoil bob. Returns false (she just doesn't pose) while she is busy with
+  // something else; the blast itself still goes off from where she is.
+  bark() {
+    if (
+      this.jumping || this.leap || this.attackTarget || this.markingHydrant ||
+      this.returning || this.zoomiesActive || this.barkElapsed !== null
+    ) return false;
+    this.barkElapsed = 0;
+    this.barkX = this.sprite.x;
+    this.sprite.setFlipX(false).setDepth(11).setAngle(0);
+    this.sprite.anims.play('dog-attack', true);
+    return true;
+  }
+
+  updateBark(delta) {
+    this.barkElapsed += delta;
+    const bob = Math.abs(Math.sin(this.barkElapsed * 0.022));
+    this.sprite.y = GROUND_Y - bob * 4;
+    this.sprite.x = this.barkX - Math.max(0, Math.sin(this.barkElapsed * 0.011)) * 3;
+    this.sprite.anims.play('dog-attack', true);
+    if (this.barkElapsed >= BARK_BLAST.poseMs) {
+      this.barkElapsed = null;
+      this.sprite.x = this.barkX;
+      this.sprite.y = GROUND_Y;
+      this.sprite.setDepth(9);
+    }
+  }
+
   stopAtHydrant(scrollSpeed) {
-    if (this.jumping || this.leap || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return false;
+    if (this.jumping || this.leap || this.barkElapsed !== null || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return false;
     this.markingHydrant = true;
     this.markingElapsed = 0;
     this.markingScrollSpeed = scrollSpeed;
@@ -247,6 +280,7 @@ export class Dog {
   startZoomies() {
     this.jumping = false;
     this.leap = null;
+    this.barkElapsed = null;
     this.attackTarget = null;
     this.chasingCop = false;
     this.markingHydrant = false;
@@ -288,6 +322,8 @@ export class Dog {
       this.updateZoomies(delta);
     } else if (this.leap) {
       this.updateProtectiveLeap(delta);
+    } else if (this.barkElapsed !== null) {
+      this.updateBark(delta);
     } else if (this.attackTarget) {
       this.updateAttack(delta);
     } else if (this.markingHydrant) {

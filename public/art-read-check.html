@@ -245,7 +245,7 @@
   <div class="grid" id="grid-birds"></div>
 
   <h2 class="section" id="powerups">Power-ups</h2>
-  <p class="section-note">Floating collectibles with a timed effect: sneakers boost jumps (8 s), the zoomies treat sends Stella sprinting through small hazards and toppling carts (6.5 s), the pink star makes Nicole invulnerable (7 s), and coffee slows the world (5 s).</p>
+  <p class="section-note">Floating collectibles with a timed effect: sneakers boost jumps (8 s), the zoomies treat sends Stella sprinting through small hazards and toppling carts (6.5 s), the pink star makes Nicole invulnerable (7 s), coffee slows the world (5 s), and the bark blast sends birds, cats, rats and cops on screen running.</p>
   <div class="grid" id="grid-powerups"></div>
 
   <h2 class="section" id="cast">Cast</h2>
@@ -1068,6 +1068,15 @@
       ],
       draw:function(){var O="#3a2314",CUP="#f3ead8",CUPD="#d2c4aa",LID="#5a3a24",LIDL="#8a5a38",KRAFT="#c98a3f",KRAFTL="#e8b062",STEAM="#e6e1d8",GOLD="#ffe66b",CY="#63efff";
         return [[8,0,1,2,STEAM],[9,2,1,2,STEAM],[8,3,1,1,STEAM],[14,0,1,2,STEAM],[13,2,1,2,STEAM],[14,3,1,1,STEAM], [4,7,16,3,O],[5,10,14,3,O],[6,13,12,4,O],[7,17,10,5,O], [5,9,14,1,CUP],[6,10,12,3,CUP],[7,13,10,4,CUP],[8,17,8,4,CUP], [17,10,1,3,CUPD],[16,13,1,4,CUPD],[15,17,1,4,CUPD], [6,12,12,6,O],[7,13,10,4,KRAFT],[8,13,5,2,KRAFTL],[16,14,1,3,"#a8702d"], [3,5,18,3,O],[4,5,16,2,LID],[5,5,8,1,LIDL],[14,6,3,1,O], [1,10,1,3,GOLD],[0,11,3,1,GOLD],[22,13,1,3,CY],[21,14,3,1,CY]];}
+    },
+
+    { g:"power", name:"Stella Bark Blast", key:"pickup-bark-blast", tw:24, th:24, ingame:48, family:"pickup", verdict:"ok",
+      notes:[
+        "A yellow speech bubble with Stella's paw print inside and cyan/pink sound-wave glints — clearly \"bark\", and not another bone next to the zoomies treat.",
+        "Stella barks (her snapping attack frames, no new art) and a shockwave ring spreads out from her. Every bird, cat, rat and cop on screen bolts as it reaches them; each scared animal counts as a cleared obstacle."
+      ],
+      draw:function(){var O="#5a2a0a",Y="#ffd166",YL="#ffec9e",PAW="#a5521a",PAWD="#7a3a10",CY="#63efff",PINK="#ff4b9b";
+        return [[5,1,14,14,O],[2,3,20,10,O],[3,2,18,12,O], [6,2,12,12,Y],[3,4,18,8,Y],[4,3,16,10,Y],[4,3,8,1,YL], [5,15,6,3,O],[4,17,4,3,O],[6,15,3,2,Y],[5,17,2,1,Y], [6,6,2,3,PAW],[9,4,2,3,PAW],[13,4,2,3,PAW],[16,6,2,3,PAW], [8,9,8,4,PAW],[9,8,6,5,PAW],[9,12,6,1,PAWD], [22,0,1,3,CY],[21,1,3,1,CY],[0,10,1,3,PINK],[0,11,3,1,PINK],[21,17,1,3,CY],[20,18,3,1,CY]];}
     },
 
     { g:"birds", name:"Pigeon", key:"pigeon-fly0", tw:24, th:14, ingame:24, family:"pigeon", verdict:"ok", fps:9,

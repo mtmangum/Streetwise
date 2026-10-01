@@ -178,6 +178,13 @@ export class ChiptuneAudio {
     this.tone(660, 0.16, 0.04, 'square', 180, 0.05);
   }
 
+  barkBlast() {
+    // Two sharp yaps, then a rising shockwave sweep.
+    this.tone(420, 0.09, 0.08, 'sawtooth', 250);
+    this.tone(480, 0.09, 0.08, 'sawtooth', 280, 0.13);
+    this.tone(180, 0.5, 0.05, 'triangle', 900, 0.1);
+  }
+
   cartTopple() {
     this.tone(150, 0.12, 0.07, 'sawtooth', 70);
     this.tone(980, 0.05, 0.03, 'square', 620, 0.1);

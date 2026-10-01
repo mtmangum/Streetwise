@@ -12,6 +12,9 @@ const DOG_CLEARABLE_FAMILIES = new Set([
   'obstacle-cat', 'obstacle-sleeping', 'obstacle-boombox', 'obstacle-rats'
 ]);
 
+// Stella's bark sends these running.
+const BARK_SCAREABLE_FAMILIES = new Set(['obstacle-cat', 'obstacle-rats', 'obstacle-cop']);
+
 function dayWeight(phase) {
   if (phase <= DUSK_START) return 1;
   return 1 - (phase - DUSK_START) / (1 - DUSK_START);
@@ -165,6 +168,7 @@ export class Obstacle extends Entity {
     if (
       this.behavior === 'cat' &&
       !this.enraged &&
+      !this.fleeing &&
       this.sprite.x - PLAYER.startX < 300
     ) {
       this.enraged = true;
@@ -177,6 +181,7 @@ export class Obstacle extends Entity {
       this.chasesAfterAvoid &&
       !this.chasing &&
       !this.retiring &&
+      !this.fleeing &&
       this.sprite.x + this.sprite.displayWidth / 2 < PLAYER.startX
     ) {
       // Reaching Nicole's far side without colliding means she successfully
@@ -266,6 +271,26 @@ export class Obstacle extends Entity {
       ease: 'Bounce.easeOut'
     });
     this.scene.showCartTopple(sprite.x, GROUND_Y - 6);
+  }
+
+  // Stella's bark: cats, rats and cops turn tail and bolt off to the right.
+  // One not yet passed counts as cleared, so the scare is worth the same as a
+  // dodge.
+  barkAway() {
+    if (!this.alive || this.fleeing || !BARK_SCAREABLE_FAMILIES.has(this.family)) return false;
+    this.chasing = false;
+    this.retiring = false;
+    this.fleeing = true;
+    if (!this.rewarded) {
+      this.rewarded = true;
+      this.scene.onObstacleAvoided(this.sprite.x, this.sprite.y - this.sprite.displayHeight / 2, false);
+    }
+    this.sprite.body.setVelocity(0, 0);
+    this.sprite.body.enable = false;
+    this.sprite.setFlipX(true).setDepth(10);
+    if (this.behavior === 'cat') this.sprite.anims.play('obstacle-cat-run', true);
+    this.sprite.anims.timeScale = 1.8;
+    return true;
   }
 
   scareOff() {

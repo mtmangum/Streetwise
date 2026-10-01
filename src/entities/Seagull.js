@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { Entity } from './Entity.js';
 import { GAME_WIDTH } from '../config.js';
+import { flyAwayFrightened } from './birdScare.js';
 
 // Rare high-value target. Like the pigeon, it must be struck during a power
 // jump, but catching it restores Nicole's complete life-force bar.
@@ -19,12 +20,23 @@ export class Seagull extends Entity {
     this.setSpeed(speed);
   }
 
+  barkAway() {
+    if (!this.alive || this.scared) return false;
+    flyAwayFrightened(this);
+    return true;
+  }
+
   setSpeed(speed) {
+    if (this.scared) return;
     const magnitude = this.direction < 0 ? speed * 0.76 + 85 : speed * 0.48 + 58;
     this.sprite.setVelocityX(this.direction * magnitude);
   }
 
   onUpdate() {
+    if (this.scared) {
+      if (this.sprite.x > GAME_WIDTH + 65 || this.sprite.y < -40) this.destroy();
+      return;
+    }
     const player = this.scene.player;
     if (
       player?.hasSneakerBoost &&
@@ -42,7 +54,7 @@ export class Seagull extends Entity {
   }
 
   onCollide(player) {
-    if (!this.alive || !player.powerJumpUsed) return;
+    if (!this.alive || this.scared || !player.powerJumpUsed) return;
     this.scene.collectSeagull(this.sprite.x, this.sprite.y);
     this.destroy();
   }
