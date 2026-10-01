@@ -743,7 +743,7 @@
     { g:"night", name:"Running cat", key:"obstacle-cat0", tw:30, th:27, ingame:44, family:"cat", verdict:"ok", was:"Legs never moved",
       notes:[
         "Shipped: a real 4-frame gallop (obstacle-cat-run @ 10fps) — gather → airborne reach with the legs splayed fore/aft → front contact → back push-off, echoing Stella's double-suspension cycle.",
-        "The old arched pose is kept as obstacle-cat-hiss (2 frames) for the enraged charge when a cat spots Nicole. No texture size change.",
+        "The arched pose is kept as obstacle-cat-hiss (2 frames) for the enraged charge when a cat spots Nicole, now redrawn in profile to match the gallop. No texture size change.",
         "Animating here at 9fps."
       ],
       fps:5,
@@ -769,44 +769,37 @@
           [11,7,3,2,O],[17,7,3,2,O],[12,8,2,1,E],[17,8,2,1,E],[14,10,3,1,O],[13,11,2,2,W],[17,11,2,2,W],
           [4,22,6,4,O],[18,22,7,4,O],[5,22,5,2,D],[19,22,5,2,D]];}
       ,
-      v2:{ tw:30, th:27, ingame:44, verdict:"ok", fps:9,
-        frames:(function(){
-          function catRun(f){
+      v2:(function(){
+        function catRun(f){
             var O="#1d1b25",D="#34323e",M="#4a4852",L="#716d7b",E="#d9e04a",W="#f1e7d8";
             var by=[0,-1,1,-1][f];
-            var ext=[[7,21],[5,24],[6,22],[6,23]][f], x0=ext[0], x1=ext[1];
-            var core=[
-              [8,4+by,13,9,O],[9,2+by,4,3,O],[16,2+by,4,3,O],
-              [9,6+by,11,6,M],[10,6+by,3,2,L],
-              [11,8+by,2,2,O],[16,8+by,2,2,O],[12,8+by,2,1,E],[16,8+by,2,1,E],
-              [9,10+by,3,1,W],[10,12+by,4,1,W],
-              [x0,10+by,x1-x0,9,O],[x0+1,11+by,x1-x0-2,7,M],[x0+1,11+by,8,2,L],[x0+2,16+by,x1-x0-6,2,D]
+            var body=[
+              [9,10+by,15,8,O],[10,11+by,13,6,M],[11,11+by,8,2,L],[11,16+by,11,1,D]
+            ];
+            var head=[
+              [4,3+by,3,4,O],[8,2+by,3,5,O],[9,3+by,1,3,L],
+              [3,6+by,9,8,O],[4,7+by,7,6,M],[4,7+by,3,2,L],
+              [2,9+by,2,4,O],[2,10+by,2,2,W],[2,9+by,1,1,O],
+              [6,8+by,2,2,O],[6,8+by,2,1,E],[3,12+by,4,1,W]
             ];
             var tail=[
-              [[22,2,5,3,O],[24,3,3,9,O],[25,4,2,7,M]],
-              [[23,12,6,2,O],[27,11,3,2,O],[28,10,2,2,O],[24,13,4,1,M]],
-              [[23,7,4,7,O],[24,8,3,6,M],[25,4,3,4,O]],
-              [[22,3,5,3,O],[23,4,3,10,O],[24,5,2,8,M]]
+              [[24,9,3,3,O],[26,4,3,6,O],[27,5,1,4,M]],
+              [[24,10,5,2,O],[28,9,2,2,O],[25,10,3,1,M]],
+              [[24,8,3,3,O],[26,3,3,6,O],[27,4,1,4,M]],
+              [[24,9,4,2,O],[27,7,3,3,O],[25,9,2,1,M]]
             ][f];
             var legs=[
-              [[8,17,3,7,O],[9,18,2,5,M],[8,23,3,2,O],[15,17,4,7,O],[16,18,3,5,M],[16,23,3,2,O]],
-              [[7,14,3,4,O],[2,15,6,3,O],[0,16,4,2,M],[0,17,2,2,L],[16,14,3,4,O],[19,15,6,3,O],[24,16,4,2,M],[26,17,2,2,L]],
-              [[5,16,3,9,O],[6,17,2,7,M],[4,24,4,2,O],[17,17,3,3,O],[13,18,4,5,O],[14,19,3,4,M],[15,22,3,2,O]],
-              [[16,16,4,9,O],[17,17,3,7,M],[18,24,4,2,O],[8,15,3,4,O],[9,16,2,3,M],[10,17,2,2,O]]
+              [[12,17,3,5,O],[13,17,1,4,M],[11,21,4,2,O],[16,17,3,5,O],[17,17,1,4,M],[15,21,4,2,O]],
+              [[2,14,8,3,O],[3,14,6,2,M],[0,15,3,3,O],[22,14,8,3,O],[23,14,6,2,M],[27,15,3,3,O]],
+              [[6,16,3,4,O],[4,19,3,5,O],[5,19,1,4,M],[2,23,4,2,O],[15,17,4,4,O],[16,17,2,3,M],[14,20,4,2,O]],
+              [[22,16,3,4,O],[24,19,3,5,O],[25,19,1,4,M],[25,23,4,2,O],[10,16,3,4,O],[9,19,3,2,O]]
             ][f];
-            return tail.concat(core, legs);
+            return tail.concat(body, legs, head);
           }
-          return [function(){return catRun(0);}, function(){return catRun(1);},
-                  function(){return catRun(2);}, function(){return catRun(3);}];
-        })(),
-        draw:function(){
-          var O="#1d1b25",D="#34323e",M="#4a4852",L="#716d7b",E="#d9e04a",W="#f1e7d8";
-          return [[22,2,5,3,O],[24,3,3,9,O],[25,4,2,7,M],
-            [8,4,13,9,O],[9,2,4,3,O],[16,2,4,3,O],[9,6,11,6,M],[10,6,3,2,L],
-            [11,8,2,2,O],[16,8,2,2,O],[12,8,2,1,E],[16,8,2,1,E],[9,10,3,1,W],[10,12,4,1,W],
-            [7,10,14,9,O],[8,11,12,7,M],[8,11,8,2,L],[9,16,8,2,D],
-            [8,17,3,7,O],[9,18,2,5,M],[8,23,3,2,O],[15,17,4,7,O],[16,18,3,5,M],[16,23,3,2,O]];}
-      }
+        var frames=[function(){return catRun(0);}, function(){return catRun(1);},
+                    function(){return catRun(2);}, function(){return catRun(3);}];
+        return { tw:30, th:27, ingame:44, verdict:"ok", fps:9, frames:frames, draw:frames[0] };
+      })()
     },
 
     { g:"night", name:"Burn barrel", key:"obstacle-trashfire0", tw:28, th:36, ingame:60, family:"trashfire", verdict:"ok",

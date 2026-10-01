@@ -307,46 +307,59 @@ export class BootScene extends Phaser.Scene {
 
   // Four-frame low gallop - gather, airborne reach with the legs splayed
   // fore/aft, front contact, back push-off - so the cat visibly runs rather
-  // than sliding on a single pose. Frames feed obstacle-cat-run; the enraged
-  // charge swaps to the obstacle-cat-hiss pair drawn below.
+  // than sliding on a single pose. Drawn in profile, facing left. Frames feed
+  // obstacle-cat-run; the enraged charge swaps to the obstacle-cat-hiss pair
+  // drawn below.
   drawCatRunObstacle(key, f) {
     const O=0x1d1b25,D=0x34323e,M=COLORS.catBody,L=0x716d7b,E=COLORS.catEye,W=0xf1e7d8;
     const by=[0,-1,1,-1][f];
-    const ext=[[7,21],[5,24],[6,22],[6,23]][f], x0=ext[0], x1=ext[1];
-    const core=[
-      [8,4+by,13,9,O],[9,2+by,4,3,O],[16,2+by,4,3,O],
-      [9,6+by,11,6,M],[10,6+by,3,2,L],
-      [11,8+by,2,2,O],[16,8+by,2,2,O],[12,8+by,2,1,E],[16,8+by,2,1,E],
-      [9,10+by,3,1,W],[10,12+by,4,1,W],
-      [x0,10+by,x1-x0,9,O],[x0+1,11+by,x1-x0-2,7,M],[x0+1,11+by,8,2,L],[x0+2,16+by,x1-x0-6,2,D]
+    // Side view, facing left (the way the cat runs): body mass, then head
+    // with one ear, a muzzle and a single eye in profile.
+    const body=[
+      [9,10+by,15,8,O],[10,11+by,13,6,M],[11,11+by,8,2,L],[11,16+by,11,1,D]
+    ];
+    const head=[
+      [4,3+by,3,4,O],[8,2+by,3,5,O],[9,3+by,1,3,L],
+      [3,6+by,9,8,O],[4,7+by,7,6,M],[4,7+by,3,2,L],
+      [2,9+by,2,4,O],[2,10+by,2,2,W],[2,9+by,1,1,O],
+      [6,8+by,2,2,O],[6,8+by,2,1,E],[3,12+by,4,1,W]
     ];
     const tail=[
-      [[22,2,5,3,O],[24,3,3,9,O],[25,4,2,7,M]],
-      [[23,12,6,2,O],[27,11,3,2,O],[28,10,2,2,O],[24,13,4,1,M]],
-      [[23,7,4,7,O],[24,8,3,6,M],[25,4,3,4,O]],
-      [[22,3,5,3,O],[23,4,3,10,O],[24,5,2,8,M]]
+      [[24,9,3,3,O],[26,4,3,6,O],[27,5,1,4,M]],
+      [[24,10,5,2,O],[28,9,2,2,O],[25,10,3,1,M]],
+      [[24,8,3,3,O],[26,3,3,6,O],[27,4,1,4,M]],
+      [[24,9,4,2,O],[27,7,3,3,O],[25,9,2,1,M]]
     ][f];
     const legs=[
-      [[8,17,3,7,O],[9,18,2,5,M],[8,23,3,2,O],[15,17,4,7,O],[16,18,3,5,M],[16,23,3,2,O]],
-      [[7,14,3,4,O],[2,15,6,3,O],[0,16,4,2,M],[0,17,2,2,L],[16,14,3,4,O],[19,15,6,3,O],[24,16,4,2,M],[26,17,2,2,L]],
-      [[5,16,3,9,O],[6,17,2,7,M],[4,24,4,2,O],[17,17,3,3,O],[13,18,4,5,O],[14,19,3,4,M],[15,22,3,2,O]],
-      [[16,16,4,9,O],[17,17,3,7,M],[18,24,4,2,O],[8,15,3,4,O],[9,16,2,3,M],[10,17,2,2,O]]
+      [[12,17,3,5,O],[13,17,1,4,M],[11,21,4,2,O],[16,17,3,5,O],[17,17,1,4,M],[15,21,4,2,O]],
+      [[2,14,8,3,O],[3,14,6,2,M],[0,15,3,3,O],[22,14,8,3,O],[23,14,6,2,M],[27,15,3,3,O]],
+      [[6,16,3,4,O],[4,19,3,5,O],[5,19,1,4,M],[2,23,4,2,O],[15,17,4,4,O],[16,17,2,3,M],[14,20,4,2,O]],
+      [[22,16,3,4,O],[24,19,3,5,O],[25,19,1,4,M],[25,23,4,2,O],[10,16,3,4,O],[9,19,3,2,O]]
     ][f];
-    this.drawObstacleTexture(key,30,27,[...tail, ...core, ...legs]);
+    this.drawObstacleTexture(key,30,27,[...tail, ...body, ...legs, ...head]);
   }
 
-  // Arched back, tail straight up, slanted brows over narrow glowing eyes,
-  // bared fangs, motion lines. Two frames (obstacle-cat-hiss) played fast
-  // when a cat notices Nicole and charges - see Obstacle.js behavior 'cat'.
+  // Profile, facing left: arched back, tail straight up, flattened brow over a
+  // narrow glowing eye, open mouth with fangs, stiff legs, and motion lines
+  // trailing behind. Two frames (obstacle-cat-hiss) played fast when a cat
+  // notices Nicole and charges - see Obstacle.js behavior 'cat'.
   drawCatObstacle(key, hiss) {
-    const O=0x1d1b25,D=0x34323e,M=COLORS.catBody,L=0x716d7b,E=COLORS.catEye,W=0xf1e7d8;
-    const tail=hiss?[[25,2,3,12,O],[24,3,2,10,M],[22,1,4,3,O]]:[[25,5,3,13,O],[24,6,2,11,M],[22,3,4,4,O]];
+    const O=0x1d1b25,D=0x34323e,M=COLORS.catBody,L=0x716d7b,E=COLORS.catEye,W=0xf1e7d8,MOUTH=0x8a2233;
+    const tail=hiss
+      ? [[23,10,3,3,O],[25,1,3,11,O],[26,2,1,9,M]]
+      : [[23,10,3,3,O],[25,4,3,8,O],[26,5,1,6,M]];
     this.drawObstacleTexture(key,30,27,[...tail,
-      [4,15,20,9,O],[7,11,13,6,O],[8,10,11,5,M],[5,16,18,7,M],[6,16,6,2,L],[18,18,5,5,D],
-      [8,4,13,9,O],[9,2,4,4,O],[17,2,4,4,O],[9,5,11,7,M],[10,5,3,2,L],
-      [11,7,3,2,O],[17,7,3,2,O],[12,8,2,1,E],[17,8,2,1,E],[14,10,3,1,O],[13,11,2,2,W],[17,11,2,2,W],
-      [4,22,6,4,O],[18,22,7,4,O],[5,22,5,2,D],[19,22,5,2,D],
-      ...(hiss?[[1,9,5,1,L],[2,12,5,1,L],[21,9,5,1,L],[21,12,6,1,L]]:[])
+      // Far legs, then the arched body with a raised hump.
+      [12,20,3,5,O],[13,20,1,4,D],[17,20,3,5,O],[18,20,1,4,D],
+      [5,12,19,9,O],[6,13,17,7,M],[9,8,11,5,O],[10,9,9,4,M],[10,9,6,2,L],[8,19,13,1,D],
+      // Stiff near legs braced against the ground.
+      [7,19,3,7,O],[8,19,1,6,M],[6,24,4,2,O],[20,19,3,7,O],[21,19,1,6,M],[20,24,4,2,O],
+      // Head low and forward: ears, slanted brow, eye, open mouth and fangs.
+      [2,8,3,4,O],[6,8,3,4,O],[7,9,1,2,L],
+      [2,11,8,8,O],[3,12,6,6,M],[3,12,3,2,L],
+      [4,12,5,1,O],[5,13,3,1,E],
+      [0,14,3,5,O],[1,15,2,3,MOUTH],[1,14,1,1,W],[1,18,1,1,W],[3,18,4,1,W],
+      ...(hiss?[[8,6,1,2,O],[12,5,1,3,O],[16,6,1,2,O],[26,13,4,1,L],[27,16,3,1,L],[26,19,4,1,L]]:[])
     ]);
   }
 
