@@ -168,6 +168,16 @@ export class ChiptuneAudio {
     this.tone(720, 0.34, 0.045, 'sawtooth', 145);
   }
 
+  stellaLeap() {
+    this.tone(330, 0.1, 0.06, 'square', 620);
+    this.tone(620, 0.08, 0.05, 'square', 880, 0.1);
+  }
+
+  crowKnocked() {
+    this.tone(980, 0.22, 0.05, 'sawtooth', 230);
+    this.tone(660, 0.16, 0.04, 'square', 180, 0.05);
+  }
+
   thunder() {
     this.tone(72, 0.7, 0.11, 'sawtooth', 34);
     this.tone(49, 0.9, 0.08, 'triangle', 29, 0.08);

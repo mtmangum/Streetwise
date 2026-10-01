@@ -25,6 +25,8 @@ export class Crow extends Entity {
   }
 
   setSpeed(speed) {
+    // A knocked-away crow keeps the velocity Stella gave it.
+    if (this.knocked) return;
     // Stay well clear of the world scroll speed so the crow always visibly
     // sweeps past obstacles instead of hanging beside one (at a low coefficient
     // it matched obstacle speed at the top scroll rate and looked stuck to it).
@@ -32,7 +34,21 @@ export class Crow extends Entity {
     this.sprite.setVelocityX(this.direction * magnitude);
   }
 
-  onUpdate() {
+  // Stella's snap connects: the crow reels back the way it came, spinning,
+  // and no longer threatens Nicole.
+  knockAway() {
+    this.knocked = true;
+    this.flightPhase = 'knocked';
+    this.sprite.setVelocity(210 + Math.random() * 60, -(190 + Math.random() * 60));
+  }
+
+  onUpdate(_time, delta) {
+    if (this.knocked) {
+      this.sprite.angle += delta * 0.9;
+      if (this.sprite.x > GAME_WIDTH + 55 || this.sprite.y < -55) this.destroy();
+      return;
+    }
+
     if (this.flightPhase === 'approach') {
       const distanceAhead = (this.sprite.x - PLAYER.startX) * -this.direction;
       if (distanceAhead < 290) {
@@ -40,6 +56,7 @@ export class Crow extends Entity {
         const travelSeconds = Math.max(0.25, distanceAhead / Math.abs(this.sprite.body.velocity.x));
         this.sprite.setVelocityY((272 - this.sprite.y) / travelSeconds);
         this.scene.audio.crowDive();
+        this.scene.tryProtectiveLeap(this);
       }
     } else if (this.flightPhase === 'diving') {
       const passedNicole = this.direction < 0
@@ -63,7 +80,7 @@ export class Crow extends Entity {
   }
 
   onCollide(player) {
-    if (!this.alive) return;
+    if (!this.alive || this.knocked) return;
     player.onCrowCollide(this);
     this.destroy();
   }

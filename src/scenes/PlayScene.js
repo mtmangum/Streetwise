@@ -67,6 +67,7 @@ export class PlayScene extends Phaser.Scene {
     this.nextSneakerSparkAt = 0;
     this.pinkStarUntil = 0;
     this.nextPinkStarSparkAt = 0;
+    this.protectiveLeapUsed = false;
     this.audio = new ChiptuneAudio(this);
 
     this.parallax = new Parallax(this);
@@ -851,6 +852,41 @@ export class PlayScene extends Phaser.Scene {
     this.audio.pinkStar();
     this.showControlHint('PINK STAR POWER!', 'INVULNERABLE  ·  SPARKLING SUPER JUMPS');
     this.emitPinkStarBurst(x, y, 14);
+  }
+
+  // Called by a crow as it starts its dive. Stella gets one interception per
+  // run; she is saved for a later dive while Nicole is already invulnerable
+  // (pink star) or Stella is busy with a cop / zoomies.
+  tryProtectiveLeap(crow) {
+    if (this.protectiveLeapUsed || this.state !== 'running') return;
+    if (this.time.now < this.pinkStarUntil) return;
+    if (!this.dog.protectiveLeap(crow)) return;
+    this.protectiveLeapUsed = true;
+    this.audio.stellaLeap();
+  }
+
+  showProtectiveLeapStrike(x, y) {
+    this.audio.dogAttack();
+    this.audio.crowKnocked();
+    for (let i = 0; i < 9; i++) {
+      const feather = this.add.rectangle(x, y, Phaser.Math.Between(3, 6), 2, i % 3 ? 0x1d1b25 : 0x716d7b)
+        .setDepth(18)
+        .setAngle(Phaser.Math.Between(-60, 60));
+      this.tweens.add({
+        targets: feather,
+        x: x + Phaser.Math.Between(-30, 60),
+        y: y + Phaser.Math.Between(-30, 40),
+        angle: feather.angle + Phaser.Math.Between(-200, 200),
+        alpha: 0,
+        duration: Phaser.Math.Between(380, 760),
+        onComplete: () => feather.destroy()
+      });
+    }
+  }
+
+  // Shown once Stella lands, so the banner doesn't cover the leap itself.
+  showProtectiveLeapLanding() {
+    this.showControlHint('STELLA TO THE RESCUE!', 'SHE TOOK THE CROW DIVE FOR YOU');
   }
 
   showPinkStarDeflect() {

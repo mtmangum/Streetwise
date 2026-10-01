@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GROUND_Y, PLAYER, DOG, ZOOMIES } from '../config.js';
+import { GAME_WIDTH, GROUND_Y, PLAYER, DOG, ZOOMIES, PROTECTIVE_LEAP } from '../config.js';
 
 // Companion character with scripted jumps and street interactions. She has
 // no physics body, so these authored sequences can stay expressive without
@@ -29,10 +29,11 @@ export class Dog {
     this.returning = false;
     this.zoomiesActive = false;
     this.zoomiesElapsed = 0;
+    this.leap = null;
   }
 
   jump() {
-    if (this.jumping || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return;
+    if (this.jumping || this.leap || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return;
     this.jumping = true;
     this.jumpT = 0;
     this.jumpStartX = this.sprite.x;
@@ -45,6 +46,7 @@ export class Dog {
     this.markingHydrant = false;
     this.returning = false;
     this.zoomiesActive = false;
+    this.leap = null;
     this.jumpT = 0;
     this.sprite.x = this.restX;
     this.sprite.y = GROUND_Y;
@@ -54,7 +56,7 @@ export class Dog {
   }
 
   attackCop(cop) {
-    if (this.attackTarget || this.zoomiesActive || !cop?.alive) return;
+    if (this.attackTarget || this.leap || this.zoomiesActive || !cop?.alive) return;
     this.jumping = false;
     this.markingHydrant = false;
     this.returning = false;
@@ -67,8 +69,91 @@ export class Dog {
     this.sprite.anims.play('dog-run', true);
   }
 
+  // Stella's Protective Leap: she launches from behind Nicole, clears her, and
+  // snaps the diving crow out of the air in front of her. The contact point is
+  // predicted from the crow's dive vector so the two meet at the leap's apex.
+  // Returns false (leaving her free) when she is busy with a cop or zoomies.
+  protectiveLeap(crow) {
+    if (this.leap || this.attackTarget || this.zoomiesActive || !crow?.alive) return false;
+    const cfg = PROTECTIVE_LEAP;
+    const { x: vx, y: vy } = crow.sprite.body.velocity;
+    const w = this.sprite.displayWidth;
+    const h = this.sprite.displayHeight;
+    // Aim the snap at the crow's body: her mouth sits near the front of the
+    // sprite, a little below its top edge.
+    const mouthX = 0.92 * w;
+    const mouthDrop = 0.8 * h;
+
+    const idealCenterY = GROUND_Y - cfg.idealLift - mouthDrop;
+    const wantedMs = vy > 1 ? ((idealCenterY - crow.sprite.y) / vy) * 1000 : cfg.contactMaxMs;
+    const contactMs = Phaser.Math.Clamp(wantedMs, cfg.contactMinMs, cfg.contactMaxMs);
+    const crowX = crow.sprite.x + vx * (contactMs / 1000);
+    const crowY = crow.sprite.y + vy * (contactMs / 1000);
+
+    this.jumping = false;
+    this.markingHydrant = false;
+    this.returning = false;
+    this.markingDrops.forEach((drop) => drop.setVisible(false));
+    this.leap = {
+      crow,
+      elapsed: 0,
+      struck: false,
+      contactMs,
+      durationMs: contactMs + cfg.afterContactMs,
+      startX: this.sprite.x,
+      contactX: crowX - mouthX,
+      landX: crowX - mouthX + cfg.landingAheadPx,
+      lift: Phaser.Math.Clamp(GROUND_Y - (crowY + mouthDrop), cfg.minLift, cfg.maxLift),
+      strikeX: crowX,
+      strikeY: crowY
+    };
+    this.sprite.setFlipX(false).setDepth(11).clearTint();
+    this.sprite.anims.play('dog-jump', true);
+    return true;
+  }
+
+  updateProtectiveLeap(delta) {
+    const leap = this.leap;
+    leap.elapsed += delta;
+    const t = Math.min(leap.elapsed, leap.durationMs);
+
+    let x, lift, angle;
+    if (t < leap.contactMs) {
+      const u = t / leap.contactMs;
+      x = Phaser.Math.Linear(leap.startX, leap.contactX, 1 - (1 - u) ** 2);
+      lift = leap.lift * Math.sin(u * Math.PI / 2);
+      angle = -8 - 20 * u;
+    } else {
+      const u = (t - leap.contactMs) / (leap.durationMs - leap.contactMs);
+      x = Phaser.Math.Linear(leap.contactX, leap.landX, u);
+      lift = leap.lift * Math.cos(u * Math.PI / 2);
+      angle = -28 + 40 * u;
+    }
+    this.sprite.x = x;
+    this.sprite.y = GROUND_Y - lift;
+    this.sprite.setAngle(angle);
+
+    if (!leap.struck && leap.elapsed >= leap.contactMs) {
+      leap.struck = true;
+      if (leap.crow.alive) {
+        leap.crow.knockAway();
+        this.scene.showProtectiveLeapStrike(leap.crow.sprite.x, leap.crow.sprite.y);
+      }
+    }
+    const snapping = leap.struck && leap.elapsed < leap.contactMs + PROTECTIVE_LEAP.snapMs;
+    this.sprite.anims.play(snapping ? 'dog-attack' : 'dog-jump', true);
+
+    if (leap.elapsed >= leap.durationMs) {
+      this.leap = null;
+      this.sprite.y = GROUND_Y;
+      this.sprite.setAngle(0);
+      this.returning = true;
+      if (leap.struck) this.scene.showProtectiveLeapLanding();
+    }
+  }
+
   stopAtHydrant(scrollSpeed) {
-    if (this.jumping || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return false;
+    if (this.jumping || this.leap || this.attackTarget || this.markingHydrant || this.returning || this.zoomiesActive) return false;
     this.markingHydrant = true;
     this.markingElapsed = 0;
     this.markingScrollSpeed = scrollSpeed;
@@ -161,6 +246,7 @@ export class Dog {
 
   startZoomies() {
     this.jumping = false;
+    this.leap = null;
     this.attackTarget = null;
     this.chasingCop = false;
     this.markingHydrant = false;
@@ -200,6 +286,8 @@ export class Dog {
   update(delta) {
     if (this.zoomiesActive) {
       this.updateZoomies(delta);
+    } else if (this.leap) {
+      this.updateProtectiveLeap(delta);
     } else if (this.attackTarget) {
       this.updateAttack(delta);
     } else if (this.markingHydrant) {

@@ -127,4 +127,5 @@ If you rename the repo, update `base` in `vite.config.js` to match.
 - [x] 8-bit soundtrack and sound effects
 - [x] Power jump with aerial rewards and hazards
 - [x] Pause/resume controls
+- [x] Stella's Protective Leap (one crow dive intercepted per run)
 - [ ] Local high-score storage (e.g. best dodge streak)

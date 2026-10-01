@@ -176,6 +176,19 @@ export const SNEAKER_BOOST = {
   respawnMaxMs: 44000
 };
 
+// Stella's one-per-run interception of a diving crow. The leap is timed from
+// the crow's own dive vector so she meets it in front of Nicole.
+export const PROTECTIVE_LEAP = {
+  contactMinMs: 400,
+  contactMaxMs: 520,
+  afterContactMs: 340,
+  idealLift: 95,
+  minLift: 55,
+  maxLift: 135,
+  landingAheadPx: 36,
+  snapMs: 180
+};
+
 export const ZOOMIES = {
   durationMs: 6500,
   outboundMs: 3900,
