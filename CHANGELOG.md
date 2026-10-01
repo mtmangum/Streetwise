@@ -17,7 +17,8 @@ All notable changes to Streetwise: Nicole & Stella are recorded here.
 ### Easy (Nicole) mode and start menu
 
 - Added an Easy (Nicole) mode: a slower world (75% speed), wider obstacle spacing, softer hits, longer protection after a hit, slower health drain, more forgiving jump timing, and a longer, floatier jump. Power-ups come around more often and birds less often.
-- Replaced the start screen with a simple menu of two large cards, Normal and Easy (Nicole). Tapping a card starts the run in that mode, and the last choice is remembered. Stray taps no longer start a run; keyboard shortcuts still work but are secondary, since tablets are the main target.
+- Added an NES-style title screen (chunky pixel-font logo, Christmas ribbon, blinking "PUSH START" / "TOUCH TO START") that holds for a beat, or until tapped, before the menu.
+- Replaced the start screen with a simple NES-style menu of two large rows with a blinking cursor, Normal and Easy (Nicole). Tapping a card starts the run in that mode, and the last choice is remembered. Stray taps no longer start a run; keyboard shortcuts still work but are secondary, since tablets are the main target.
 
 ### Power-ups and Stella
 

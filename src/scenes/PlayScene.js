@@ -10,6 +10,7 @@ import { Crow } from '../entities/Crow.js';
 import { Seagull } from '../entities/Seagull.js';
 import { Storm } from '../entities/Storm.js';
 import { Snow } from '../entities/Snow.js';
+import { pixelText } from '../gfx/pixelFont.js';
 import { SneakerBoost } from '../entities/SneakerBoost.js';
 import { ZoomiesPickup } from '../entities/ZoomiesPickup.js';
 import { PinkStarPickup } from '../entities/PinkStarPickup.js';
@@ -27,6 +28,10 @@ const HEALTH_BAR = { x: 16, y: 14, width: 360, overchargeWidth: 160, height: 16,
 const FINALE_START_SECONDS = DAWN.startSeconds + DAWN.durationSeconds;
 
 const DIFFICULTY_STORAGE_KEY = 'streetwise.difficulty';
+
+// The title card plays once per page load; restarting a run goes straight to
+// the mode menu.
+let titleCardShown = false;
 
 function loadDifficultyKey() {
   try {
@@ -343,72 +348,69 @@ export class PlayScene extends Phaser.Scene {
     // Start menu: pick a mode by tapping its card. Tapping a card starts the
     // run in that mode; Space / Enter starts whichever card is highlighted.
     // The tag in the corner shows an easier mode is on during play.
-    const menuWidth = 540;
-    const menuHeight = 200;
+    // NES-style menu: a boxed list with a blinking triangle cursor beside the
+    // highlighted choice. Each row is a big tap target.
+    const menuWidth = 460;
+    const menuHeight = 206;
     const menuLeft = (GAME_WIDTH - menuWidth) / 2;
-    const menuTop = 34;
-    // A dark veil quiets the health bar and scenery behind the menu so the
-    // two choices have room to breathe.
-    const veil = this.add
+    const menuTop = 30;
+    this.menuVeil = this.add
       .rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x05070c, 0.5)
       .setOrigin(0, 0)
       .setDepth(28);
     const menuPanel = this.add.graphics().setDepth(29);
     menuPanel.fillStyle(0x05070c, 0.45);
-    menuPanel.fillRoundedRect(menuLeft + 4, menuTop + 5, menuWidth, menuHeight, 16);
-    menuPanel.fillStyle(0x121823, 0.97);
-    menuPanel.fillRoundedRect(menuLeft, menuTop, menuWidth, menuHeight, 16);
-    menuPanel.lineStyle(3, 0xd94a4a, 1);
-    menuPanel.strokeRoundedRect(menuLeft, menuTop, menuWidth, menuHeight, 16);
-    // Candy-stripe bar in Christmas red and green.
-    const stripeWidth = menuWidth - 48;
-    for (let x = 0; x < stripeWidth; x += 12) {
-      menuPanel.fillStyle(x % 24 === 0 ? 0xd94a4a : 0x3fae6a, 1);
-      menuPanel.fillRect(menuLeft + 24 + x, menuTop + 16, Math.min(12, stripeWidth - x), 4);
-    }
-    const menuText = (x, y, text, size, color, extra = {}) => this.add
-      .text(x, y, text, {
-        fontFamily: 'sans-serif',
-        fontSize: `${size}px`,
-        fontStyle: 'bold',
-        resolution: RENDER_SCALE,
-        color,
-        stroke: '#090b10',
-        strokeThickness: 3,
-        align: 'center',
-        ...extra
-      })
-      .setOrigin(0.5)
-      .setDepth(31);
-    // Controls are taught in-game by the first-obstacle hints, so the menu is
-    // just the title and the two choices.
+    menuPanel.fillRect(menuLeft + 5, menuTop + 6, menuWidth, menuHeight);
+    menuPanel.fillStyle(0x0b0d16, 0.97);
+    menuPanel.fillRect(menuLeft, menuTop, menuWidth, menuHeight);
+    // Double white border, like an NES dialog box.
+    menuPanel.lineStyle(3, 0xffffff, 1);
+    menuPanel.strokeRect(menuLeft + 4, menuTop + 4, menuWidth - 8, menuHeight - 8);
+    menuPanel.lineStyle(1, 0xd94a4a, 1);
+    menuPanel.strokeRect(menuLeft + 9, menuTop + 9, menuWidth - 18, menuHeight - 18);
     this.menuItems = [
-      veil,
       menuPanel,
-      menuText(GAME_WIDTH / 2, menuTop + 46, 'STREETWISE: NICOLE & STELLA', 22, '#f2c14e', { strokeThickness: 4 })
+      pixelText(this, GAME_WIDTH / 2, menuTop + 34, 'CHOOSE YOUR RUN', {
+        scale: 3, top: '#ffd23c', bottom: '#e8702a', outline: '#1a0a0a', shadow: '#7a1c1c'
+      }).setDepth(31)
     ];
     this.modeCards = {};
-    const cardWidth = 232;
-    const cardCenterY = menuTop + 128;
+    const rowLeft = menuLeft + 28;
     [
-      { key: 'normal', x: GAME_WIDTH / 2 - 128, title: 'NORMAL', desc: 'FULL SPEED', accent: 0xf2c14e },
-      { key: 'easy', x: GAME_WIDTH / 2 + 128, title: 'EASY — NICOLE', desc: 'SLOWER & GENTLER', accent: 0x7fe3c4 }
+      { key: 'normal', y: menuTop + 96, title: 'NORMAL', desc: 'FULL SPEED', accent: 0xf2c14e },
+      { key: 'easy', y: menuTop + 162, title: 'EASY - NICOLE', desc: 'SLOWER AND GENTLER', accent: 0x7fe3c4 }
     ].forEach((card) => {
       const box = this.add
-        .rectangle(card.x, cardCenterY, cardWidth, 104, 0x141b27, 1)
+        .rectangle(GAME_WIDTH / 2, card.y, menuWidth - 56, 58, 0x141b27, 1)
         .setDepth(30)
         .setInteractive({ useHandCursor: true });
-      const title = menuText(card.x, cardCenterY - 28, card.title, 22, '#ffffff');
-      const desc = menuText(card.x, cardCenterY + 2, card.desc, 14, '#d6e0ea', { strokeThickness: 2 });
-      const play = menuText(card.x, cardCenterY + 30, '▶  PLAY', 16, '#ffffff', { strokeThickness: 2 });
+      const cursor = pixelText(this, rowLeft + 12, card.y, '>', {
+        scale: 3, top: '#ffffff', outline: '#000000', originX: 0.5
+      }).setDepth(31);
+      const title = pixelText(this, rowLeft + 44, card.y - 13, card.title, {
+        scale: 3, top: '#ffffff', outline: '#000000', originX: 0
+      }).setDepth(31);
+      const desc = pixelText(this, rowLeft + 44, card.y + 15, card.desc, {
+        scale: 2, top: '#ffffff', outline: '#000000', originX: 0
+      }).setDepth(31);
       box.on('pointerdown', (_pointer, _x, _y, event) => {
         event?.stopPropagation();
         this.setDifficulty(card.key);
         this.handleInputDown();
       });
-      this.modeCards[card.key] = { box, title, desc, play, accent: card.accent };
-      this.menuItems.push(box, title, desc, play);
+      this.modeCards[card.key] = { box, title, desc, cursor, accent: card.accent };
+      this.menuItems.push(box, cursor, title, desc);
     });
+    // The cursor on the highlighted row blinks, as on the real thing.
+    this.cursorBlink = this.time.addEvent({
+      delay: 450,
+      loop: true,
+      callback: () => {
+        this.cursorOn = !this.cursorOn;
+        this.refreshDifficultyUi();
+      }
+    });
+    this.cursorOn = true;
     this.modeTag = this.add
       .text(GAME_WIDTH - 62, 46, '', {
         fontFamily: 'sans-serif',
@@ -430,6 +432,7 @@ export class PlayScene extends Phaser.Scene {
     this.overlayTitle.setVisible(false);
     this.overlayText.setVisible(false);
     this.refreshDifficultyUi();
+    this.buildTitleCard();
 
     this.input.keyboard.on('keydown-SPACE', (event) => {
       if (!event.repeat) this.handleInputDown();
@@ -465,7 +468,7 @@ export class PlayScene extends Phaser.Scene {
     // On the start screen only the mode cards start a run, so a stray tap
     // can't begin one in a mode that wasn't chosen.
     this.input.on('pointerdown', () => {
-      if (this.state !== 'ready') this.handleInputDown();
+      if (this.state !== 'ready' || this.menuStage === 'title') this.handleInputDown();
     });
     this.input.on('pointerup', () => this.handleInputUp());
     this.input.on('pointerupoutside', () => this.handleInputUp());
@@ -475,7 +478,7 @@ export class PlayScene extends Phaser.Scene {
     // Keep the unlock attempt inside a real user gesture. If a browser rejects
     // the first Web Audio resume, the next gameplay input safely retries it.
     this.audio.start();
-    if (this.state === 'ready') return this.startRun();
+    if (this.state === 'ready') return this.menuStage === 'title' ? this.showMenu() : this.startRun();
     if (this.state === 'gameover' || this.state === 'complete') return this.restart();
     if (this.state === 'paused' || this.state === 'ending') return;
     this.jumpController.press();
@@ -565,6 +568,10 @@ export class PlayScene extends Phaser.Scene {
     );
     this.player.applyDifficulty(this.difficulty);
     this.menuItems.forEach((item) => item.setVisible(false));
+    this.titleItems.forEach((item) => item.setVisible(false));
+    this.promptBlink?.remove(false);
+    this.cursorBlink?.remove(false);
+    this.menuVeil.setVisible(false);
     this.pauseButton.setVisible(true);
     this.pauseButtonText.setVisible(true);
     this.modeTag.setVisible(true);
@@ -1003,6 +1010,88 @@ export class PlayScene extends Phaser.Scene {
     this.registerEntity(new ZoomiesPickup(this, this.scrollSpeed), this.pickupGroup);
   }
 
+  // The opening title screen, NES style: a chunky two-tone logo slides in from
+  // the top, the subtitle from below, a Christmas ribbon pops in, and a
+  // "PUSH START" prompt blinks. It holds for a beat and then gives way to the
+  // mode menu; a tap or key press skips ahead. Plays once per page load.
+  buildTitleCard() {
+    this.titleItems = [];
+    const touch = this.sys.game.device.input.touch;
+    const logo = pixelText(this, GAME_WIDTH / 2, 92, 'STREETWISE', {
+      scale: 7, top: '#ffd23c', bottom: '#e8702a', outline: '#1a0a0a', shadow: '#7a1c1c'
+    }).setDepth(31);
+    const sub = pixelText(this, GAME_WIDTH / 2, 160, 'NICOLE & STELLA', {
+      scale: 4, top: '#ff9fd0', bottom: '#e0508f', outline: '#1a0a0a', shadow: '#5a1244'
+    }).setDepth(31);
+    const ribbonBack = this.add.graphics().setDepth(30);
+    ribbonBack.fillStyle(0x05070c, 0.5);
+    ribbonBack.fillRect(-163, -13, 326, 32);
+    ribbonBack.fillStyle(0xc8202f, 1);
+    ribbonBack.fillRect(-168, -18, 326, 32);
+    ribbonBack.lineStyle(2, 0xffffff, 1);
+    ribbonBack.strokeRect(-168, -18, 326, 32);
+    ribbonBack.fillStyle(0x2f9e4f, 1);
+    ribbonBack.fillRect(-168, 8, 326, 6);
+    const ribbonText = pixelText(this, -5, -4, 'SPECIAL CHRISTMAS EDITION', {
+      scale: 2, top: '#ffe08a', outline: '#5b0f18'
+    }).setDepth(31);
+    const ribbon = this.add.container(GAME_WIDTH / 2 + 5, 214, [ribbonBack, ribbonText]).setDepth(31);
+    const prompt = pixelText(this, GAME_WIDTH / 2, 282, touch ? 'TOUCH TO START' : 'PUSH START', {
+      scale: 3, top: '#ffffff', outline: '#000000', shadow: '#555555'
+    }).setDepth(31).setVisible(false);
+    const copyright = pixelText(this, GAME_WIDTH / 2, 328, '(C) 2026 STREETWISE', {
+      scale: 2, top: '#c9d2dc', outline: '#000000'
+    }).setDepth(31);
+    this.titleItems.push(logo, sub, ribbon, prompt, copyright);
+
+    if (titleCardShown) {
+      this.menuStage = 'menu';
+      this.titleItems.forEach((item) => item.setVisible(false));
+      this.menuItems.forEach((item) => item.setVisible(true));
+      return;
+    }
+    titleCardShown = true;
+    this.menuStage = 'title';
+    this.menuItems.forEach((item) => item.setVisible(false));
+    this.menuVeil.setAlpha(0.45);
+    // Logo drops from the top, subtitle rises from the bottom.
+    logo.setY(-60);
+    this.tweens.add({ targets: logo, y: 92, duration: 900, ease: 'Cubic.easeOut' });
+    sub.setX(GAME_WIDTH + 320);
+    this.tweens.add({ targets: sub, x: GAME_WIDTH / 2, duration: 900, delay: 350, ease: 'Cubic.easeOut' });
+    ribbon.setAlpha(0).setScale(0.6);
+    this.tweens.add({ targets: ribbon, alpha: 1, scale: 1, duration: 320, delay: 1250, ease: 'Back.easeOut' });
+    copyright.setAlpha(0);
+    this.tweens.add({ targets: copyright, alpha: 1, duration: 300, delay: 1450 });
+    // The prompt blinks on once everything has landed.
+    this.time.delayedCall(1700, () => {
+      if (this.menuStage !== 'title') return;
+      prompt.setVisible(true);
+      this.promptBlink = this.time.addEvent({
+        delay: 500,
+        loop: true,
+        callback: () => prompt.setVisible(!prompt.visible)
+      });
+    });
+    this.time.delayedCall(4600, () => this.showMenu());
+  }
+
+  // Fades the title card out and the mode menu in.
+  showMenu() {
+    if (this.menuStage !== 'title' || this.state !== 'ready') return;
+    this.menuStage = 'menu';
+    this.promptBlink?.remove(false);
+    this.tweens.add({ targets: this.menuVeil, alpha: 0.5, duration: 300 });
+    this.tweens.add({
+      targets: this.titleItems,
+      alpha: 0,
+      duration: 260,
+      onComplete: () => this.titleItems.forEach((item) => item.setVisible(false))
+    });
+    this.menuItems.forEach((item) => item.setVisible(true).setAlpha(0));
+    this.tweens.add({ targets: this.menuItems, alpha: 1, duration: 360, delay: 200 });
+  }
+
   setDifficulty(key) {
     this.difficultyKey = key;
     this.difficulty = DIFFICULTY[key];
@@ -1011,22 +1100,21 @@ export class PlayScene extends Phaser.Scene {
   }
 
   cycleDifficulty() {
-    if (this.state !== 'ready') return;
+    if (this.state !== 'ready' || this.menuStage !== 'menu') return;
     this.setDifficulty(this.difficultyKey === 'easy' ? 'normal' : 'easy');
   }
 
-  // Both cards are tappable; the remembered one gets the accent border and
-  // brighter text so Space / Enter has an obvious target.
+  // Both rows are tappable; the remembered one gets the accent border, white
+  // text and the blinking cursor, so Space / Enter has an obvious target.
   refreshDifficultyUi() {
     Object.entries(this.modeCards).forEach(([key, card]) => {
       const selected = key === this.difficultyKey;
-      const accent = `#${card.accent.toString(16).padStart(6, '0')}`;
       card.box
-        .setFillStyle(selected ? 0x1d2c3a : 0x141b27, 1)
-        .setStrokeStyle(selected ? 3 : 2, selected ? card.accent : 0x4a5566, 1);
-      card.title.setColor(selected ? '#ffffff' : '#c3cdd8');
-      card.desc.setColor(selected ? '#d6e0ea' : '#97a4b2');
-      card.play.setColor(selected ? accent : '#97a4b2');
+        .setFillStyle(selected ? 0x1d2c3a : 0x10151f, 1)
+        .setStrokeStyle(selected ? 3 : 1, selected ? card.accent : 0x3a4352, 1);
+      card.title.setTint(selected ? 0xffffff : 0x8d99a8);
+      card.desc.setTint(selected ? card.accent : 0x6c7886);
+      card.cursor.setAlpha(selected && this.cursorOn !== false ? 1 : 0);
     });
     this.modeTag.setText(this.difficultyKey === 'easy' ? 'NICOLE MODE' : '');
   }
