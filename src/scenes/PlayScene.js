@@ -370,9 +370,13 @@ export class PlayScene extends Phaser.Scene {
       menuPanel,
       menuText(GAME_WIDTH / 2, menuTop + 34, 'STREETWISE: NICOLE & STELLA', 19, '#f2c14e', { strokeThickness: 4 }),
       menuText(GAME_WIDTH / 2, menuTop + 62, 'CHOOSE YOUR RUN', 12, '#9fb0c2'),
-      menuText(GAME_WIDTH / 2, menuTop + 172, 'TAP  —  JUMP        DOUBLE-TAP  —  POWER JUMP', 12, '#eef3f6'),
-      menuText(GAME_WIDTH / 2, menuTop + 190, 'POWER JUMP TO STRIKE BIRDS', 12, '#eef3f6'),
-      menuText(GAME_WIDTH / 2, menuTop + 218, 'TAP A MODE TO PLAY   ·   SPACE / ENTER STARTS THE HIGHLIGHTED ONE   ·   ← → CHOOSE', 9, '#7d8a99')
+      menuText(GAME_WIDTH / 2, menuTop + 172, 'TAP  —  JUMP        DOUBLE-TAP  —  POWER JUMP', 14, '#eef3f6'),
+      menuText(GAME_WIDTH / 2, menuTop + 193, 'POWER JUMP TO STRIKE BIRDS', 14, '#eef3f6'),
+      // Touch is the primary input; keyboard shortcuts are only mentioned
+      // where a keyboard is likely to be present.
+      this.sys.game.device.input.touch
+        ? menuText(GAME_WIDTH / 2, menuTop + 221, 'TAP A MODE TO PLAY', 14, '#f2c14e')
+        : menuText(GAME_WIDTH / 2, menuTop + 221, 'CLICK A MODE TO PLAY   ·   ← →  CHOOSE   ·   SPACE  START', 12, '#9fb0c2')
     ];
     this.modeCards = {};
     [
