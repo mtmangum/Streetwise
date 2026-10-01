@@ -229,6 +229,7 @@
     <a href="#night">Nighttime obstacles</a>
     <a href="#birds">Birds</a>
     <a href="#powerups">Power-ups</a>
+    <a href="#winter">Christmas &amp; weather</a>
     <a href="#cast">Cast</a>
   </nav>
 
@@ -248,8 +249,12 @@
   <p class="section-note">Floating collectibles with a timed effect: sneakers boost jumps (8 s), the zoomies treat sends Stella sprinting through small hazards and toppling carts (6.5 s), the pink star makes Nicole invulnerable (7 s), coffee slows the world (5 s), and the bark blast sends birds, cats, rats and cops on screen running.</p>
   <div class="grid" id="grid-powerups"></div>
 
+  <h2 class="section" id="winter">Christmas &amp; weather</h2>
+  <p class="section-note">The seasonal dressing. Snow caps and string lights are separate layers over the brownstones so they stay bright instead of being tinted brown; the late-night storm turns from rain to sleet to snow and leaves snow on the street.</p>
+  <div class="grid" id="grid-winter"></div>
+
   <h2 class="section" id="cast">Cast</h2>
-  <p class="section-note">The characters — every animation state, from playerFrames.js / dogFrames.js / drawMattTexture, playing.</p>
+  <p class="section-note">The characters — every animation state, from playerFrames.js / dogFrames.js / drawMattTexture, playing. For Christmas, Nicole and Stella wear Santa hats (Stella also has a gold collar bell).</p>
   <div class="grid" id="grid-cast"></div>
 
   <footer id="tally"></footer>
@@ -429,15 +434,30 @@
         r(15,23,5,3,C.outline),r(16,23,4,2,C.skin),r(3,22,6,5,C.outline),r(4,22,5,4,C.dressDark),
         r(2,26,7,3,C.outline),r(3,26,6,2,C.stocking),r(13,26,6,3,C.outline),r(14,26,5,2,C.shoeLight)]
     };
-    function nicole(pose){ return SPECIAL[pose] ? SPECIAL[pose].slice() : BASE.concat(POSES[pose]); }
+    // Christmas: a Santa hat on every pose (red cone, white brim, pompom drooping down the back).
+    var HAT={hat:0xd62f3f,hatDark:0x9e1f2f,fur:0xffffff,furDark:0xd3d9e3};
+    function santaHat(x,y,w){return [
+      r(x+2,y,w-6,3,HAT.hat),r(x+1,y+1,w-3,2,HAT.hat),r(x+w-7,y,4,3,HAT.hatDark),
+      r(x-1,y+1,4,3,HAT.hat),r(x-2,y+3,3,2,HAT.hatDark),r(x-3,y+4,3,3,HAT.fur),
+      r(x,y+3,w,2,HAT.fur),r(x,y+4,w,1,HAT.furDark)];}
+    var HAT_AT={fallForward:[9,11,11],prone:[2,17,8],kneel:[9,7,10]};
+    function nicole(pose){
+      if (SPECIAL[pose]) { var h=HAT_AT[pose]; return SPECIAL[pose].concat(santaHat(h[0],h[1],h[2])); }
+      return BASE.concat(POSES[pose], santaHat(3,0,15));
+    }
 
     // Stella - 30x15 grid.
-    var DC={outline:0x252633,dark:0x555b68,body:0x9299a5,light:0xc7cbd1,eye:0x17131b,collar:0xd84a62};
+    var DC={outline:0x252633,dark:0x555b68,body:0x9299a5,light:0xc7cbd1,eye:0x17131b,collar:0xd84a62,hat:0xd62f3f,fur:0xffffff,bell:0xffd54a};
+    // Christmas: Santa hat on her head and a gold bell on the collar.
+    function dHat(hX,hY){var top=Math.max(0,hY-3);return [r(hX+1,top,5,hY-1-top,DC.hat),r(hX,hY-1,6,1,DC.fur),r(hX-1,top,2,2,DC.fur)];}
+    var dIdleHat=[r(21,0,5,1,DC.hat),r(20,1,6,1,DC.fur),r(19,0,2,2,DC.fur),r(18,9,2,2,DC.bell)];
     function d(o){var hX=o.headX,hY=o.headY,bY=o.bodyY,tY=o.tailY,legs=o.legs;
       var out=[r(3,tY,7,2,DC.outline),r(2,tY,7,1,DC.dark),r(8,bY,12,6,DC.outline),r(9,bY,11,4,DC.body),r(10,bY,7,1,DC.light),r(7,bY+2,5,3,DC.dark),
         r(18,bY-2,5,6,DC.outline),r(19,bY-2,4,5,DC.body),r(20,bY-1,2,1,DC.light),r(21,bY-1,1,4,DC.collar),
         r(hX,hY,6,5,DC.outline),r(hX+1,hY+1,5,3,DC.body),r(hX+1,hY-2,3,3,DC.outline),r(hX+2,hY-1,2,2,DC.dark),
         r(hX+5,hY+2,5,2,DC.outline),r(hX+5,hY+1,4,2,DC.body),r(hX+8,hY+1,1,1,DC.light),r(hX+4,hY+1,1,1,DC.eye)];
+      out.push(r(20,bY+3,3,2,DC.bell));
+      dHat(hX,hY).forEach(function(q){out.push(q);});
       legs.forEach(function(g){out.push(r(g[0],g[1],g[2],g[3],DC.outline),r(g[0]+1,g[1],Math.max(1,g[2]-1),Math.max(1,g[3]-1),DC.dark));});
       return out;
     }
@@ -446,14 +466,14 @@
       r(18,5,6,7,DC.outline),r(19,5,4,6,DC.body),r(20,5,2,2,DC.light),r(19,5,1,4,DC.collar),
       r(11,8,9,6,DC.outline),r(12,8,7,5,DC.body),r(12,9,3,3,DC.light),r(9,11,6,4,DC.outline),r(10,11,5,3,DC.dark),
       r(18,10,3,5,DC.outline),r(19,10,2,5,DC.dark),r(22,10,3,5,DC.outline),r(23,10,2,5,DC.body),
-      r(5,12,7,2,DC.outline),r(4,13,7,1,DC.dark)];
+      r(5,12,7,2,DC.outline),r(4,13,7,1,DC.dark)].concat(dIdleHat);
     var dMark=[r(20,1,6,5,DC.outline),r(21,2,5,3,DC.body),r(21,0,3,3,DC.outline),r(22,1,2,2,DC.dark),
       r(25,3,4,2,DC.outline),r(25,2,3,2,DC.body),r(28,2,1,1,DC.light),r(24,2,1,1,DC.eye),
       r(18,5,6,7,DC.outline),r(19,5,4,6,DC.body),r(20,5,2,2,DC.light),r(19,5,1,4,DC.collar),
       r(11,8,9,6,DC.outline),r(12,8,7,5,DC.body),r(12,9,3,3,DC.light),r(9,11,6,4,DC.outline),r(10,11,5,3,DC.dark),
       r(20,10,3,5,DC.outline),r(21,10,2,5,DC.dark),
       r(9,9,5,2,DC.outline),r(8,8,2,4,DC.outline),r(9,9,4,1,DC.dark),
-      r(5,12,7,2,DC.outline),r(4,13,7,1,DC.dark)];
+      r(5,12,7,2,DC.outline),r(4,13,7,1,DC.dark)].concat(dIdleHat);
     var DOG={
       idle:dIdle, marking:dMark,
       lick:dIdle.concat([r(28,5,2,1,0xf06d91),r(29,6,1,1,0xffa0b8)]),
@@ -1106,6 +1126,61 @@
       draw:function(){return A.crowMean(0);}
     },
 
+    // ======================= CHRISTMAS & WEATHER =======================
+    { g:"winter", plain:true, name:"Roofline lights & wreath", key:"xmasLights0", tw:60, th:34, family:"scenery", fps:2,
+      notes:[
+        "Snow caps the roof, hangs in small drifts and rests on every sill. A sagging wire carries red, green, gold and blue bulbs along the cornice; the two frames rotate the colours so the string twinkles.",
+        "Wreaths (green ring, red bow) sit on a few windows of each building. All of it is drawn in its own untinted layers, so it stays bright at night instead of being muddied by the time-of-day tint."
+      ],
+      frames:(function(){
+        function scene(frame){
+          var BR="#a8654d",BRD="#8f553f",WIN="#2b2023",SNOW="#ffffff",WIRE="#1e2a1e",G="#2f9e4f",RED="#d62f3f",GOLD="#ffd54a";
+          var bulbs=["#ff4b4b","#4fd16a","#ffd54a","#4aa8ff"];
+          var out=[[0,8,60,26,BR],[0,8,60,2,BRD],[8,16,12,12,WIN],[40,16,12,12,WIN],
+            [-1,4,62,4,SNOW],[6,8,4,2,SNOW],[24,8,4,2,SNOW],[42,8,4,2,SNOW],
+            [7,28,14,2,SNOW],[39,28,14,2,SNOW]];
+          var x,i,sag;
+          for(x=3,i=0;x<57;x+=14,i++){
+            for(var s=0;s<14&&x+s<57;s++){sag=Math.round(3*Math.sin(Math.PI*s/14));out.push([x+s,13+sag-4,1,1,WIRE]);}
+            out.push([x+6,15,3,3,bulbs[(i+frame)%4]]);
+          }
+          // Pixel-ring wreath around the left window with a bow and gold berry.
+          out.push([11,14,6,2,G],[9,16,2,8,G],[17,16,2,8,G],[11,24,6,2,G],[13,25,3,2,RED],[13,13,2,2,GOLD]);
+          return out;
+        }
+        return [function(){return scene(0);},function(){return scene(1);}];
+      })(),
+      draw:function(){return this.frames[0]();} },
+
+    { g:"winter", plain:true, name:"Snow cover", key:"snowCover", tw:64, th:12, family:"scenery",
+      notes:[
+        "A lumpy white drift line over a pale blue-grey body, 64px wide so it tiles with the street. During the storm the layer grows from nothing to about 12 game pixels tall and then stays for the rest of the run.",
+        "It sits under Nicole, Stella and the obstacles, so their feet read as standing in the snow."
+      ],
+      draw:function(){
+        var out=[[0,0,64,12,"#d6e2ee"]];
+        var lumps=[[0,4],[8,2],[16,3],[24,1],[30,3],[38,2],[46,4],[54,1],[60,3]];
+        lumps.forEach(function(l,i){var nx=lumps[(i+1)%lumps.length][0]||64;out.push([l[0],l[1],(nx>l[0]?nx:64)-l[0],12-l[1],"#ffffff"]);});
+        out.push([0,8,64,1,"#eaf1f8"]);
+        return out;} },
+
+    { g:"winter", plain:true, name:"Storm: rain → sleet → snow", key:"storm-stages", tw:60, th:26, family:"weather",
+      notes:[
+        "Left to right: rain streaks (thin, fast, blue-grey), sleet pellets (short, pale, slightly slower) and snowflakes (fat, white, slow, swaying). One pool of particles is reused; each time one respawns it picks its type from how far through the storm it is, so the weather changes gradually.",
+        "The storm runs 105–135 s into the run: rain first (with lightning and thunder), then sleet, then snow. Snow cover starts building during the sleet and keeps growing through the snow."
+      ],
+      draw:function(){
+        var out=[],i;
+        var rain=[[3,2],[8,9],[13,4],[5,14],[11,17]];
+        rain.forEach(function(p){out.push([p[0],p[1],1,8,"#779bb8"]);});
+        out.push([2,3,1,8,"#b8d8ee"],[12,10,1,8,"#b8d8ee"]);
+        var sleet=[[24,3],[31,8],[27,13],[34,17],[22,19],[29,22]];
+        sleet.forEach(function(p,k){out.push([p[0],p[1],2,4,k%2?"#a9c4da":"#dfeaf4"]);});
+        var snow=[[44,3,4],[53,6,3],[48,12,5],[55,17,4],[43,20,3]];
+        snow.forEach(function(p){out.push([p[0],p[1],p[2],p[2],"#ffffff"]);});
+        out.push([20,0,1,26,"#2a3140"],[40,0,1,26,"#2a3140"]);
+        return out;} },
+
     // ======================= CAST =======================
     { g:"cast", plain:true, name:"Nicole — idle", key:"player-idle", tw:21, th:30, family:"player", fps:2,
       notes:["Rest pose while the world is stopped — a slow two-frame sway of the arm and skirt."],
@@ -1334,17 +1409,18 @@
                   night:document.getElementById("grid-night"),
                   birds:document.getElementById("grid-birds"),
                   power:document.getElementById("grid-powerups"),
+                  winter:document.getElementById("grid-winter"),
                   cast:document.getElementById("grid-cast") };
   var tally = { shipped:0, kept:0, unchanged:0, open:0 }, cast = 0, counts = {};
   DATA.forEach(function(item){
     counts[item.g] = (counts[item.g] || 0) + 1;
     buckets[item.g].appendChild(render(item));
-    if (item.plain) cast++;
-    else tally[DECISIONS[item.key] || "shipped"]++;
+    if (item.g === "cast") cast++;
+    else if (item.g !== "winter") tally[DECISIONS[item.key] || "shipped"]++;
   });
 
   document.getElementById("tally").textContent =
-    (counts.day + counts.night) + " obstacles  ·  " + counts.birds + " birds  ·  " + counts.power + " power-ups  ·  " +
+    (counts.day + counts.night) + " obstacles  ·  " + counts.birds + " birds  ·  " + counts.power + " power-ups  ·  " + counts.winter + " seasonal  ·  " +
     tally.shipped + " shipped  ·  " + tally.kept + " kept as-is  ·  " +
     tally.unchanged + " needed no change  ·  " + tally.open + " still in review  ·  " +
     cast + " cast animations  ·  the game is the source of truth";

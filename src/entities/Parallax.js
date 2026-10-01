@@ -38,6 +38,23 @@ export class Parallax {
       .setOrigin(0, 0)
       .setDepth(-6);
 
+    // Christmas dressing: snow caps sit just above their buildings, and the
+    // string lights twinkle by swapping between two textures.
+    this.snowFar = scene.add
+      .tileSprite(0, GROUND_Y - hillsFar.height, GAME_WIDTH, hillsFar.height, 'snowFar')
+      .setOrigin(0, 0)
+      .setDepth(-7.9);
+    this.snowNear = scene.add
+      .tileSprite(0, GROUND_Y - hillsNear.height, GAME_WIDTH, hillsNear.height, 'snowNear')
+      .setOrigin(0, 0)
+      .setDepth(-5.9);
+    this.lights = scene.add
+      .tileSprite(0, GROUND_Y - hillsNear.height, GAME_WIDTH, hillsNear.height, 'xmasLights0')
+      .setOrigin(0, 0)
+      .setDepth(-5.8);
+    this.lightsFrame = 0;
+    this.lightsFrameTime = 0;
+
     // Same silhouette as hillsNear, sparse lit-window squares baked in -
     // fading this in over hillsNear is what sells "grassy hills at day"
     // slowly becoming "building skyline at night" without swapping geometry.
@@ -64,11 +81,20 @@ export class Parallax {
 
   scroll(speed, delta) {
     const dt = delta / 1000;
+    this.lightsFrameTime += delta;
+    if (this.lightsFrameTime >= 450) {
+      this.lightsFrameTime %= 450;
+      this.lightsFrame = 1 - this.lightsFrame;
+      this.lights.setTexture(`xmasLights${this.lightsFrame}`);
+    }
     this.skyline.tilePositionX += speed * PARALLAX.skyline.speedFactor * dt;
     this.hillsFar.tilePositionX += speed * PARALLAX.hillsFar.speedFactor * dt;
     this.clouds.tilePositionX += speed * PARALLAX.clouds.speedFactor * dt;
     this.hillsNear.tilePositionX += speed * PARALLAX.hillsNear.speedFactor * dt;
     this.hillsWindows.tilePositionX = this.hillsNear.tilePositionX;
+    this.snowFar.tilePositionX = this.hillsFar.tilePositionX;
+    this.snowNear.tilePositionX = this.hillsNear.tilePositionX;
+    this.lights.tilePositionX = this.hillsNear.tilePositionX;
     this.pedestrians.tilePositionX += speed * PARALLAX.pedestrians.speedFactor * dt;
     this.parkedCars.tilePositionX += speed * PARALLAX.parkedCars.speedFactor * dt;
     this.pedestrianFrameTime += delta;
@@ -96,6 +122,10 @@ export class Parallax {
     this.hillsNear.setTint(palette.hillNear);
     this.clouds.setTint(palette.cloud);
     this.hillsWindows.setAlpha(palette.windowGlow);
+    // Snow dims with the daylight; the lights stay bright, and read best at night.
+    this.snowFar.setTint(palette.cloud);
+    this.snowNear.setTint(palette.cloud);
+    this.lights.setAlpha(0.75 + 0.25 * palette.windowGlow);
     this.pedestrians.setTint(palette.cloud);
     this.parkedCars.setTint(palette.hillFar);
   }

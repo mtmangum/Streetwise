@@ -86,12 +86,21 @@ export const DAY_CYCLE = {
   durationSeconds: 90
 };
 
+// The late-night storm is a winter one: it opens as rain, turns to sleet and
+// ends as heavy snow, which keeps piling up on the ground for the rest of the
+// run. rainEnd / sleetEnd are fractions of the storm's length.
 export const STORM = {
   startSeconds: 105,
   endSeconds: 135,
-  rainDropCount: 44,
+  rainDropCount: 150,
+  rainEnd: 0.34,
+  sleetEnd: 0.67,
+  // Lightning and thunder only belong to the rain half of the storm.
+  lightningUntil: 0.45,
   lightningMinMs: 4200,
-  lightningMaxMs: 8500
+  lightningMaxMs: 8500,
+  // Ground cover (0-1) reached by the end of the sleet and snow stages.
+  coverAfterSleet: 0.25
 };
 
 export const DAWN = {

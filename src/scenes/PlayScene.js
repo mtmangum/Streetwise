@@ -9,6 +9,7 @@ import { Pigeon } from '../entities/Pigeon.js';
 import { Crow } from '../entities/Crow.js';
 import { Seagull } from '../entities/Seagull.js';
 import { Storm } from '../entities/Storm.js';
+import { Snow } from '../entities/Snow.js';
 import { SneakerBoost } from '../entities/SneakerBoost.js';
 import { ZoomiesPickup } from '../entities/ZoomiesPickup.js';
 import { PinkStarPickup } from '../entities/PinkStarPickup.js';
@@ -117,6 +118,7 @@ export class PlayScene extends Phaser.Scene {
       () => this.scheduleDogJump()
     );
     this.storm = new Storm(this);
+    this.snow = new Snow(this);
     this.coffeeTint = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0xffa640, 1)
       .setOrigin(0, 0)
       .setDepth(19)
@@ -349,10 +351,13 @@ export class PlayScene extends Phaser.Scene {
     menuPanel.fillRoundedRect(menuLeft + 4, menuTop + 5, 420, menuHeight, 14);
     menuPanel.fillStyle(0x121823, 0.96);
     menuPanel.fillRoundedRect(menuLeft, menuTop, 420, menuHeight, 14);
-    menuPanel.lineStyle(2, 0xe0752f, 0.9);
+    menuPanel.lineStyle(3, 0xd94a4a, 1);
     menuPanel.strokeRoundedRect(menuLeft, menuTop, 420, menuHeight, 14);
-    menuPanel.fillStyle(0xf2c14e, 1);
-    menuPanel.fillRoundedRect(menuLeft + 18, menuTop + 13, 384, 3, 2);
+    // Candy-stripe bar in Christmas red and green.
+    for (let x = 0; x < 384; x += 12) {
+      menuPanel.fillStyle(x % 24 === 0 ? 0xd94a4a : 0x3fae6a, 1);
+      menuPanel.fillRect(menuLeft + 18 + x, menuTop + 13, 12, 4);
+    }
     const menuText = (x, y, text, size, color, extra = {}) => this.add
       .text(x, y, text, {
         fontFamily: 'sans-serif',
@@ -1432,6 +1437,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    if (this.state !== 'paused') this.snow.update(time, delta, this.state === 'running' ? this.scrollSpeed : 0);
     if (this.state === 'ending') {
       this.updateFinale(delta);
       return;
@@ -1442,7 +1448,8 @@ export class PlayScene extends Phaser.Scene {
     this.jumpController.update();
     if (!this.storm.hasStarted && this.elapsed >= STORM.startSeconds) this.storm.start(time);
     if (this.storm.active && this.elapsed >= STORM.endSeconds) this.storm.stop();
-    this.storm.update(time, delta);
+    this.storm.update(time, delta, this.elapsed);
+    this.ground.setSnowCover(this.storm.cover);
     this.health = Phaser.Math.Clamp(
       this.health - HEALTH.drainPerSecond * this.difficulty.drainScale * (delta / 1000),
       0,

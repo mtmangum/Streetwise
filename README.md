@@ -129,6 +129,7 @@ If you rename the repo, update `base` in `vite.config.js` to match.
 - [x] Power jump with aerial rewards and hazards
 - [x] Pause/resume controls
 - [x] Easy (Nicole) mode: slower world, wider obstacle spacing, softer hits
+- [x] Christmas theme: snowy brownstones with string lights and wreaths, falling snow, Santa hats, and a rain-to-sleet-to-snow storm that leaves snow on the street
 - [x] Stella's Protective Leap (one crow dive intercepted per run)
 - [x] Coffee power-up (slows the world for five seconds)
 - [x] Stella Bark Blast power-up (scares off birds, cats, rats and cops on screen)

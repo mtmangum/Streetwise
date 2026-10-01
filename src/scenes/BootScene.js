@@ -899,9 +899,28 @@ export class BootScene extends Phaser.Scene {
     g.destroy();
   }
 
+  // Drifts of settled snow along the top of the street: a lumpy white edge
+  // over a pale blue-grey body, 64px wide so it tiles with the ground.
+  generateSnowCoverTexture() {
+    const g = this.add.graphics();
+    g.fillStyle(0xd6e2ee, 1);
+    g.fillRect(0, 0, 64, 12);
+    g.fillStyle(0xffffff, 1);
+    const lumps = [[0, 4], [8, 2], [16, 3], [24, 1], [30, 3], [38, 2], [46, 4], [54, 1], [60, 3]];
+    lumps.forEach(([x, dip], i) => {
+      const next = lumps[(i + 1) % lumps.length][0] || 64;
+      g.fillRect(x, dip, (next > x ? next : 64) - x, 12 - dip);
+    });
+    g.fillStyle(0xeaf1f8, 1);
+    g.fillRect(0, 8, 64, 1);
+    g.generateTexture('snowCover', 64, 12);
+    g.destroy();
+  }
+
   generateParallaxTextures() {
+    this.generateSnowCoverTexture();
     this.drawSkylineTexture('skyline', PARALLAX.skyline.tileWidth, PARALLAX.skyline.height);
-    this.drawBrownstoneTexture('hillsFar', PARALLAX.hillsFar.tileWidth, PARALLAX.hillsFar.height, 8);
+    const farBuildings = this.drawBrownstoneTexture('hillsFar', PARALLAX.hillsFar.tileWidth, PARALLAX.hillsFar.height, 8);
     const nearBuildings = this.drawBrownstoneTexture(
       'hillsNear',
       PARALLAX.hillsNear.tileWidth,
@@ -909,10 +928,84 @@ export class BootScene extends Phaser.Scene {
       5
     );
     this.drawWindowsTexture('hillsWindows', PARALLAX.hillsNear.tileWidth, PARALLAX.hillsNear.height, nearBuildings);
+    this.drawChristmasTextures(farBuildings, nearBuildings);
     this.drawPedestriansTexture('pedestrians0', PARALLAX.pedestrians.tileWidth, PARALLAX.pedestrians.height, false);
     this.drawPedestriansTexture('pedestrians1', PARALLAX.pedestrians.tileWidth, PARALLAX.pedestrians.height, true);
     this.drawParkedCarsTexture('parkedCars', PARALLAX.parkedCars.tileWidth, PARALLAX.parkedCars.height);
     this.drawCloudTexture('clouds', 0xffffff, PARALLAX.clouds.tileWidth, PARALLAX.clouds.height);
+  }
+
+  // Christmas dressing for the brownstones, kept in separate layers from the
+  // tinted facades so it stays white and colorful instead of being muddied by
+  // the time-of-day tint: snow caps on roofs, sills and stoops (tinted lightly
+  // by Parallax so they dim at night), and two twinkling frames of string
+  // lights plus wreaths that stay at full brightness.
+  drawChristmasTextures(farBuildings, nearBuildings) {
+    const snow = 0xffffff;
+    const drawSnow = (key, tileWidth, tileHeight, buildings, detailed) => {
+      const g = this.add.graphics();
+      g.fillStyle(snow, 1);
+      for (const b of buildings) {
+        // Roofline cap with a few hanging drifts.
+        g.fillRect(b.x - 1, b.y - 3, b.w + 2, 4);
+        for (let dx = 4; dx < b.w - 6; dx += 11) g.fillRect(b.x + dx, b.y + 1, 4, 2);
+        if (b.roofBox) g.fillRect(b.x + b.w * 0.58, b.y - 9, b.w * 0.25, 3);
+        if (b.roofTank) {
+          const tx = b.x + b.w * 0.55;
+          g.fillRect(tx - 1, b.y - 17, Math.max(16, b.w * 0.28) + 2, 3);
+        }
+        if (!detailed) continue;
+        // Snow resting on every window sill and the stoop steps.
+        for (const win of this.windowCells(b)) g.fillRect(win.x - 1, win.y + win.h, win.w + 2, 2);
+        const stoopX = b.stoopSide === 0
+          ? b.x + b.w * 0.08
+          : b.stoopSide === 1 ? b.x + (b.w - b.stoopW) / 2 : b.x + b.w - b.stoopW - b.w * 0.08;
+        g.fillRect(stoopX, tileHeight - 7, b.stoopW, 2);
+        g.fillRect(stoopX + b.stoopW * 0.2, tileHeight - 11, b.stoopW * 0.6, 2);
+      }
+      g.generateTexture(key, tileWidth, tileHeight);
+      g.destroy();
+    };
+    drawSnow('snowFar', PARALLAX.hillsFar.tileWidth, PARALLAX.hillsFar.height, farBuildings, false);
+    drawSnow('snowNear', PARALLAX.hillsNear.tileWidth, PARALLAX.hillsNear.height, nearBuildings, true);
+
+    const bulbs = [0xff4b4b, 0x4fd16a, 0xffd54a, 0x4aa8ff];
+    [0, 1].forEach((frame) => {
+      const g = this.add.graphics();
+      let wreathIndex = 0;
+      for (const b of nearBuildings) {
+        // A sagging wire along the cornice with a bulb every few pixels; the
+        // second frame rotates the colors so the string twinkles.
+        const span = 14;
+        let bulb = 0;
+        for (let x = b.x + 3; x < b.x + b.w - 3; x += span) {
+          for (let step = 0; step < span && x + step < b.x + b.w - 3; step++) {
+            const sag = Math.round(3 * Math.sin((Math.PI * step) / span));
+            g.fillStyle(0x1e2a1e, 1);
+            g.fillRect(x + step, b.y + 7 + sag, 1, 1);
+          }
+          const bx = x + span / 2;
+          g.fillStyle(bulbs[(bulb + frame) % bulbs.length], 1);
+          g.fillRect(bx - 1, b.y + 11, 3, 3);
+          bulb++;
+        }
+        // Wreaths with a red bow on a couple of windows per building.
+        this.windowCells(b).forEach((win, i) => {
+          if ((i + wreathIndex) % 4 !== 0) return;
+          const cx = win.x + win.w / 2;
+          const cy = win.y + win.h / 2;
+          g.lineStyle(3, 0x2f9e4f, 1);
+          g.strokeCircle(cx, cy, Math.max(4, win.w * 0.62));
+          g.fillStyle(0xd62f3f, 1);
+          g.fillRect(cx - 2, cy + Math.max(4, win.w * 0.62) - 2, 5, 3);
+          g.fillStyle(0xffd54a, 1);
+          g.fillRect(cx - 1, cy - Math.max(4, win.w * 0.62) - 1, 2, 2);
+        });
+        wreathIndex++;
+      }
+      g.generateTexture(`xmasLights${frame}`, PARALLAX.hillsNear.tileWidth, PARALLAX.hillsNear.height);
+      g.destroy();
+    });
   }
 
   drawParkedCarsTexture(key, tileWidth, tileHeight) {
