@@ -106,6 +106,9 @@ export class Obstacle extends Entity {
     this.speedFactor = type.speedFactor ?? 1;
     this.family = obstacleFamily(type);
     this.dogClearable = DOG_CLEARABLE_FAMILIES.has(this.family);
+    // Too big for Stella's zoomies to sweep away, but she can knock it over.
+    this.dogTopplable = this.family === 'obstacle-shoppingcart';
+    this.toppled = false;
     this.isTall = height >= 68;
     this.hintNotified = false;
     this.currentSpeed = speed;
@@ -234,6 +237,35 @@ export class Obstacle extends Entity {
     if (this.sprite.x < -60) {
       this.destroy();
     }
+  }
+
+  // Stella's zoomies tip the cart onto its side: a much lower shape, no longer
+  // rolling under its own power, so it is far easier to jump.
+  topple() {
+    if (!this.alive || this.toppled) return;
+    this.toppled = true;
+    this.isTall = false;
+    this.speedFactor = 1;
+    this.setSpeed(this.currentSpeed);
+    const sprite = this.sprite;
+    const scale = sprite.displayWidth / sprite.width;
+    sprite.anims.stop();
+    sprite.setTexture('obstacle-shoppingcart-toppled');
+    sprite.setScale(scale);
+    // A new texture means a new frame size; resync the hitbox so it shrinks
+    // with the sprite instead of keeping the upright cart's.
+    sprite.body.setSize(sprite.width, sprite.height);
+    const restY = GROUND_Y - sprite.displayHeight / 2;
+    sprite.y = restY - 16;
+    sprite.setAngle(-24);
+    this.scene.tweens.add({
+      targets: sprite,
+      y: restY,
+      angle: 0,
+      duration: 260,
+      ease: 'Bounce.easeOut'
+    });
+    this.scene.showCartTopple(sprite.x, GROUND_Y - 6);
   }
 
   scareOff() {

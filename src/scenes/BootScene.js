@@ -58,6 +58,7 @@ export class BootScene extends Phaser.Scene {
     this.drawHydrantObstacle('obstacle-hydrant-long1', true, true);
     this.drawShoppingCartObstacle('obstacle-shoppingcart0', false);
     this.drawShoppingCartObstacle('obstacle-shoppingcart1', true);
+    this.drawToppledShoppingCart('obstacle-shoppingcart-toppled');
     this.drawHotDogCartObstacle('obstacle-hotdogcart');
     this.drawParkingMeterObstacle('obstacle-parkingmeter');
     this.drawCatRunObstacle('obstacle-cat0', 0);
@@ -526,6 +527,27 @@ export class BootScene extends Phaser.Scene {
       [7,5,10,3,O],[9,3,6,3,O],[10,3,4,2,STEEL],[5,7,14,3,O],[6,7,12,2,L],
       [7,9,10,15,O],[8,9,8,14,M],[9,10,2,12,L],[13,10,3,13,0xb8432c],[5,12,4,7,O],[3,13,4,5,O],[4,14,3,3,M],
       [16,11,4,8,O],[17,12,2,6,STEEL],[6,19,12,5,O],[7,19,10,3,D],[3,23,19,4,O],[5,23,15,2,L]
+    ]);
+  }
+
+  // The cart after Stella's zoomies knock it over: lying on its side, wheels
+  // in the air at the right, push frame and grip at the left. Much lower than
+  // the upright cart so it is easy to hop.
+  drawToppledShoppingCart(key) {
+    const O=0x22252a,D=0x50575d,M=0x818a8f,L=0xcbd0d1,R=0xa84b42,B=0x435d78,IN=0x2d3036;
+    this.drawObstacleTexture(key,56,24,[
+      // Rear push frame and grip.
+      [0,2,11,3,O],[1,2,9,2,R],[5,4,5,17,O],[6,5,3,15,L],
+      // Cage lying on its side: outline, dark interior, bars and child seat.
+      [8,4,36,2,O],[8,19,36,2,O],[8,4,2,17,O],[42,4,2,17,O],
+      [10,6,32,13,IN],[10,6,32,1,L],[10,18,32,1,M],
+      [13,7,2,11,M],[20,7,2,11,L],[27,7,2,11,M],[34,7,2,11,L],[40,7,2,11,M],
+      [10,11,32,2,M],
+      [14,8,9,7,O],[15,9,7,5,B],[17,10,3,1,L],
+      // Wheels and forks stick out sideways at the front.
+      [42,5,5,4,O],[43,6,4,2,M],[42,16,5,4,O],[43,17,4,2,M],
+      [46,1,9,9,O],[48,3,5,5,L],[50,5,1,1,O],
+      [46,12,9,9,O],[48,14,5,5,L],[50,16,1,1,O]
     ]);
   }
 

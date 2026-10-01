@@ -1026,13 +1026,34 @@ export class PlayScene extends Phaser.Scene {
 
   clearZoomiesObstacles(dogBounds) {
     for (const entity of this.entities) {
-      if (!entity.alive || !entity.dogClearable) continue;
+      if (!entity.alive || !(entity.dogClearable || (entity.dogTopplable && !entity.toppled))) continue;
       if (!Phaser.Geom.Intersects.RectangleToRectangle(dogBounds, entity.sprite.getBounds())) continue;
+      if (entity.dogTopplable) {
+        entity.topple();
+        continue;
+      }
       entity.rewarded = true;
       const { x, y } = entity.sprite;
       entity.destroy();
       this.onObstacleAvoided(x, y - 20, false);
       this.showZoomiesImpact(x, y, 7);
+    }
+  }
+
+  showCartTopple(x, y) {
+    this.audio.cartTopple();
+    for (let i = 0; i < 7; i++) {
+      const dust = this.add.circle(x + Phaser.Math.Between(-30, 30), y, Phaser.Math.Between(2, 4), 0xcfc6b4, 0.8)
+        .setDepth(18);
+      this.tweens.add({
+        targets: dust,
+        x: dust.x + Phaser.Math.Between(-24, 24),
+        y: y - Phaser.Math.Between(8, 26),
+        scale: 2,
+        alpha: 0,
+        duration: Phaser.Math.Between(350, 650),
+        onComplete: () => dust.destroy()
+      });
     }
   }
 

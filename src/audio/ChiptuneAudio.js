@@ -178,6 +178,12 @@ export class ChiptuneAudio {
     this.tone(660, 0.16, 0.04, 'square', 180, 0.05);
   }
 
+  cartTopple() {
+    this.tone(150, 0.12, 0.07, 'sawtooth', 70);
+    this.tone(980, 0.05, 0.03, 'square', 620, 0.1);
+    this.tone(760, 0.05, 0.03, 'square', 480, 0.17);
+  }
+
   coffee() {
     // A sip, then the beat drops: notes sliding down into a slower groove.
     [76, 72, 67, 64].forEach((note, i) =>
