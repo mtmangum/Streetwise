@@ -2,6 +2,44 @@
 
 All notable changes to Streetwise: Nicole & Stella are recorded here.
 
+## 2026-09-30 — Christmas edition
+
+### Christmas theme
+
+- Dressed the brownstones for the season: snow on roofs, window sills and stoops, sagging strings of twinkling lights along the rooflines, and pixel-art holly wreaths with berries, ornaments and a ribbon bow.
+- Added gentle ambient snowfall (including on the start menu), a wintry sky, and a snowy street palette that shades to cool blue-grey at dusk and night.
+- Nicole and Stella now wear Santa hats in every pose, and Stella has a gold collar bell.
+- Gave the start menu a red outline and a red/green candy-stripe bar.
+- The late-night thunderstorm is now a winter storm: it opens as rain, turns to sleet and ends as a heavy, wind-blown snowstorm with a thickening white haze. Lightning and thunder belong to the rain stage only.
+- Snow now builds up on the street during the storm and stays for the rest of the run.
+
+### Easy (Nicole) mode and start menu
+
+- Added an Easy (Nicole) mode: a slower world (75% speed), wider obstacle spacing, softer hits, longer protection after a hit, slower health drain, more forgiving jump timing, and a longer, floatier jump. Power-ups come around more often and birds less often.
+- Replaced the start screen with a simple menu of two large cards, Normal and Easy (Nicole). Tapping a card starts the run in that mode, and the last choice is remembered. Stray taps no longer start a run; keyboard shortcuts still work but are secondary, since tablets are the main target.
+
+### Power-ups and Stella
+
+- Added the Coffee power-up: the world slows to half speed for five seconds while Nicole's jump is unchanged, with an amber wash, steam, and a slower soundtrack.
+- Added the Stella Bark Blast power-up: Stella barks, and every bird, cat, rat and cop on screen bolts as a shockwave reaches it. Scared obstacles that had not yet been passed count as cleared.
+- Added Stella's Protective Leap: once per run she leaps over Nicole and snaps the first diving crow out of the air.
+- Stella's zoomies now topple shopping carts onto their sides, a much lower and easier hop.
+- Redrew the running cat and its hiss/charge pose in profile.
+
+### Art Read-Check
+
+- Split the old Airborne section into Birds and Power-ups, and added a Christmas & weather section, cards for Coffee, Bark Blast, the protective leap and the toppled cart, and the Santa hats on the cast cards.
+
+## 2026-09-02
+
+### Pickups and finale
+
+- Added the pink-sneakers jump boost, the "zoomies" dog-treat pickup (Stella sprints through small hazards), and the pink-star pickup (temporary invulnerability and sparkling super jumps).
+- Added the end-of-run reunion finale with Matt.
+- Reworked and animated much of the obstacle art for readability, and added recoverable double-tap power jumps.
+- Added the Art Read-Check page (obstacles, pickups and cast drawn from their exact pixel data), served from the site build.
+- Added the late-night storm, a refactored systems layer, and a resilient loading screen.
+
 ## 2026-09-01
 
 ### Gameplay

@@ -63,6 +63,12 @@ src/
     Seagull.js              Rare full-life target
     Crow.js                 Hostile aerial hazard
     Parallax.js             Sky, sun/moon, brownstones, clouds scenery layer
+    Ground.js               Scrolling street plus the snow that settles on it
+    Storm.js                Late-night rain -> sleet -> snow storm and snow cover
+    Snow.js                 Ambient flurries
+    SneakerBoost.js, ZoomiesPickup.js, PinkStarPickup.js,
+    CoffeePickup.js, BarkBlastPickup.js
+                            Power-up pickups
 ```
 
 ## Current state
@@ -92,6 +98,22 @@ The first 20 seconds form an easier onboarding stretch with widely spaced,
 stationary obstacles and no birds. Difficulty then ramps through tighter
 spacing, moving carts, faster scrolling, aerial hazards, and day/night
 roster changes. Cops chase briefly after Nicole clears them.
+
+The game is dressed for Christmas: snowy brownstones with string lights and
+wreaths, falling snow, and Santa hats on Nicole and Stella. The late-night
+storm turns from rain to sleet to snow and leaves snow piled on the street
+(`Storm.js`, `Snow.js`, `Ground.js`).
+
+Floating power-ups appear during a run: pink sneakers (higher jumps), the
+zoomies treat (Stella sprints through small hazards and topples shopping
+carts), the pink star (invulnerability), coffee (slows the world for five
+seconds), and the Stella Bark Blast (scares off every bird, cat, rat and cop
+on screen). Stella also leaps once per run to intercept a diving crow.
+
+The start menu offers Normal and Easy (Nicole) modes. Easy slows the world,
+spaces obstacles out, softens hits and gives a longer jump; all of its tuning
+lives in the `DIFFICULTY` block in `src/config.js`. The game targets tablets,
+so everything is playable by touch and keyboard shortcuts are only secondary.
 
 There's no numeric score. Life force slowly drains during play, rises by
 eight points when an obstacle is cleared, and can extend past 100% into a
