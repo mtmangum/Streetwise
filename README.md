@@ -1,6 +1,6 @@
 # Streetwise: Nicole & Stella
 
-![Painted late-1980s-style cover art for Streetwise: Nicole & Stella](docs/streetwise-cover.png)
+![Painted late-1980s-style cover art for Streetwise: Nicole & Stella, Special Christmas Edition, with Nicole and Stella in Santa hats running through falling snow](docs/streetwise-cover.png)
 
 A 16-bit-style side-scroller game built with [Phaser 4](https://phaser.io/) and [Vite](https://vitejs.dev/).
 

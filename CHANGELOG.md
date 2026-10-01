@@ -12,6 +12,7 @@ All notable changes to Streetwise: Nicole & Stella are recorded here.
 - Gave the start menu a red outline and a red/green candy-stripe bar.
 - The late-night thunderstorm is now a winter storm: it opens as rain, turns to sleet and ends as a heavy, wind-blown snowstorm with a thickening white haze. Lightning and thunder belong to the rain stage only.
 - Snow now builds up on the street during the storm and stays for the rest of the run.
+- Updated the cover art for the season: Santa hats on Nicole and Stella, falling snow, snow settled on the mailbox and the hot dog cart's umbrella, and a "Special Christmas Edition" banner under the title.
 
 ### Easy (Nicole) mode and start menu
 
