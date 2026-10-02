@@ -184,6 +184,9 @@ export const DIFFICULTY = {
     // Below 1 = floatier jumps: same takeoff speed, weaker gravity, so Nicole
     // stays in the air longer (airtime scales by 1 / gravityScale).
     gravityScale: 1,
+    // Streetwise Streak: this many clean jumps in a row earns temporary invulnerability.
+    streakTarget: 5,
+    streakDurationMs: 5000,
     easyStartSeconds: 20,
     birdGapScale: 1,
     pickupGapScale: 1
@@ -199,6 +202,8 @@ export const DIFFICULTY = {
     coyoteTimeMs: 140,
     jumpBufferMs: 200,
     gravityScale: 0.85,
+    streakTarget: 4,
+    streakDurationMs: 6000,
     easyStartSeconds: 35,
     birdGapScale: 1.5,
     pickupGapScale: 0.7

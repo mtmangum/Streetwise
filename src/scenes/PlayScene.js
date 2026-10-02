@@ -102,6 +102,10 @@ export class PlayScene extends Phaser.Scene {
     this.coffeeUntil = 0;
     this.coffeeFactor = 1;
     this.nextCoffeePuffAt = 0;
+    this.streakCount = 0;
+    this.streakUntil = 0;
+    this.streakWasActive = false;
+    this.nextStreakSparkAt = 0;
     this.audio = new ChiptuneAudio(this);
 
     this.parallax = new Parallax(this);
@@ -411,6 +415,27 @@ export class PlayScene extends Phaser.Scene {
       }
     });
     this.cursorOn = true;
+    // Streetwise Streak meter, under the power meter: one pip per clean jump
+    // needed, filling gold as the streak builds.
+    this.streakLabel = this.add
+      .text(16, 58, 'STREAK', {
+        fontFamily: 'monospace',
+        fontSize: '10px',
+        fontStyle: 'bold',
+        resolution: RENDER_SCALE,
+        color: '#ffd23c',
+        stroke: '#090b10',
+        strokeThickness: 2
+      })
+      .setOrigin(0, 0.5)
+      .setDepth(23)
+      .setVisible(false);
+    this.streakPips = Array.from({ length: 5 }, (_, i) => this.add
+      .rectangle(64 + i * 17, 53, 13, 10, 0x14161c)
+      .setOrigin(0, 0)
+      .setStrokeStyle(1, 0x000000, 0.8)
+      .setDepth(23)
+      .setVisible(false));
     this.modeTag = this.add
       .text(GAME_WIDTH - 62, 46, '', {
         fontFamily: 'sans-serif',
@@ -574,6 +599,9 @@ export class PlayScene extends Phaser.Scene {
     this.menuVeil.setVisible(false);
     this.pauseButton.setVisible(true);
     this.pauseButtonText.setVisible(true);
+    this.streakLabel.setVisible(true);
+    this.streakPips.forEach((pip, i) => pip.setVisible(i < this.difficulty.streakTarget));
+    this.refreshStreakPips();
     this.modeTag.setVisible(true);
     this.overlayPanel.setVisible(false);
     this.overlayTitle.setVisible(false);
@@ -749,6 +777,7 @@ export class PlayScene extends Phaser.Scene {
   // Called by Obstacle when it scrolls safely past the player.
   onObstacleAvoided(x, y, jumped = false) {
     if (this.state !== 'running') return;
+    if (jumped) this.registerPerfectJump();
     if (jumped) {
       this.momentumFactor = Math.max(
         WORLD.minimumMomentum,
@@ -805,7 +834,14 @@ export class PlayScene extends Phaser.Scene {
       this.showPinkStarDeflect();
       return;
     }
+    if (this.time.now < this.streakUntil) {
+      this.showStreakDeflect();
+      return;
+    }
     if (this.time.now < this.damageInvulnerableUntil) return;
+    // A real hit ends the streak.
+    this.streakCount = 0;
+    this.refreshStreakPips();
     this.damageInvulnerableUntil = this.time.now + this.difficulty.invulnerabilityMs;
     this.health = Phaser.Math.Clamp(this.health - damage * this.difficulty.damageScale, 0, HEALTH.overchargeMax);
     this.updateHealthBar();
@@ -1252,6 +1288,94 @@ export class PlayScene extends Phaser.Scene {
     return this.coffeeFactor;
   }
 
+  // A clean jump: Nicole was in the air as an obstacle passed and wasn't hit.
+  // Enough in a row earns a short invulnerability. Jumps made while the bonus
+  // is running don't build the next streak, and a real hit resets the count.
+  registerPerfectJump() {
+    if (this.time.now < this.streakUntil) return;
+    this.streakCount += 1;
+    if (this.streakCount >= this.difficulty.streakTarget) {
+      this.activateStreak();
+      return;
+    }
+    this.audio.streakStep(this.streakCount);
+    this.refreshStreakPips();
+    const pip = this.streakPips[this.streakCount - 1];
+    this.tweens.add({ targets: pip, scaleX: 1.4, scaleY: 1.6, duration: 110, yoyo: true });
+  }
+
+  activateStreak() {
+    this.streakCount = 0;
+    this.streakUntil = this.time.now + this.difficulty.streakDurationMs;
+    this.audio.streak();
+    this.showControlHint('STREETWISE STREAK!', `${this.difficulty.streakTarget} CLEAN JUMPS  ·  INVULNERABLE`);
+    this.emitStreakBurst(this.player.sprite.x + 12, this.player.sprite.y - 30, 14);
+    this.refreshStreakPips();
+  }
+
+  // While the bonus runs the pips glow; otherwise they show the count so far.
+  refreshStreakPips() {
+    const active = this.time.now < this.streakUntil;
+    this.streakPips.forEach((pip, index) => {
+      const lit = active || index < this.streakCount;
+      pip.setFillStyle(lit ? 0xffd23c : 0x14161c, 1);
+    });
+  }
+
+  showStreakDeflect() {
+    this.audio.starDeflect();
+    this.emitStreakBurst(
+      this.player.sprite.x + this.player.sprite.displayWidth / 2,
+      this.player.sprite.y - this.player.sprite.displayHeight / 2,
+      6
+    );
+  }
+
+  emitStreakBurst(x, y, count) {
+    for (let i = 0; i < count; i++) {
+      const spark = this.add.star(x, y, 4, 2, 5, i % 2 ? 0xffd23c : 0xffffff, 1).setDepth(26);
+      this.tweens.add({
+        targets: spark,
+        x: x + Phaser.Math.Between(-54, 54),
+        y: y + Phaser.Math.Between(-50, 50),
+        angle: Phaser.Math.Between(-160, 160),
+        alpha: 0,
+        scale: { from: 0.4, to: 1.1 },
+        duration: Phaser.Math.Between(380, 700),
+        onComplete: () => spark.destroy()
+      });
+    }
+  }
+
+  // Gold-and-white flicker on Nicole, with sparks at her feet, while the
+  // streak bonus lasts. The pink star's own look takes priority if both run.
+  updateStreak(time) {
+    if (this.streakWasActive && time >= this.streakUntil) {
+      this.streakWasActive = false;
+      this.audio.streakEnd();
+      this.refreshStreakPips();
+    }
+    if (time >= this.streakUntil) return;
+    this.streakWasActive = true;
+    if (time >= this.pinkStarUntil) {
+      this.player.sprite.setTint(Math.sin(time * 0.03) > 0 ? 0xffd23c : 0xfff6c8);
+    }
+    if (time < this.nextStreakSparkAt) return;
+    this.nextStreakSparkAt = time + 90;
+    const spark = this.add.rectangle(
+      this.player.sprite.x + Phaser.Math.Between(2, 30),
+      this.player.sprite.y - Phaser.Math.Between(0, 8),
+      2, 2, Math.random() < 0.5 ? 0xffd23c : 0xffffff, 1
+    ).setDepth(16);
+    this.tweens.add({
+      targets: spark,
+      y: spark.y - 20,
+      alpha: 0,
+      duration: 380,
+      onComplete: () => spark.destroy()
+    });
+  }
+
   activatePinkStar(x, y) {
     this.pinkStarUntil = Math.max(this.pinkStarUntil, this.time.now + PINK_STAR.durationMs);
     this.audio.pinkStar();
@@ -1620,6 +1744,7 @@ export class PlayScene extends Phaser.Scene {
     this.player.update(time, delta);
     this.updateSneakerBoost(time);
     this.updatePinkStar(time);
+    this.updateStreak(time);
     this.dog.update(delta);
 
     // Same call, different behavior per entity type — no type-checking here.

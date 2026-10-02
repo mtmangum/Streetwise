@@ -111,6 +111,10 @@ carts), the pink star (invulnerability), coffee (slows the world for five
 seconds), and the Stella Bark Blast (scares off every bird, cat, rat and cop
 on screen). Stella also leaps once per run to intercept a diving crow.
 
+Jumping cleanly over obstacles builds a Streetwise Streak: five in a row
+(four in Easy mode) make Nicole invulnerable for five seconds (six in Easy).
+The STREAK meter under the power meter shows progress; a real hit resets it.
+
 The start menu offers Normal and Easy (Nicole) modes. Easy slows the world,
 spaces obstacles out, softens hits and gives a longer jump; all of its tuning
 lives in the `DIFFICULTY` block in `src/config.js`. The game targets tablets,
@@ -155,5 +159,6 @@ If you rename the repo, update `base` in `vite.config.js` to match.
 - [x] Christmas theme: snowy brownstones with string lights and wreaths, falling snow, Santa hats, and a rain-to-sleet-to-snow storm that leaves snow on the street
 - [x] Stella's Protective Leap (one crow dive intercepted per run)
 - [x] Coffee power-up (slows the world for five seconds)
+- [x] Streetwise Streak (clean jumps in a row earn temporary invulnerability)
 - [x] Stella Bark Blast power-up (scares off birds, cats, rats and cops on screen)
 - [ ] Local high-score storage (e.g. best dodge streak)

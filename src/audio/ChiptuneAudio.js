@@ -185,6 +185,23 @@ export class ChiptuneAudio {
     this.tone(180, 0.5, 0.05, 'triangle', 900, 0.1);
   }
 
+  streakStep(count) {
+    // Each clean jump in the streak chirps a little higher.
+    this.tone(midiToHz(72 + count * 2), 0.07, 0.05, 'square');
+  }
+
+  streak() {
+    [72, 76, 79, 84, 88].forEach((note, i) =>
+      this.tone(midiToHz(note), 0.14, 0.055, i % 2 ? 'square' : 'triangle', null, i * 0.05)
+    );
+  }
+
+  streakEnd() {
+    [84, 79, 72].forEach((note, i) =>
+      this.tone(midiToHz(note), 0.08, 0.04, 'triangle', null, i * 0.05)
+    );
+  }
+
   cartTopple() {
     this.tone(150, 0.12, 0.07, 'sawtooth', 70);
     this.tone(980, 0.05, 0.03, 'square', 620, 0.1);
