@@ -24,7 +24,7 @@ All notable changes to Streetwise: Nicole & Stella are recorded here.
 
 - Added the Coffee power-up: the world slows to half speed for five seconds while Nicole's jump is unchanged, with an amber wash, steam, and a slower soundtrack.
 - Added the Stella Bark Blast power-up: Stella barks, and every bird, cat, rat and cop on screen bolts as a shockwave reaches it. Scared obstacles that had not yet been passed count as cleared.
-- Added Streetwise Streak: five clean jumps in a row (four in Easy mode) make Nicole invulnerable for five seconds (six in Easy). A small STREAK meter under the power meter fills as the streak builds, a real hit resets it, and Nicole glows gold with sparkles while the bonus runs.
+- Added Streetwise Streak: five clean jumps in a row (four in Easy mode) make Nicole invulnerable for five seconds (six in Easy). A small STREAK meter beside the power meter fills as the streak builds, a real hit resets it, and Nicole glows gold with sparkles while the bonus runs.
 - Added Stella's Protective Leap: once per run she leaps over Nicole and snaps the first diving crow out of the air.
 - Stella's zoomies now topple shopping carts onto their sides, a much lower and easier hop.
 - Redrew the running cat and its hiss/charge pose in profile.

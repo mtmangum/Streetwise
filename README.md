@@ -113,7 +113,7 @@ on screen). Stella also leaps once per run to intercept a diving crow.
 
 Jumping cleanly over obstacles builds a Streetwise Streak: five in a row
 (four in Easy mode) make Nicole invulnerable for five seconds (six in Easy).
-The STREAK meter under the power meter shows progress; a real hit resets it.
+The STREAK meter beside the power meter shows progress; a real hit resets it.
 
 The start menu offers Normal and Easy (Nicole) modes. Easy slows the world,
 spaces obstacles out, softens hits and gives a longer jump; all of its tuning

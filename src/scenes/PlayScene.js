@@ -415,10 +415,10 @@ export class PlayScene extends Phaser.Scene {
       }
     });
     this.cursorOn = true;
-    // Streetwise Streak meter, under the power meter: one pip per clean jump
+    // Streetwise Streak meter, beside the power meter: one pip per clean jump
     // needed, filling gold as the streak builds.
     this.streakLabel = this.add
-      .text(16, 58, 'STREAK', {
+      .text(232, 39, 'STREAK', {
         fontFamily: 'monospace',
         fontSize: '10px',
         fontStyle: 'bold',
@@ -431,7 +431,7 @@ export class PlayScene extends Phaser.Scene {
       .setDepth(23)
       .setVisible(false);
     this.streakPips = Array.from({ length: 5 }, (_, i) => this.add
-      .rectangle(64 + i * 17, 53, 13, 10, 0x14161c)
+      .rectangle(282 + i * 17, 34, 13, 10, 0x14161c)
       .setOrigin(0, 0)
       .setStrokeStyle(1, 0x000000, 0.8)
       .setDepth(23)
