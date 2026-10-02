@@ -28,8 +28,9 @@ All notable changes to Streetwise: Nicole & Stella are recorded here.
 - Stella's zoomies now topple shopping carts onto their sides, a much lower and easier hop.
 - Redrew the running cat and its hiss/charge pose in profile.
 
-### Art Read-Check
+### Sprite Gallery
 
+- Renamed the Art Read-Check page to the Sprite Gallery (now at `sprite-gallery.html`; the old `art-read-check.html` link redirects to it).
 - Split the old Airborne section into Birds and Power-ups, and added a Christmas & weather section, cards for Coffee, Bark Blast, the protective leap and the toppled cart, and the Santa hats on the cast cards.
 
 ## 2026-09-02
@@ -39,7 +40,7 @@ All notable changes to Streetwise: Nicole & Stella are recorded here.
 - Added the pink-sneakers jump boost, the "zoomies" dog-treat pickup (Stella sprints through small hazards), and the pink-star pickup (temporary invulnerability and sparkling super jumps).
 - Added the end-of-run reunion finale with Matt.
 - Reworked and animated much of the obstacle art for readability, and added recoverable double-tap power jumps.
-- Added the Art Read-Check page (obstacles, pickups and cast drawn from their exact pixel data), served from the site build.
+- Added the Art Read-Check page (since renamed the Sprite Gallery) (obstacles, pickups and cast drawn from their exact pixel data), served from the site build.
 - Added the late-night storm, a refactored systems layer, and a resilient loading screen.
 
 ## 2026-09-01
